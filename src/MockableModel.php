@@ -3,37 +3,45 @@
 namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Eloquent\Builder;
+use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
 {
-    public static $saveCount = [];
+    public static $saveCalls = [];
 
-    public static function getSavedAttributes($index)
+    public static $fakeCreate;
+
+    public static $firstModel;
+
+    public static $fakeRows = [];
+
+    public static function getSavedModelAttributes($index = 0)
     {
-        return self::$saveCount[self::class][$index] ?? [];
+        return self::$saveCalls[$index] ?? [];
     }
 
     public static function fakeSave()
     {
+        self::$saveCalls = [];
         self::saving(function ($model) {
-            if (isset(self::$saveCount[self::class])) {
-                self::$saveCount[self::class] = [$model->getAttributes()];
-            } else {
-                self::$saveCount[self::class][] = $model->getAttributes();
-            }
+            // we record the model attributes at the moment of being saved.
+            self::$saveCalls[] = $model->getAttributes();
 
+            // we return false to avoid hitting the database.
             return false;
         });
     }
 
-    public static function getSaveCount()
+    public static function assertModelIsSaved($times = 1)
     {
-        return isset(self::$saveCount[self::class]) ? count(self::$saveCount[self::class]) : 0;
+        $actual = isset(self::$saveCalls) ? count(self::$saveCalls) : 0;
+
+        PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
     }
 
     public static function fakeCreate()
     {
-        self::$fake = new class (self::class) extends Builder
+        self::$fakeCreate = new class (self::class) extends Builder
         {
             public $originalModel;
 
@@ -53,10 +61,10 @@ trait MockableModel
 
     public static function query()
     {
-        if (self::$rows) {
-            return self::fakeRow();
-        } elseif (self::$fake) {
-            return self::$fake;
+        if (self::$fakeRows) {
+            return self::fakeQueryBuilder();
+        } elseif (self::$fakeCreate) {
+            return self::$fakeCreate;
         } else {
             return parent::query();
         }
@@ -69,21 +77,15 @@ trait MockableModel
 
     public static function getCreateAttributes()
     {
-        return self::$fake->createdModel->attributes;
+        return self::$fakeCreate->createdModel->attributes;
     }
 
-    public static $fake;
-
-    public static $firstModel;
-
-    public static $rows;
-
-    public static function addRow(array $attributes)
+    public static function addFakeRow(array $attributes)
     {
-        self::$rows[] = $attributes;
+        self::$fakeRows[] = $attributes;
     }
 
-    public static function fakeRow()
+    public static function fakeQueryBuilder()
     {
         return new class (self::class) extends Builder
         {
@@ -140,5 +142,13 @@ trait MockableModel
                 return $this;
             }
         };
+    }
+
+    public static function stopFaking()
+    {
+        self::$fakeRows = [];
+        self::$fakeCreate = null;
+        self::$saveCalls = [];
+        self::$firstModel = null;
     }
 }
