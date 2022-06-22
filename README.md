@@ -1,4 +1,5 @@
-# eloquent-mockery
+# Eloquent Mockery
+
 Mock your eloquent queries without the repository pattern.
 
 ## Usage:
@@ -17,15 +18,15 @@ User extends Model
 Then you can:
 ```php
 
-        // arrange:
-        User::addFakeRow(['id' => 1, 'username' => 'faky', 'password' => '...']);
-        User::addFakeRow(['id' => 1, 'username' => 'maky', 'password' => '...']]);
+// arrange:
+User::addFakeRow(['id' => 1, 'username' => 'faky', 'password' => '...']);
+User::addFakeRow(['id' => 1, 'username' => 'maky', 'password' => '...']]);
 
-        // act:
-        $user = User::where('username', 'faky')->first();   # <=== does NOT connect to DB
+// act (this query resides in your controller):
+$user = User::where('username', 'faky')->first();   # <=== does NOT connect to DB
 
-        // assert:
-        assert($user->id === 1);
+// assert:
+assert($user->id === 1);
 
 ```
 

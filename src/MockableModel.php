@@ -91,10 +91,11 @@ trait MockableModel
         {
             public $recordedWheres = [];
 
-            /**
-             * @var \Illuminate\Database\Eloquent\HigherOrderBuilderProxy|mixed
-             */
-            private $recordedWhereIn = [];
+            public $recordedWhereIn = [];
+
+            public $recordedWhereNull = [];
+
+            public $recordedWhereNotNull = [];
 
             public function __construct($originalModel)
             {
@@ -103,7 +104,7 @@ trait MockableModel
 
             public function first($columns = ['*'])
             {
-                $collection = collect(($this->originalModel)::$rows);
+                $collection = collect(($this->originalModel)::$fakeRows);
                 foreach ($this->recordedWheres as $_where) {
                     $_where = array_filter($_where);
                     $collection = $collection->where($_where[0], $_where[1] ?? null);
@@ -111,6 +112,14 @@ trait MockableModel
 
                 foreach ($this->recordedWhereIn as $_where) {
                     $collection = $collection->whereIn($_where[0], $_where[1] ?? null);
+                }
+
+                foreach ($this->recordedWhereNull as $_where) {
+                    $collection = $collection->whereNull($_where[0]);
+                }
+
+                foreach ($this->recordedWhereNotNull as $_where) {
+                    $collection = $collection->whereNotNull($_where[0]);
                 }
 
                 $data = $collection->first();
@@ -138,6 +147,20 @@ trait MockableModel
             public function whereIn($column, $values, $boolean = 'and', $not = false)
             {
                 $this->recordedWhereIn[] = [$column, $values];
+
+                return $this;
+            }
+
+            public function whereNull($column = null)
+            {
+                $this->recordedWhereNull[] = [$column];
+
+                return $this;
+            }
+
+            public function whereNotNull($column = null)
+            {
+                $this->recordedWhereNotNull[] = [$column];
 
                 return $this;
             }
