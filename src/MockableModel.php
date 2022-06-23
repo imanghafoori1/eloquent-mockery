@@ -72,7 +72,13 @@ trait MockableModel
 
     public function newQuery()
     {
-        return self::query();
+        if (self::$fakeRows) {
+            return self::fakeQueryBuilder();
+        } elseif (self::$fakeCreate) {
+            return self::$fakeCreate;
+        } else {
+            return parent::newQuery();
+        }
     }
 
     public static function getCreateAttributes()
