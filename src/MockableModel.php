@@ -2,7 +2,9 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use App\AddressModule\Models\Address;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
@@ -15,9 +17,16 @@ trait MockableModel
 
     public static $fakeRows = [];
 
+    public static $fakeRelations = [];
+
     public static function getSavedModelAttributes($index = 0)
     {
         return self::$saveCalls[$index] ?? [];
+    }
+
+    public static function addRelation(string $relation, $model, array $row)
+    {
+        self::$fakeRelations[] = [$relation, $model, $row];
     }
 
     public static function fakeSave()
@@ -108,6 +117,23 @@ trait MockableModel
                 $this->originalModel = $originalModel;
             }
 
+            public function get($columns = ['*'])
+            {
+                $models = [];
+                foreach (($this->originalModel)::$fakeRows as $i => $row) {
+                    $model = new $this->originalModel;
+                    $model->setRawAttributes($row);
+                    foreach (($this->originalModel)::$fakeRelations as $j => [$relName, $relModel, $row]) {
+                        $relModel = new $relModel;
+                        $relModel->setRawAttributes($row[$i]);
+                        $model->setRelation($relName, $relModel);
+                    }
+                    $models[] = $model;
+                }
+
+                return Collection::make($models);
+            }
+
             public function first($columns = ['*'])
             {
                 $collection = collect(($this->originalModel)::$fakeRows);
@@ -150,6 +176,7 @@ trait MockableModel
 
                 return $this;
             }
+
             public function whereIn($column, $values, $boolean = 'and', $not = false)
             {
                 $this->recordedWhereIn[] = [$column, $values];
@@ -170,6 +197,11 @@ trait MockableModel
 
                 return $this;
             }
+
+            public function orderBy()
+            {
+                return $this;
+            }
         };
     }
 
@@ -179,5 +211,12 @@ trait MockableModel
         self::$fakeCreate = null;
         self::$saveCalls = [];
         self::$firstModel = null;
+    }
+
+    public function andReturn($rows)
+    {
+        foreach ($rows as $row) {
+            self::addFakeRow($row);
+        }
     }
 }
