@@ -19,9 +19,16 @@ trait MockableModel
 
     public static $fakeRelations = [];
 
+    public static $deleteCalls = [];
+
     public static function getSavedModelAttributes($index = 0)
     {
         return self::$saveCalls[$index] ?? [];
+    }
+
+    public static function getDeletedModelAttributes($index = 0)
+    {
+        return self::$deleteCalls[$index] ?? [];
     }
 
     public static function addRelation(string $relation, $model, array $row)
@@ -41,7 +48,26 @@ trait MockableModel
         });
     }
 
+    public static function fakeDelete()
+    {
+        self::$deleteCalls = [];
+        self::deleting(function ($model) {
+            // we record the model attributes at the moment of being deleted.
+            self::$deleteCalls[] = $model->getAttributes();
+
+            // we return false to avoid hitting the database.
+            return false;
+        });
+    }
+
     public static function assertModelIsSaved($times = 1)
+    {
+        $actual = isset(self::$saveCalls) ? count(self::$saveCalls) : 0;
+
+        PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
+    }
+
+    public static function assertModelIsNotDeleted($times = 1)
     {
         $actual = isset(self::$saveCalls) ? count(self::$saveCalls) : 0;
 
@@ -136,28 +162,10 @@ trait MockableModel
 
             public function first($columns = ['*'])
             {
-                $collection = collect(($this->originalModel)::$fakeRows);
-                foreach ($this->recordedWheres as $_where) {
-                    $_where = array_filter($_where);
-                    $collection = $collection->where($_where[0], $_where[1] ?? null);
-                }
-
-                foreach ($this->recordedWhereIn as $_where) {
-                    $collection = $collection->whereIn($_where[0], $_where[1] ?? null);
-                }
-
-                foreach ($this->recordedWhereNull as $_where) {
-                    $collection = $collection->whereNull($_where[0]);
-                }
-
-                foreach ($this->recordedWhereNotNull as $_where) {
-                    $collection = $collection->whereNotNull($_where[0]);
-                }
-
-                $data = $collection->first();
+                $data = $this->filter()->first();
 
                 if (! $data) {
-                    return parent::first();
+                    return $data;
                 }
 
                 $this->originalModel::unguard();
@@ -198,9 +206,37 @@ trait MockableModel
                 return $this;
             }
 
+            public function count()
+            {
+                return $this->filter()->count();
+            }
+
             public function orderBy()
             {
                 return $this;
+            }
+
+            private function filter()
+            {
+                $collection = collect(($this->originalModel)::$fakeRows);
+                foreach ($this->recordedWheres as $_where) {
+                    $_where = array_filter($_where);
+                    $collection = $collection->where($_where[0], $_where[1] ?? null);
+                }
+
+                foreach ($this->recordedWhereIn as $_where) {
+                    $collection = $collection->whereIn($_where[0], $_where[1] ?? null);
+                }
+
+                foreach ($this->recordedWhereNull as $_where) {
+                    $collection = $collection->whereNull($_where[0]);
+                }
+
+                foreach ($this->recordedWhereNotNull as $_where) {
+                    $collection = $collection->whereNotNull($_where[0]);
+                }
+
+                return $collection;
             }
         };
     }
