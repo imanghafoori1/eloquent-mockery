@@ -74,32 +74,10 @@ trait MockableModel
         PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
     }
 
-    public static function fakeCreate()
-    {
-        self::$fakeCreate = new class (self::class) extends Builder
-        {
-            public $originalModel;
-
-            public $createdModel;
-
-            public function __construct($originalModel)
-            {
-                $this->originalModel = $originalModel;
-            }
-
-            public function create(array $attributes = [])
-            {
-                return $this->createdModel = new $this->originalModel($attributes);
-            }
-        };
-    }
-
     public static function query()
     {
         if (self::$fakeRows) {
             return self::fakeQueryBuilder();
-        } elseif (self::$fakeCreate) {
-            return self::$fakeCreate;
         } else {
             return parent::query();
         }
@@ -109,8 +87,6 @@ trait MockableModel
     {
         if (self::$fakeRows) {
             return self::fakeQueryBuilder();
-        } elseif (self::$fakeCreate) {
-            return self::$fakeCreate;
         } else {
             return parent::newQuery();
         }
@@ -140,6 +116,7 @@ trait MockableModel
 
             public function __construct($originalModel)
             {
+                $this->model = new $originalModel;
                 $this->originalModel = $originalModel;
             }
 
@@ -214,6 +191,15 @@ trait MockableModel
             public function orderBy()
             {
                 return $this;
+            }
+
+            public function create($data = [])
+            {
+                $model = clone $this->model;
+                $model->exists = true;
+                ($this->originalModel)::$saveCalls[] = $data;
+
+                return $model;
             }
 
             private function filter()
