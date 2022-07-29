@@ -5,6 +5,7 @@ namespace Imanghafoori\EloquentMockery;
 use App\AddressModule\Models\Address;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
@@ -25,14 +26,32 @@ trait MockableModel
 
     public static $columnAliases = [];
 
+    public static $forceMocks = [];
+
     public static function getSavedModelAttributes($index = 0)
     {
         return self::$saveCalls[$index] ?? [];
     }
 
-    public static function getDeletedModelAttributes($index = 0)
+    public static function shouldRecieve($method)
     {
-        return self::$deleteCalls[$index] ?? [];
+        return new class (self::class, $method) {
+
+            private $theClass;
+
+            private $method;
+
+            public function __construct($class, $method)
+            {
+                $this->theClass = $class;
+                $this->method = $method;
+            }
+
+            public function andReturn($value)
+            {
+                ($this->theClass)::$forceMocks[$this->method][] = $value;
+            }
+        };
     }
 
     public static function addRelation(string $relation, $model, array $row)
@@ -57,11 +76,25 @@ trait MockableModel
         self::$deleteCalls = [];
         self::deleting(function ($model) {
             // we record the model attributes at the moment of being deleted.
-            self::$deleteCalls[] = $model->getAttributes();
+            self::$deleteCalls[] = $model;
 
             // we return false to avoid hitting the database.
             return false;
         });
+    }
+
+    public static function getDeletedModelAttributes($index = 0)
+    {
+        if (isset(self::$deleteCalls[$index])) {
+            return (self::$deleteCalls[$index])->getAttributes();
+        }
+
+        return [];
+    }
+
+    public static function getDeletedModel($index = 0)
+    {
+        return self::$deleteCalls[$index] ?? null;
     }
 
     public static function assertModelIsSaved($times = 1)
@@ -149,7 +182,7 @@ trait MockableModel
             public function get($columns = ['*'])
             {
                 $models = [];
-                foreach (($this->originalModel)::$fakeRows as $i => $row) {
+                foreach ($this->filter() as $i => $row) {
                     $model = new $this->originalModel;
                     $model->setRawAttributes($row);
                     foreach (($this->originalModel)::$fakeRelations as $j => [$relName, $relModel, $row]) {
@@ -315,5 +348,10 @@ trait MockableModel
         self::$fakeCreate = null;
         self::$saveCalls = [];
         self::$firstModel = null;
+        self::$fakeRelations = [];
+        self::$deleteCalls = [];
+        self::$ignoreWheres = false;
+        self::$columnAliases = [];
+        self::$forceMocks = [];
     }
 }
