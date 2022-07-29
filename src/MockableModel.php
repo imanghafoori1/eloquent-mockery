@@ -21,6 +21,10 @@ trait MockableModel
 
     public static $deleteCalls = [];
 
+    public static $ignoreWheres = false;
+
+    public static $columnAliases = [];
+
     public static function getSavedModelAttributes($index = 0)
     {
         return self::$saveCalls[$index] ?? [];
@@ -99,7 +103,29 @@ trait MockableModel
 
     public static function addFakeRow(array $attributes)
     {
-        self::$fakeRows[] = $attributes;
+        $row = [];
+        foreach ($attributes as $key => $value) {
+            $col = self::parseColumn($key);
+            $row[$col] = $value;
+        }
+        self::$fakeRows[] = $row;
+    }
+
+    public static function ignoreWheres()
+    {
+        return self::$ignoreWheres = true;
+    }
+
+    private static function parseColumn($where)
+    {
+        if (! strpos($where,' as ')) {
+            return $where;
+        }
+
+        [$tableCol, $alias] = explode(' as ', $where);
+        self::$columnAliases[trim($tableCol)] = trim($alias);
+
+        return $tableCol;
     }
 
     public static function fakeQueryBuilder()
@@ -176,6 +202,11 @@ trait MockableModel
                 return $this;
             }
 
+            public function select($columns = ['*'])
+            {
+                return $this;
+            }
+
             public function whereNotNull($column = null)
             {
                 $this->recordedWhereNotNull[] = [$column];
@@ -193,6 +224,26 @@ trait MockableModel
                 return $this;
             }
 
+            public function join()
+            {
+                return $this;
+            }
+
+            public function leftJoin()
+            {
+                return $this;
+            }
+
+            public function rightJoin()
+            {
+                return $this;
+            }
+
+            public function innerJoin()
+            {
+                return $this;
+            }
+
             public function create($data = [])
             {
                 $model = clone $this->model;
@@ -205,6 +256,11 @@ trait MockableModel
             private function filter()
             {
                 $collection = collect(($this->originalModel)::$fakeRows);
+
+                if ($this->originalModel::$ignoreWheres){
+                    return $collection;
+                }
+
                 foreach ($this->recordedWheres as $_where) {
                     $_where = array_filter($_where);
                     $collection = $collection->where($_where[0], $_where[1] ?? null);
