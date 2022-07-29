@@ -262,12 +262,15 @@ trait MockableModel
                 }
 
                 foreach ($this->recordedWheres as $_where) {
-                    $_where = array_filter($_where);
-                    $collection = $collection->where($_where[0], $_where[1] ?? null);
+                    $_where = array_filter($_where, function ($val) {
+                        return ! is_null($val);
+                    });
+
+                    $collection = $collection->where(...$_where);
                 }
 
                 foreach ($this->recordedWhereIn as $_where) {
-                    $collection = $collection->whereIn($_where[0], $_where[1] ?? null);
+                    $collection = $collection->whereIn($_where[0], $_where[1]);
                 }
 
                 foreach ($this->recordedWhereNull as $_where) {
@@ -278,7 +281,30 @@ trait MockableModel
                     $collection = $collection->whereNotNull($_where[0]);
                 }
 
-                return $collection;
+                return $collection
+                    ->map(function ($item) {
+                        return $this->_renameKeys_sa47rbt(
+                            Arr::dot($item),
+                            ($this->originalModel)::$columnAliases
+                        );
+                    });
+            }
+
+            private function _renameKeys_sa47rbt(array $array, array $replace)
+            {
+                $newArray = [];
+                if (! $replace) {
+                    return $array;
+                }
+
+                foreach ($array as $key => $value) {
+                    $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
+                    $key = explode('.', $key);
+                    $key = array_pop($key);
+                    $newArray[$key] = $value;
+                }
+
+                return $newArray;
             }
         };
     }
@@ -289,12 +315,5 @@ trait MockableModel
         self::$fakeCreate = null;
         self::$saveCalls = [];
         self::$firstModel = null;
-    }
-
-    public function andReturn($rows)
-    {
-        foreach ($rows as $row) {
-            self::addFakeRow($row);
-        }
     }
 }
