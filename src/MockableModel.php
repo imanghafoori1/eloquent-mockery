@@ -12,6 +12,8 @@ trait MockableModel
 {
     public static $saveCalls = [];
 
+    public static $fakeDelete = false;
+
     public static $fakeCreate;
 
     public static $firstModel;
@@ -31,6 +33,17 @@ trait MockableModel
     public static function getSavedModelAttributes($index = 0)
     {
         return self::$saveCalls[$index] ?? [];
+    }
+
+    protected function performDeleteOnModel()
+    {
+        if (self::$fakeDelete === false) {
+            parent::performDeleteOnModel();
+        } else {
+            self::$deleteCalls[] = $this;
+
+            $this->exists = false;
+        }
     }
 
     public static function shouldRecieve($method)
@@ -73,23 +86,7 @@ trait MockableModel
 
     public static function fakeDelete()
     {
-        self::$deleteCalls = [];
-        self::deleting(function ($model) {
-            // we record the model attributes at the moment of being deleted.
-            self::$deleteCalls[] = $model;
-
-            // we return false to avoid hitting the database.
-            return false;
-        });
-    }
-
-    public static function getDeletedModelAttributes($index = 0)
-    {
-        if (isset(self::$deleteCalls[$index])) {
-            return (self::$deleteCalls[$index])->getAttributes();
-        }
-
-        return [];
+        self::$fakeDelete = true;
     }
 
     public static function getDeletedModel($index = 0)
@@ -201,7 +198,7 @@ trait MockableModel
                 $data = $this->filter()->first();
 
                 if (! $data) {
-                    return $data;
+                    return null;
                 }
 
                 $this->originalModel::unguard();

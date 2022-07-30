@@ -54,13 +54,12 @@ class BasicTest extends TestCase
         $this->assertEquals(1, $users->count());
 
         $user = User::where('id', 2)->first();
-
         $this->assertEquals(2, $user->id);
         $this->assertEquals('Iman 2', $user->name);
         $this->assertInstanceOf(User::class, $user);
 
+        // Previous wheres are not applied here in this query.
         $user = User::first();
-
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman 1', $user->name);
         $this->assertInstanceOf(User::class, $user);
@@ -95,5 +94,55 @@ class BasicTest extends TestCase
         $this->assertEquals(1, $users->count());
 
         User::stopFaking();
+    }
+    /**
+     * @test
+     */
+    public function whereNull()
+    {
+        User::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
+        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
+
+        $users = User::whereNull('name')->get();
+        $this->assertEquals(1, ($users[0])->id);
+        $this->assertInstanceOf(Collection::class, $users);
+        $this->assertEquals(1, $users->count());
+
+        $users = User::whereNotNull('name')->get();
+        $this->assertEquals(2, ($users[0])->id);
+        $this->assertEquals(3, ($users[1])->id);
+        $this->assertInstanceOf(Collection::class, $users);
+        $this->assertEquals(2, $users->count());
+
+        User::stopFaking();
+    }
+
+    /**
+     * @test
+     */
+    public function basic_count()
+    {
+        User::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
+        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
+        User::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
+
+        $count1 = User::count();
+        $count2 = User::query()->count();
+        $count3 = User::query()->where('id', 1)->count();
+        $count4 = User::whereNull('name')->count();
+        $count5 = User::whereNull('id')->count();
+        $count6 = User::query()
+            ->where('id','<', 4)
+            ->where('age', '>',20)
+            ->count();
+
+        $this->assertEquals(4, $count1);
+        $this->assertEquals(4, $count2);
+        $this->assertEquals(1, $count3);
+        $this->assertEquals(1, $count4);
+        $this->assertEquals(0, $count5);
+        $this->assertEquals(1, $count6);
     }
 }
