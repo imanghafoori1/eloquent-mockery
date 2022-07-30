@@ -17,7 +17,7 @@ class BasicTest extends TestCase
     /**
      * @test
      */
-    public function basic_first()
+    public function first()
     {
         User::addFakeRow([
             'id' => 1,
@@ -25,15 +25,18 @@ class BasicTest extends TestCase
         ]);
 
         $user = User::first();
-
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman', $user->name);
         $this->assertInstanceOf(User::class, $user);
 
         $user = User::query()->first();
-
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman', $user->name);
+        $this->assertInstanceOf(User::class, $user);
+
+        $user = User::query()->first(['id']);
+        $attrs = $user->getAttributes();
+        $this->assertEquals(['id' => 1], $attrs);
         $this->assertInstanceOf(User::class, $user);
 
         User::stopFaking();
@@ -95,54 +98,21 @@ class BasicTest extends TestCase
 
         User::stopFaking();
     }
-    /**
-     * @test
-     */
-    public function whereNull()
-    {
-        User::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-
-        $users = User::whereNull('name')->get();
-        $this->assertEquals(1, ($users[0])->id);
-        $this->assertInstanceOf(Collection::class, $users);
-        $this->assertEquals(1, $users->count());
-
-        $users = User::whereNotNull('name')->get();
-        $this->assertEquals(2, ($users[0])->id);
-        $this->assertEquals(3, ($users[1])->id);
-        $this->assertInstanceOf(Collection::class, $users);
-        $this->assertEquals(2, $users->count());
-
-        User::stopFaking();
-    }
 
     /**
      * @test
      */
-    public function basic_count()
+    public function test_get()
     {
         User::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
         User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
         User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
         User::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
 
-        $count1 = User::count();
-        $count2 = User::query()->count();
-        $count3 = User::query()->where('id', 1)->count();
-        $count4 = User::whereNull('name')->count();
-        $count5 = User::whereNull('id')->count();
-        $count6 = User::query()
-            ->where('id','<', 4)
-            ->where('age', '>',20)
-            ->count();
-
-        $this->assertEquals(4, $count1);
-        $this->assertEquals(4, $count2);
-        $this->assertEquals(1, $count3);
-        $this->assertEquals(1, $count4);
-        $this->assertEquals(0, $count5);
-        $this->assertEquals(1, $count6);
+        $users = User::whereNull('name')->get(['age']);
+        $this->assertEquals(null, ($users[0])->id);
+        $this->assertEquals(20, ($users[0])->age);
+        $this->assertEquals(1, $users->count());
+        User::stopFaking();
     }
 }

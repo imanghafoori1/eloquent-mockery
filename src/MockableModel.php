@@ -179,12 +179,13 @@ trait MockableModel
             public function get($columns = ['*'])
             {
                 $models = [];
-                foreach ($this->filter() as $i => $row) {
+                foreach ($this->filterRows() as $i => $row) {
                     $model = new $this->originalModel;
+                    $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
                     $model->setRawAttributes($row);
-                    foreach (($this->originalModel)::$fakeRelations as $j => [$relName, $relModel, $row]) {
+                    foreach (($this->originalModel)::$fakeRelations as $j => [$relName, $relModel, $relatedRow]) {
                         $relModel = new $relModel;
-                        $relModel->setRawAttributes($row[$i]);
+                        $relModel->setRawAttributes($relatedRow[$i]);
                         $model->setRelation($relName, $relModel);
                     }
                     $models[] = $model;
@@ -195,7 +196,8 @@ trait MockableModel
 
             public function first($columns = ['*'])
             {
-                $data = $this->filter()->first();
+                $filtered = $this->filterRows();
+                $data = $this->filterColumns($columns, $filtered)->first();
 
                 if (! $data) {
                     return null;
@@ -246,7 +248,7 @@ trait MockableModel
 
             public function count()
             {
-                return $this->filter()->count();
+                return $this->filterRows()->count();
             }
 
             public function orderBy()
@@ -283,7 +285,7 @@ trait MockableModel
                 return $model;
             }
 
-            private function filter()
+            private function filterRows()
             {
                 $collection = collect(($this->originalModel)::$fakeRows);
 
@@ -335,6 +337,17 @@ trait MockableModel
                 }
 
                 return $newArray;
+            }
+
+            private function filterColumns($columns, $filtered)
+            {
+                if ($columns !== ['*']) {
+                    $filtered = $filtered->map(function ($item) use ($columns) {
+                        return Arr::only($item, $columns);
+                    });
+                }
+
+                return $filtered;
             }
         };
     }
