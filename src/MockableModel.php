@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery;
 
 use App\AddressModule\Models\Address;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -237,6 +238,30 @@ trait MockableModel
             public function select($columns = ['*'])
             {
                 return $this;
+            }
+
+            public function find($id, $columns = ['*'])
+            {
+                if (is_array($id) || $id instanceof Arrayable) {
+                    return $this->findMany($id, $columns);
+                }
+
+                return $this->where($this->model->getKeyName(), $id)->first($columns);
+            }
+
+            public function findMany($ids, $columns = ['*'])
+            {
+                $ids = $ids instanceof Arrayable ? $ids->toArray() : $ids;
+                if (empty($ids)) {
+                    return new Collection();
+                }
+
+                $this->whereKey($ids)->get($columns);
+            }
+
+            public function whereKey($id)
+            {
+
             }
 
             public function whereNotNull($column = null)

@@ -17,6 +17,29 @@ class BasicTest extends TestCase
     /**
      * @test
      */
+    public function find()
+    {
+        User::addFakeRow([
+            'id' => 1,
+            'name' => 'Iman',
+        ]);
+        User::addFakeRow([
+            'id' => 2,
+            'name' => 'Iman 2',
+        ]);
+
+        $user = User::find(1);
+        $this->assertEquals(1, $user->id);
+        $this->assertEquals('Iman', $user->name);
+
+        $user = User::query()->find(2);
+        $this->assertEquals(2, $user->id);
+        $this->assertEquals('Iman 2', $user->name);
+    }
+
+    /**
+     * @test
+     */
     public function first()
     {
         User::addFakeRow([
