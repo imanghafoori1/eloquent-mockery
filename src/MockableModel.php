@@ -166,7 +166,7 @@ trait MockableModel
 
     public static function fakeQueryBuilder()
     {
-        return new FakeQueryBuilder(static::class);
+        return new FakeEloquentBuilder(static::class);
     }
 
     public static function stopFaking()

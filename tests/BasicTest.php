@@ -44,6 +44,11 @@ class BasicTest extends TestCase
         $this->assertEquals(['id' => 1], $attrs);
         $this->assertInstanceOf(User::class, $user);
 
+        $user = User::query()->latest('id')->first(['id']);
+        $attrs = $user->getAttributes();
+        $this->assertEquals(['id' => 1], $attrs);
+        $this->assertInstanceOf(User::class, $user);
+
         User::stopFaking();
     }
 

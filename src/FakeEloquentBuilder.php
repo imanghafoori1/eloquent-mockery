@@ -6,19 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 
-class FakeQueryBuilder extends Builder
+class FakeEloquentBuilder extends Builder
 {
-    public $recordedWheres = [];
-
-    public $recordedWhereIn = [];
-
-    public $recordedWhereNull = [];
-
-    public $recordedWhereNotNull = [];
-
     public function __construct($originalModel)
     {
-        $this->query = $this;
+        $this->query = new FakeBuilder();
         $this->model = new $originalModel;
         $this->originalModel = $originalModel;
     }
@@ -60,60 +52,32 @@ class FakeQueryBuilder extends Builder
         return $model;
     }
 
-    public function where($column, $operator = null, $value = null, $boolean = 'and')
-    {
-        $this->recordedWheres[] = [$column, $operator, $value];
-
-        return $this;
-    }
-
-    public function whereIn($column, $values, $boolean = 'and', $not = false)
-    {
-        $this->recordedWhereIn[] = [$column, $values];
-
-        return $this;
-    }
-
-    public function whereNull($column = null)
-    {
-        $this->recordedWhereNull[] = [$column];
-
-        return $this;
-    }
-
     public function select($columns = ['*'])
     {
         return $this;
     }
 
-    public function whereNotNull($column = null)
-    {
-        $this->recordedWhereNotNull[] = [$column];
-
-        return $this;
-    }
-
-    public function count()
+    public function count($columns = '*')
     {
         return $this->filterRows()->count();
     }
 
-    public function orderBy()
+    public function orderBy($column, $direction = 'asc')
     {
         return $this;
     }
 
-    public function join()
+    public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
     {
         return $this;
     }
 
-    public function leftJoin()
+    public function leftJoin($table, $first, $operator = null, $second = null)
     {
         return $this;
     }
 
-    public function rightJoin()
+    public function rightJoin($table, $first, $operator = null, $second = null)
     {
         return $this;
     }
@@ -140,7 +104,7 @@ class FakeQueryBuilder extends Builder
             return $collection;
         }
 
-        foreach ($this->recordedWheres as $_where) {
+        foreach ($this->query->recordedWheres as $_where) {
             $_where = array_filter($_where, function ($val) {
                 return ! is_null($val);
             });
@@ -148,15 +112,15 @@ class FakeQueryBuilder extends Builder
             $collection = $collection->where(...$_where);
         }
 
-        foreach ($this->recordedWhereIn as $_where) {
+        foreach ($this->query->recordedWhereIn as $_where) {
             $collection = $collection->whereIn($_where[0], $_where[1]);
         }
 
-        foreach ($this->recordedWhereNull as $_where) {
+        foreach ($this->query->recordedWhereNull as $_where) {
             $collection = $collection->whereNull($_where[0]);
         }
 
-        foreach ($this->recordedWhereNotNull as $_where) {
+        foreach ($this->query->recordedWhereNotNull as $_where) {
             $collection = $collection->whereNotNull($_where[0]);
         }
 
