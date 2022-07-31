@@ -14,27 +14,9 @@ class User extends Model
 
 class BasicTest extends TestCase
 {
-    /**
-     * @test
-     */
-    public function find()
+    public function tearDown(): void
     {
-        User::addFakeRow([
-            'id' => 1,
-            'name' => 'Iman',
-        ]);
-        User::addFakeRow([
-            'id' => 2,
-            'name' => 'Iman 2',
-        ]);
-
-        $user = User::find(1);
-        $this->assertEquals(1, $user->id);
-        $this->assertEquals('Iman', $user->name);
-
-        $user = User::query()->find(2);
-        $this->assertEquals(2, $user->id);
-        $this->assertEquals('Iman 2', $user->name);
+        User::stopFaking();
     }
 
     /**
@@ -136,6 +118,7 @@ class BasicTest extends TestCase
         $this->assertEquals(null, ($users[0])->id);
         $this->assertEquals(20, ($users[0])->age);
         $this->assertEquals(1, $users->count());
+
         User::stopFaking();
     }
 }
