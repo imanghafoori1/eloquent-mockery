@@ -8,10 +8,10 @@ use Illuminate\Support\Arr;
 
 class FakeEloquentBuilder extends Builder
 {
-    public function __construct($originalModel)
+    public function __construct($model, $originalModel)
     {
-        $this->query = new FakeBuilder();
-        $this->model = new $originalModel;
+        $this->query = new FakeBuilder($model);
+        $this->model = $model;
         $this->originalModel = $originalModel;
     }
 

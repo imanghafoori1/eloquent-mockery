@@ -2,13 +2,14 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Illuminate\Database\Eloquent\Builder;
 use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
 {
     public static $saveCalls = [];
 
-    public static $fakeDelete = false;
+    public static $fakeMode = false;
 
     public static $fakeCreate;
 
@@ -26,20 +27,11 @@ trait MockableModel
 
     public static $forceMocks = [];
 
+    public static $softDeletedModels = [];
+
     public static function getSavedModelAttributes($index = 0)
     {
         return self::$saveCalls[$index] ?? [];
-    }
-
-    protected function performDeleteOnModel()
-    {
-        if (self::$fakeDelete === false) {
-            parent::performDeleteOnModel();
-        } else {
-            self::$deletedModels[] = $this;
-
-            $this->exists = false;
-        }
     }
 
     public static function shouldRecieve($method)
@@ -80,9 +72,17 @@ trait MockableModel
         });
     }
 
-    public static function fakeDelete()
+    public static function fakeSoftDelete()
     {
-        self::$fakeDelete = true;
+        static::$fakeMode = true;
+        static::softDeleted(function ($model) {
+            self::$softDeletedModels[] = $model;
+        });
+    }
+
+    public static function getSoftDeletedModel($index = 0)
+    {
+        return self::$softDeletedModels[$index] ?? null;
     }
 
     public static function getDeletedModel($index = 0)
@@ -104,27 +104,28 @@ trait MockableModel
         PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
     }
 
-    public static function query()
+    public function newModelQuery()
     {
-        if (self::$fakeRows) {
-            return self::fakeQueryBuilder();
+        if (self::$fakeRows || self::$fakeMode) {
+            return new FakeEloquentBuilder($this, static::class);
         } else {
-            return parent::query();
-        }
-    }
-
-    public function newQuery()
-    {
-        if (self::$fakeRows) {
-            return self::fakeQueryBuilder();
-        } else {
-            return parent::newQuery();
+            return parent::newModelQuery();
         }
     }
 
     public static function getCreateAttributes()
     {
         return self::$fakeCreate->createdModel->attributes;
+    }
+
+    protected function newBaseQueryBuilder()
+    {
+        return new FakeBuilder($this);
+    }
+
+    public function newEloquentBuilder($query)
+    {
+        return new ;
     }
 
     public static function addFakeRow(array $attributes)

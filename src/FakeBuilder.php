@@ -6,7 +6,6 @@ use Illuminate\Database\Query\Builder;
 
 class FakeBuilder extends Builder
 {
-
     public $recordedWheres = [];
 
     public $recordedWhereIn = [];
@@ -15,9 +14,11 @@ class FakeBuilder extends Builder
 
     public $recordedWhereNotNull = [];
 
-    public function __construct()
+    public $model = [];
+
+    public function __construct($model)
     {
-        //
+        $this->model = $model;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
@@ -66,5 +67,17 @@ class FakeBuilder extends Builder
         $this->recordedWhereNotNull[] = [$columns];
 
         return $this;
+    }
+
+    public function delete($id = null)
+    {
+        ($this->model)::$deletedModels[] = $this->model;
+
+        return 1;
+    }
+
+    public function update(array $values)
+    {
+        return 1;
     }
 }
