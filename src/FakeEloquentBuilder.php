@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 
 class FakeEloquentBuilder extends Builder
@@ -20,6 +21,7 @@ class FakeEloquentBuilder extends Builder
         $models = [];
         foreach ($this->filterRows() as $i => $row) {
             $model = new $this->originalModel;
+            $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
             $model->setRawAttributes($row);
             foreach (($this->originalModel)::$fakeRelations as $j => [$relName, $relModel, $relatedRow]) {
@@ -159,5 +161,12 @@ class FakeEloquentBuilder extends Builder
         }
 
         return $filtered;
+    }
+
+    public function setModel(Model $model)
+    {
+        $this->model = $model;
+
+        return $this;
     }
 }

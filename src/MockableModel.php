@@ -2,7 +2,6 @@
 
 namespace Imanghafoori\EloquentMockery;
 
-use Illuminate\Database\Eloquent\Builder;
 use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
@@ -104,28 +103,27 @@ trait MockableModel
         PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
     }
 
-    public function newModelQuery()
-    {
-        if (self::$fakeRows || self::$fakeMode) {
-            return new FakeEloquentBuilder($this, static::class);
-        } else {
-            return parent::newModelQuery();
-        }
-    }
-
     public static function getCreateAttributes()
     {
         return self::$fakeCreate->createdModel->attributes;
     }
 
-    protected function newBaseQueryBuilder()
-    {
-        return new FakeBuilder($this);
-    }
-
     public function newEloquentBuilder($query)
     {
-        return new ;
+        if (self::$fakeRows || self::$fakeMode) {
+            return new FakeEloquentBuilder($this, static::class);
+        } else {
+            return parent::newEloquentBuilder($query);
+        }
+    }
+
+    protected function newBaseQueryBuilder()
+    {
+        if (self::$fakeRows || self::$fakeMode) {
+            return new FakeBuilder($this);
+        } else {
+            return parent::newBaseQueryBuilder();
+        }
     }
 
     public static function addFakeRow(array $attributes)
@@ -136,6 +134,11 @@ trait MockableModel
             $row[$col] = $value;
         }
         self::$fakeRows[] = $row;
+    }
+
+    public static function fakeDelete()
+    {
+        self::$fakeMode = true;
     }
 
     public static function ignoreWheres()

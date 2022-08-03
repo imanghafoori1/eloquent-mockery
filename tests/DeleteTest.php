@@ -17,6 +17,27 @@ class DeleteTest extends TestCase
     /**
      * @test
      */
+    public function raw_delete()
+    {
+        DeleteUser::addFakeRow(['id' => 1]);
+        DeleteUser::addFakeRow(['id' => 2]);
+        DeleteUser::addFakeRow(['id' => 3]);
+        DeleteUser::addFakeRow(['id' => 4]);
+
+        $result = DeleteUser::destroy(1, 2);
+        $this->assertEquals(2, $result);
+
+        $this->assertEquals(2, count(DeleteUser::$deletedModels));
+        $model = DeleteUser::getDeletedModel(0);
+        $this->assertEquals($model->id, 1);
+        $this->assertFalse($model->exists);
+
+        DeleteUser::stopFaking();
+    }
+
+    /**
+     * @test
+     */
     public function delete()
     {
         DeleteUser::fakeDelete();
