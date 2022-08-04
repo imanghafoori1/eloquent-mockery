@@ -120,7 +120,7 @@ trait MockableModel
     protected function newBaseQueryBuilder()
     {
         if (self::$fakeRows || self::$fakeMode) {
-            return new FakeBuilder(static::class);
+            return new FakeQueryBuilder(static::class);
         } else {
             return parent::newBaseQueryBuilder();
         }
@@ -138,6 +138,7 @@ trait MockableModel
     public static function addFakeRow(array $attributes)
     {
         $row = [];
+        self::$fakeMode = true;
         foreach ($attributes as $key => $value) {
             $col = self::parseColumn($key);
             $row[$col] = $value;
@@ -184,6 +185,7 @@ trait MockableModel
 
     public static function stopFaking()
     {
+        self::$fakeMode = false;
         self::$fakeRows = [];
         self::$fakeCreate = null;
         self::$saveCalls = [];

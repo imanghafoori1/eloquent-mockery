@@ -11,7 +11,7 @@ class FakeEloquentBuilder extends Builder
 {
     public function __construct($model, $originalModel)
     {
-        $this->query = new FakeBuilder($model);
+        $this->query = new FakeQueryBuilder($model);
         $this->model = $model;
         $this->originalModel = $originalModel;
     }

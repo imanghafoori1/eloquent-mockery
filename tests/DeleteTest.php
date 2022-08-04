@@ -29,18 +29,20 @@ class DeleteTest extends TestCase
         DeleteUser::addFakeRow(['id' => 3]);
         DeleteUser::addFakeRow(['id' => 4]);
 
-        $result = DeleteUser::destroy(1, 2);
-        $this->assertEquals(2, $result);
+        $count = DeleteUser::destroy(1, 2);
+        $this->assertEquals(2, $count);
         $this->assertEquals(2, count(DeleteUser::$deletedModels));
 
         $model = DeleteUser::getDeletedModel(0);
         $this->assertEquals($model->id, 1);
         $this->assertFalse($model->exists);
 
-        $result = DeleteUser::destroy(1, 2);
-        $this->assertEquals(0, $result);
+        // Can not be deleted twice.
+        $count = DeleteUser::destroy(1, 2);
+        $this->assertEquals(0, $count);
 
         $this->assertNull(DeleteUser::find(1));
+        $this->assertNotNull(DeleteUser::find(3));
         $this->assertEquals(2, DeleteUser::count());
     }
 
@@ -58,6 +60,9 @@ class DeleteTest extends TestCase
         $this->assertEquals(spl_object_hash($user), spl_object_hash($user2));
         $this->assertTrue($result);
         $this->assertFalse($user->exists);
+
+        $this->assertNull(DeleteUser::find(1));
+        $this->assertEquals(0, DeleteUser::count());
     }
 
     /**
@@ -66,7 +71,6 @@ class DeleteTest extends TestCase
     public function delete_non_existent()
     {
         DeleteUser::addFakeRow(['id' => 1]);
-        DeleteUser::fakeDelete();
         DeleteUser::setEventDispatcher(new Dispatcher);
 
         $std = new \stdClass();
@@ -98,8 +102,14 @@ class DeleteTest extends TestCase
         DeleteUser::setEventDispatcher(new Dispatcher);
         $std = new \stdClass();
         $std->deleting = false;
+        $std->deleted = false;
         DeleteUser::deleting(function () use ($std) {
             $std->deleting = true;
+            return false;
+        });
+
+        DeleteUser::deleted(function () use ($std) {
+            $std->deleted = true;
             return false;
         });
 
@@ -113,6 +123,38 @@ class DeleteTest extends TestCase
         $this->assertFalse($result);
         $this->assertTrue($user->exists);
         $this->assertTrue($std->deleting);
+        $this->assertFalse($std->deleted);
+    }
+
+    /**
+     * @test
+     */
+    public function delete_events()
+    {
+        DeleteUser::fakeDelete();
+        DeleteUser::setEventDispatcher(new Dispatcher);
+        $std = new \stdClass();
+        $std->deleting = false;
+        $std->deleted = false;
+        DeleteUser::deleting(function () use ($std) {
+            $std->deleting = true;
+        });
+
+        DeleteUser::deleted(function () use ($std) {
+            $std->deleted = true;
+        });
+
+        $user = new DeleteUser();
+        $user->id = 1;
+        $user->exists = true;
+        $result = $user->delete();
+        $model = DeleteUser::getDeletedModel();
+
+        $this->assertNull($model);
+        $this->assertTrue($result);
+        $this->assertFalse($user->exists);
+        $this->assertTrue($std->deleting);
+        $this->assertTrue($std->deleted);
     }
 
     /**
@@ -123,12 +165,12 @@ class DeleteTest extends TestCase
         DeleteUser::setEventDispatcher(new Dispatcher);
 
         DeleteUser::addFakeRow(['id' => 1]);
-        $user = DeleteUser::find(1);
+        $user = DeleteUser::query()->find(1);
 
         $result = $user->forceDelete();
-        $model = DeleteUser::getDeletedModel();
+        $deletedModel = DeleteUser::getDeletedModel();
 
-        $this->assertEquals($model->id, 1);
+        $this->assertEquals($deletedModel->id, 1);
         $this->assertTrue($result);
         $this->assertFalse($user->exists);
     }
@@ -143,11 +185,12 @@ class DeleteTest extends TestCase
         $user = DeleteUser::find(1);
 
         $result = $user->deleteOrFail();
-        $model = DeleteUser::getDeletedModel();
+        $deletedModel = DeleteUser::getDeletedModel();
 
-        $this->assertEquals($model->id, 1);
+        $this->assertEquals($deletedModel->id, 1);
+        $this->assertSame($deletedModel, $user);
         $this->assertTrue($result);
-        $this->assertFalse($user->exists);
+        $this->assertFalse($deletedModel->exists);
     }
 
     /**

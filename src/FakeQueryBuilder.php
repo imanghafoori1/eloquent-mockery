@@ -5,7 +5,7 @@ namespace Imanghafoori\EloquentMockery;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 
-class FakeBuilder extends Builder
+class FakeQueryBuilder extends Builder
 {
     public $recordedWheres = [];
 
