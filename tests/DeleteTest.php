@@ -3,12 +3,19 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Events\Dispatcher;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class DeleteUser extends Model
 {
+    use MockableModel;
+}
+
+class SoftDeleteUser extends Model
+{
+    use SoftDeletes;
     use MockableModel;
 }
 
@@ -44,6 +51,57 @@ class DeleteTest extends TestCase
         $this->assertNull(DeleteUser::find(1));
         $this->assertNotNull(DeleteUser::find(3));
         $this->assertEquals(2, DeleteUser::count());
+    }
+
+    /**
+     * @test
+     */
+    public function destroy_soft_delete()
+    {
+        SoftDeleteUser::setEventDispatcher(new Dispatcher());
+        SoftDeleteUser::addFakeRow(['id' => 1]);
+        SoftDeleteUser::addFakeRow(['id' => 2]);
+        SoftDeleteUser::addFakeRow(['id' => 3]);
+        SoftDeleteUser::addFakeRow(['id' => 4]);
+        SoftDeleteUser::fakeSoftDelete();
+
+        $count = SoftDeleteUser::destroy(1, 2);
+        $this->assertEquals(2, $count);
+        $this->assertEquals(2, count(SoftDeleteUser::$softDeletedModels));
+
+        $model = SoftDeleteUser::getSoftDeletedModel(0);
+        $this->assertEquals($model->id, 1);
+        $this->assertTrue($model->exists);
+
+        // Can not be deleted twice.
+        $count = SoftDeleteUser::destroy(1, 2);
+        $this->assertEquals(0, $count);
+        //
+        $this->assertNull(SoftDeleteUser::find(1));
+        $this->assertNotNull(SoftDeleteUser::find(3));
+        $this->assertEquals(2, SoftDeleteUser::count());
+    }
+
+    /**
+     * @test
+     */
+    public function soft_delete()
+    {
+        SoftDeleteUser::setEventDispatcher(new Dispatcher());
+        SoftDeleteUser::addFakeRow(['id' => 1]);
+        SoftDeleteUser::addFakeRow(['id' => 2]);
+        SoftDeleteUser::addFakeRow(['id' => 3]);
+        SoftDeleteUser::addFakeRow(['id' => 4]);
+        SoftDeleteUser::fakeSoftDelete();
+        $user = SoftDeleteUser::find(1);
+        $this->assertNull($user->deleted_at);
+        $user->delete();
+        $this->assertNotNull($user->deleted_at);
+
+        $deletedModel = SoftDeleteUser::getSoftDeletedModel();
+        $this->assertEquals($deletedModel->deleted_at, $user->deleted_at);
+        $this->assertEquals($deletedModel->ff, $user->ff);
+        $this->assertNull(SoftDeleteUser::find(1));
     }
 
     /**

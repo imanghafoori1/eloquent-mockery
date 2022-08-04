@@ -76,6 +76,7 @@ trait MockableModel
         static::$fakeMode = true;
         static::softDeleted(function ($model) {
             self::$softDeletedModels[] = $model;
+            FakeEloquentBuilder::removeModel(static::class, $model->id);
         });
     }
 
@@ -192,8 +193,14 @@ trait MockableModel
         self::$firstModel = null;
         self::$fakeRelations = [];
         self::$deletedModels = [];
+        self::$softDeletedModels = [];
         self::$ignoreWheres = false;
         self::$columnAliases = [];
         self::$forceMocks = [];
+    }
+
+    public function getDateFormat()
+    {
+        return 'Y-m-d H:i:s';
     }
 }

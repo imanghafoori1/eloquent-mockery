@@ -19,7 +19,7 @@ class FakeEloquentBuilder extends Builder
     public function get($columns = ['*'])
     {
         $models = [];
-        foreach ($this->query->filterRows($this->originalModel) as $i => $row) {
+        foreach ($this->applyWheres() as $i => $row) {
             $model = new $this->originalModel;
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
@@ -37,8 +37,7 @@ class FakeEloquentBuilder extends Builder
 
     public function first($columns = ['*'])
     {
-        $filtered = $this->query->filterRows($this->originalModel);
-        $data = $this->filterColumns($columns, $filtered)->first();
+        $data = $this->filterColumns($columns, $this->applyWheres())->first();
 
         if (! $data) {
             return null;
@@ -61,7 +60,7 @@ class FakeEloquentBuilder extends Builder
 
     public function count($columns = '*')
     {
-        return $this->query->filterRows($this->originalModel)->count();
+        return $this->applyWheres()->count();
     }
 
     public function orderBy($column, $direction = 'asc')
@@ -104,11 +103,7 @@ class FakeEloquentBuilder extends Builder
         if ($count === 1) {
             ($this->originalModel)::$deletedModels[] = $this->model;
 
-            foreach (($this->originalModel)::$fakeRows as $i => $row) {
-                if ($row['id'] === $this->model->id) {
-                    unset(($this->originalModel)::$fakeRows[$i]);
-                }
-            }
+            self::removeModel($this->originalModel, $this->model->id);
         }
     }
 
@@ -126,7 +121,22 @@ class FakeEloquentBuilder extends Builder
     public function setModel(Model $model)
     {
         $this->model = $model;
+        $this->query->from = '';
 
         return $this;
+    }
+
+    public static function removeModel($originalModel, $modelId)
+    {
+        foreach ($originalModel::$fakeRows as $i => $row) {
+            if ($row['id'] === $modelId) {
+                unset($originalModel::$fakeRows[$i]);
+            }
+        }
+    }
+
+    private function applyWheres()
+    {
+        return $this->query->filterRows($this->originalModel);
     }
 }
