@@ -120,9 +120,18 @@ trait MockableModel
     protected function newBaseQueryBuilder()
     {
         if (self::$fakeRows || self::$fakeMode) {
-            return new FakeBuilder($this);
+            return new FakeBuilder(static::class);
         } else {
             return parent::newBaseQueryBuilder();
+        }
+    }
+
+    public function getConnection()
+    {
+        if (self::$fakeRows || self::$fakeMode) {
+            return new FakeConnection();
+        } else {
+            return parent::getConnection();
         }
     }
 

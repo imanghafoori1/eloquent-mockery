@@ -19,7 +19,7 @@ class FakeEloquentBuilder extends Builder
     public function get($columns = ['*'])
     {
         $models = [];
-        foreach ($this->filterRows() as $i => $row) {
+        foreach ($this->query->filterRows($this->originalModel) as $i => $row) {
             $model = new $this->originalModel;
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
@@ -37,7 +37,7 @@ class FakeEloquentBuilder extends Builder
 
     public function first($columns = ['*'])
     {
-        $filtered = $this->filterRows();
+        $filtered = $this->query->filterRows($this->originalModel);
         $data = $this->filterColumns($columns, $filtered)->first();
 
         if (! $data) {
@@ -61,7 +61,7 @@ class FakeEloquentBuilder extends Builder
 
     public function count($columns = '*')
     {
-        return $this->filterRows()->count();
+        return $this->query->filterRows($this->originalModel)->count();
     }
 
     public function orderBy($column, $direction = 'asc')
@@ -98,58 +98,18 @@ class FakeEloquentBuilder extends Builder
         return $model;
     }
 
-    private function filterRows()
+    public function delete()
     {
-        $collection = collect(($this->originalModel)::$fakeRows);
+        $count = parent::delete();
+        if ($count === 1) {
+            ($this->originalModel)::$deletedModels[] = $this->model;
 
-        if ($this->originalModel::$ignoreWheres){
-            return $collection;
+            foreach (($this->originalModel)::$fakeRows as $i => $row) {
+                if ($row['id'] === $this->model->id) {
+                    unset(($this->originalModel)::$fakeRows[$i]);
+                }
+            }
         }
-
-        foreach ($this->query->recordedWheres as $_where) {
-            $_where = array_filter($_where, function ($val) {
-                return ! is_null($val);
-            });
-
-            $collection = $collection->where(...$_where);
-        }
-
-        foreach ($this->query->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn($_where[0], $_where[1]);
-        }
-
-        foreach ($this->query->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull($_where[0]);
-        }
-
-        foreach ($this->query->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull($_where[0]);
-        }
-
-        return $collection
-            ->map(function ($item) {
-                return $this->_renameKeys_sa47rbt(
-                    Arr::dot($item),
-                    ($this->originalModel)::$columnAliases
-                );
-            });
-    }
-
-    private function _renameKeys_sa47rbt(array $array, array $replace)
-    {
-        $newArray = [];
-        if (! $replace) {
-            return $array;
-        }
-
-        foreach ($array as $key => $value) {
-            $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
-            $key = explode('.', $key);
-            $key = array_pop($key);
-            $newArray[$key] = $value;
-        }
-
-        return $newArray;
     }
 
     private function filterColumns($columns, $filtered)

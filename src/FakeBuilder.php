@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Arr;
 
 class FakeBuilder extends Builder
 {
@@ -71,13 +72,67 @@ class FakeBuilder extends Builder
 
     public function delete($id = null)
     {
-        ($this->model)::$deletedModels[] = $this->model;
+        $rows = $this->filterRows($this->model);
 
-        return 1;
+        return $rows->count();
     }
 
     public function update(array $values)
     {
         return 1;
+    }
+
+    public function filterRows($originalModel)
+    {
+        $collection = collect(($this->model)::$fakeRows);
+
+        if (($this->model)::$ignoreWheres){
+            return $collection;
+        }
+
+        foreach ($this->recordedWheres as $_where) {
+            $_where = array_filter($_where, function ($val) {
+                return ! is_null($val);
+            });
+
+            $collection = $collection->where(...$_where);
+        }
+
+        foreach ($this->recordedWhereIn as $_where) {
+            $collection = $collection->whereIn($_where[0], $_where[1]);
+        }
+
+        foreach ($this->recordedWhereNull as $_where) {
+            $collection = $collection->whereNull($_where[0]);
+        }
+
+        foreach ($this->recordedWhereNotNull as $_where) {
+            $collection = $collection->whereNotNull($_where[0]);
+        }
+
+        return $collection
+            ->map(function ($item) use ($originalModel) {
+                return $this->_renameKeys(
+                    Arr::dot($item),
+                    ($originalModel)::$columnAliases
+                );
+            });
+    }
+
+    private function _renameKeys(array $array, array $replace)
+    {
+        $newArray = [];
+        if (! $replace) {
+            return $array;
+        }
+
+        foreach ($array as $key => $value) {
+            $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
+            $key = explode('.', $key);
+            $key = array_pop($key);
+            $newArray[$key] = $value;
+        }
+
+        return $newArray;
     }
 }

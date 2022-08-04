@@ -89,6 +89,11 @@ class IgnoreWheresTest extends TestCase
         $this->assertEquals(null, ($users[0])->id);
         $this->assertEquals(20, ($users[0])->age);
         $this->assertEquals(4, $users->count());
+
+        $users = IgnoreWheresUser::query()->whereNull('name')->where('id', 1)->get(['age']);
+        $this->assertEquals(null, ($users[0])->id);
+        $this->assertEquals(20, ($users[0])->age);
+        $this->assertEquals(4, $users->count());
         IgnoreWheresUser::stopFaking();
     }
 }
