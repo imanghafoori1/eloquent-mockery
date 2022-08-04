@@ -2,6 +2,7 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
@@ -11,6 +12,8 @@ trait MockableModel
     public static $fakeMode = false;
 
     public static $fakeCreate;
+
+    public static $createdModels = [];
 
     public static $firstModel;
 
@@ -59,24 +62,21 @@ trait MockableModel
         self::$fakeRelations[] = [$relation, $model, $row];
     }
 
-    public static function fakeSave()
-    {
-        self::$saveCalls = [];
-        self::saving(function ($model) {
-            // we record the model attributes at the moment of being saved.
-            self::$saveCalls[] = $model->getAttributes();
-
-            // we return false to avoid hitting the database.
-            return false;
-        });
-    }
-
     public static function fakeSoftDelete()
     {
         static::$fakeMode = true;
         static::softDeleted(function ($model) {
             self::$softDeletedModels[] = $model;
             FakeEloquentBuilder::removeModel(static::class, $model->id);
+        });
+    }
+
+    public static function fakeCreate()
+    {
+        static::$fakeMode = true;
+        static::created(function (Model $model) {
+            self::$createdModels[] = $model;
+            FakeEloquentBuilder::insertRow(static::class, $model->getAttributes());
         });
     }
 

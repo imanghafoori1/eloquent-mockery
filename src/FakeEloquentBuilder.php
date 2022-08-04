@@ -88,15 +88,6 @@ class FakeEloquentBuilder extends Builder
         return $this;
     }
 
-    public function create($data = [])
-    {
-        $model = clone $this->model;
-        $model->exists = true;
-        ($this->originalModel)::$saveCalls[] = $data;
-
-        return $model;
-    }
-
     public function delete()
     {
         $count = parent::delete();
@@ -138,5 +129,16 @@ class FakeEloquentBuilder extends Builder
     private function applyWheres()
     {
         return $this->query->filterRows($this->originalModel);
+    }
+
+    public function newModelInstance($attributes = [])
+    {
+        return $this->model->newInstance($attributes);
+    }
+
+    public static function insertRow($originalModel, array $getAttributes)
+    {
+        $originalModel::$fakeRows[] = $getAttributes;
+        //foreach( as $row) {}
     }
 }

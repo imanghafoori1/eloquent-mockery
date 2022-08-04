@@ -135,4 +135,11 @@ class FakeQueryBuilder extends Builder
 
         return $newArray;
     }
+
+    public function insertGetId(array $values, $sequence = null)
+    {
+        $key = array_key_last(($this->model)::$fakeRows);
+
+        return ($this->model)::$fakeRows[$key]['id'] + 1 ?? 1;
+    }
 }
