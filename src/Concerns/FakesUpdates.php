@@ -9,19 +9,10 @@ trait FakesUpdates
 {
     public static $updatedModels = [];
 
-    public static function fakeUpdate()
-    {
-        static::$fakeMode = true;
-        static::updated(function (Model $model) {
-            self::$updatedModels[] = $model;
-        });
-    }
-
     public static function assertModelIsUpdated($times = 1)
     {
         $actual = count(self::$updatedModels);
 
         PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
     }
-
 }

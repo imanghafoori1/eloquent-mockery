@@ -88,14 +88,24 @@ class FakeEloquentBuilder extends Builder
         return $this;
     }
 
+    public function crossJoin()
+    {
+        return $this;
+    }
+
     public function delete()
     {
         $count = parent::delete();
-        if ($count === 1) {
+        if ($count !== 0) {
             ($this->originalModel)::$deletedModels[] = $this->model;
 
             self::removeModel($this->originalModel, $this->model->id);
         }
+    }
+
+    public function forceDelete()
+    {
+        return $this->delete();
     }
 
     private function filterColumns($columns, $filtered)
@@ -139,5 +149,21 @@ class FakeEloquentBuilder extends Builder
     public static function insertRow($originalModel, array $attributes)
     {
         $originalModel::$fakeRows[] = $attributes;
+    }
+
+    public function update(array $values)
+    {
+        $this->model->getAttributes() && ($this->originalModel)::$updatedModels[] = $this->model;
+
+        return parent::update($values);
+    }
+
+    public function create(array $attributes = [])
+    {
+        $model = parent::create($attributes);
+        FakeEloquentBuilder::insertRow($this->originalModel, $model->getAttributes());
+        $this->originalModel::$createdModels[] = $model;
+
+        return $model;
     }
 }

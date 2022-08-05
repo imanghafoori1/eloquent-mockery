@@ -72,14 +72,11 @@ class FakeQueryBuilder extends Builder
 
     public function delete($id = null)
     {
-        $rows = $this->filterRows($this->model);
-
-        return $rows->count();
+        return $this->filterRows($this->model)->count();
     }
 
     public function update(array $values)
     {
-        //$this->updateRow($this->model, $values);
         return $this->filterRows($this->model)->count();
     }
 
@@ -150,6 +147,8 @@ class FakeQueryBuilder extends Builder
     {
         $key = array_key_last(($this->model)::$fakeRows);
 
-        return ($this->model)::$fakeRows[$key]['id'] + 1 ?? 1;
+        $id = ($this->model)::$fakeRows[$key]['id'] ?? 0;
+
+        return $id + 1;
     }
 }

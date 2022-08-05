@@ -36,7 +36,11 @@ trait MockableModel
 
     public static function getSavedModelAttributes($index = 0)
     {
-        return self::$saveCalls[$index] ?? [];
+        if (isset(self::$updatedModels[$index])) {
+            return (self::$updatedModels[$index])->getAttributes();
+        } else {
+            return [];
+        }
     }
 
     public static function shouldRecieve($method)
@@ -71,15 +75,6 @@ trait MockableModel
         static::softDeleted(function ($model) {
             self::$softDeletedModels[] = $model;
             FakeEloquentBuilder::removeModel(static::class, $model->id);
-        });
-    }
-
-    public static function fakeCreate()
-    {
-        static::$fakeMode = true;
-        static::created(function (Model $model) {
-            self::$createdModels[] = $model;
-            FakeEloquentBuilder::insertRow(static::class, $model->getAttributes());
         });
     }
 
@@ -155,6 +150,11 @@ trait MockableModel
         self::$fakeMode = true;
     }
 
+    public static function fake()
+    {
+        self::$fakeMode = true;
+    }
+
     public static function ignoreWheres()
     {
         return self::$ignoreWheres = true;
@@ -191,8 +191,9 @@ trait MockableModel
     {
         self::$fakeMode = false;
         self::$fakeRows = [];
-        self::$fakeCreate = null;
+        self::$fakeCreate = false;
         self::$saveCalls = [];
+        self::$createdModels = [];
         self::$firstModel = null;
         self::$fakeRelations = [];
         self::$deletedModels = [];

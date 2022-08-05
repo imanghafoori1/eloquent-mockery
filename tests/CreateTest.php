@@ -24,7 +24,6 @@ class CreateTest extends TestCase
         CreatyModel::setEventDispatcher(new Dispatcher());
         CreatyModel::addFakeRow(['id' => 1]);
         CreatyModel::addFakeRow(['id' => 2]);
-        CreatyModel::fakeCreate();
 
         CreatyModel::saved(function () {
             $_SERVER['saved'] = true;

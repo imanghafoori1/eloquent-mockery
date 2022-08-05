@@ -30,7 +30,6 @@ class UpdateTest extends TestCase
         UpdateyModel::setEventDispatcher(new Dispatcher());
         UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
-        UpdateyModel::fakeUpdate();
 
         UpdateyModel::saved(function () {
             $_SERVER['saved'] = true;
@@ -71,12 +70,61 @@ class UpdateTest extends TestCase
     /**
      * @test
      */
+    public function update_with_no_dispatcher()
+    {
+        UpdateyModel::unsetEventDispatcher();
+        UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
+        UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+
+        $_SERVER['saved'] = false;
+        $_SERVER['updating'] = false;
+        $_SERVER['updated'] = false;
+        $_SERVER['saving'] = false;
+
+        UpdateyModel::saved(function () {
+            $_SERVER['saved'] = true;
+        });
+        UpdateyModel::updating(function () {
+            $_SERVER['updating'] = true;
+        });
+        UpdateyModel::updated(function () {
+            $_SERVER['updated'] = true;
+        });
+        UpdateyModel::saving(function () {
+            $_SERVER['saving'] = true;
+        });
+        $result = UpdateyModel::query()
+            ->find(1)
+            ->update(['name' => 'hello']);
+
+        $this->assertTrue($result);
+
+        $this->assertFalse($_SERVER['saved']);
+        $this->assertFalse($_SERVER['saving']);
+        $this->assertFalse($_SERVER['updated']);
+        $this->assertFalse($_SERVER['updating']);
+
+        $foo = UpdateyModel::$updatedModels[0];
+        $this->assertEquals(1, $foo->id);
+        $this->assertEquals('hello', $foo->name);
+
+        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertTrue($foo->exists);
+
+        unset($_SERVER['saved']);
+        unset($_SERVER['updating']);
+        unset($_SERVER['updated']);
+        unset($_SERVER['saving']);
+    }
+
+    /**
+     * @test
+     */
     public function updating_event()
     {
         UpdateyModel::setEventDispatcher(new Dispatcher());
         UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
-        UpdateyModel::fakeUpdate();
 
         UpdateyModel::updating(function () {
             return false;
@@ -103,7 +151,6 @@ class UpdateTest extends TestCase
         UpdateyModel::setEventDispatcher(new Dispatcher());
         UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
-        UpdateyModel::fakeUpdate();
 
         $_SERVER['saved'] = false;
         $_SERVER['updating'] = false;
