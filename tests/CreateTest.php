@@ -2,7 +2,6 @@
 
 namespace Imanghafoori\EloquentMockery\Tests;
 
-use App\AddressModule\Models\Address;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 use Imanghafoori\EloquentMockery\MockableModel;
@@ -50,6 +49,7 @@ class CreateTest extends TestCase
         $this->assertTrue($_SERVER['saving']);
         $this->assertTrue($_SERVER['created']);
         $this->assertTrue($_SERVER['creating']);
+
         $this->assertEquals(3, $foo->id);
         $this->assertEquals('hello', $foo->name);
         $this->assertNotNull($foo->created_at);
@@ -59,5 +59,10 @@ class CreateTest extends TestCase
 
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
+
+        unset($_SERVER['saved']);
+        unset($_SERVER['saving']);
+        unset($_SERVER['created']);
+        unset($_SERVER['creating']);
     }
 }

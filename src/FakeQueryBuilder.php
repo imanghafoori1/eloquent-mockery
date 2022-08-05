@@ -79,7 +79,17 @@ class FakeQueryBuilder extends Builder
 
     public function update(array $values)
     {
-        return 1;
+        //$this->updateRow($this->model, $values);
+        return $this->filterRows($this->model)->count();
+    }
+
+    public function updateRow($originalModel, array $attributes)
+    {
+        $row = $this->filterRows($this->model);
+
+        foreach ($row as $i) {
+            $originalModel::$fakeRows[$i] = $originalModel::$fakeRows[$i] + $attributes;
+        }
     }
 
     public function filterRows($originalModel)

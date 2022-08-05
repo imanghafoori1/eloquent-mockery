@@ -136,9 +136,8 @@ class FakeEloquentBuilder extends Builder
         return $this->model->newInstance($attributes);
     }
 
-    public static function insertRow($originalModel, array $getAttributes)
+    public static function insertRow($originalModel, array $attributes)
     {
-        $originalModel::$fakeRows[] = $getAttributes;
-        //foreach( as $row) {}
+        $originalModel::$fakeRows[] = $attributes;
     }
 }

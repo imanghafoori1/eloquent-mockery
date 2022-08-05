@@ -3,10 +3,13 @@
 namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\Concerns\FakesUpdates;
 use PHPUnit\Framework\Assert as PHPUnit;
 
 trait MockableModel
 {
+    use FakesUpdates;
+
     public static $saveCalls = [];
 
     public static $fakeMode = false;
@@ -197,6 +200,7 @@ trait MockableModel
         self::$ignoreWheres = false;
         self::$columnAliases = [];
         self::$forceMocks = [];
+        self::$updatedModels = [];
     }
 
     public function getDateFormat()
