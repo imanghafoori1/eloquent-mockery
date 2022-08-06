@@ -10,11 +10,7 @@ trait MockableModel
 {
     use FakesUpdates;
 
-    public static $saveCalls = [];
-
     public static $fakeMode = false;
-
-    public static $fakeCreate;
 
     public static $createdModels = [];
 
@@ -88,25 +84,6 @@ trait MockableModel
         return self::$deletedModels[$index] ?? null;
     }
 
-    public static function assertModelIsSaved($times = 1)
-    {
-        $actual = isset(self::$saveCalls) ? count(self::$saveCalls) : 0;
-
-        PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
-    }
-
-    public static function assertModelIsNotDeleted($times = 1)
-    {
-        $actual = isset(self::$saveCalls) ? count(self::$saveCalls) : 0;
-
-        PHPUnit::assertEquals($times, $actual, 'Model is not saved as expected.');
-    }
-
-    public static function getCreateAttributes()
-    {
-        return self::$fakeCreate->createdModel->attributes;
-    }
-
     public function newEloquentBuilder($query)
     {
         if (self::$fakeRows || self::$fakeMode) {
@@ -143,11 +120,6 @@ trait MockableModel
             $row[$col] = $value;
         }
         self::$fakeRows[] = $row;
-    }
-
-    public static function fakeDelete()
-    {
-        self::$fakeMode = true;
     }
 
     public static function fake()
@@ -191,8 +163,6 @@ trait MockableModel
     {
         self::$fakeMode = false;
         self::$fakeRows = [];
-        self::$fakeCreate = false;
-        self::$saveCalls = [];
         self::$createdModels = [];
         self::$firstModel = null;
         self::$fakeRelations = [];
