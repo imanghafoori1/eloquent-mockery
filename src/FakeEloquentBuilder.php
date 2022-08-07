@@ -9,22 +9,22 @@ use Illuminate\Support\Arr;
 
 class FakeEloquentBuilder extends Builder
 {
-    public function __construct($model, $originalModel)
+    public function __construct($modelObj, $originalModel)
     {
-        $this->query = new FakeQueryBuilder($model);
-        $this->model = $model;
-        $this->originalModel = $originalModel;
+        $this->query = new FakeQueryBuilder($modelObj);
+        $this->model = $modelObj;
+        $this->modelClass = $originalModel;
     }
 
     public function get($columns = ['*'])
     {
         $models = [];
         foreach ($this->applyWheres() as $i => $row) {
-            $model = new $this->originalModel;
+            $model = new $this->modelClass;
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
             $model->setRawAttributes($row);
-            foreach (($this->originalModel)::$fakeRelations as $j => [$relName, $relModel, $relatedRow]) {
+            foreach (($this->modelClass)::$fakeRelations as $j => [$relName, $relModel, $relatedRow]) {
                 $relModel = new $relModel;
                 $relModel->setRawAttributes($relatedRow[$i]);
                 $model->setRelation($relName, $relModel);
@@ -43,12 +43,12 @@ class FakeEloquentBuilder extends Builder
             return null;
         }
 
-        $this->originalModel::unguard();
+        $this->modelClass::unguard();
 
-        $model = new $this->originalModel($data);
+        $model = new $this->modelClass($data);
         $model->exists = true;
 
-        ($this->originalModel)::$firstModel = $model;
+        ($this->modelClass)::$firstModel = $model;
 
         return $model;
     }
@@ -97,9 +97,9 @@ class FakeEloquentBuilder extends Builder
     {
         $count = parent::delete();
         if ($count !== 0) {
-            ($this->originalModel)::$deletedModels[] = $this->model;
+            $this->modelClass::$deletedModels[] = $this->model;
 
-            self::removeModel($this->originalModel, $this->model->id);
+            self::removeModel($this->modelClass, $this->model->getKey(), $this->model->getKeyName());
         }
     }
 
@@ -127,18 +127,18 @@ class FakeEloquentBuilder extends Builder
         return $this;
     }
 
-    public static function removeModel($originalModel, $modelId)
+    public static function removeModel($modelClass, $modelId, $keyName = 'id')
     {
-        foreach ($originalModel::$fakeRows as $i => $row) {
-            if ($row['id'] === $modelId) {
-                unset($originalModel::$fakeRows[$i]);
+        foreach ($modelClass::$fakeRows as $i => $row) {
+            if ($row[$keyName] === $modelId) {
+                unset($modelClass::$fakeRows[$i]);
             }
         }
     }
 
     private function applyWheres()
     {
-        return $this->query->filterRows($this->originalModel);
+        return $this->query->filterRows();
     }
 
     public function newModelInstance($attributes = [])
@@ -153,7 +153,7 @@ class FakeEloquentBuilder extends Builder
 
     public function update(array $values)
     {
-        $this->model->getAttributes() && ($this->originalModel)::$updatedModels[] = $this->model;
+        $this->model->getAttributes() && $this->modelClass::$updatedModels[] = $this->model;
 
         return parent::update($values);
     }
@@ -161,8 +161,8 @@ class FakeEloquentBuilder extends Builder
     public function create(array $attributes = [])
     {
         $model = parent::create($attributes);
-        FakeEloquentBuilder::insertRow($this->originalModel, $model->getAttributes());
-        $this->originalModel::$createdModels[] = $model;
+        FakeEloquentBuilder::insertRow($this->modelClass, $model->getAttributes());
+        $this->modelClass::$createdModels[] = $model;
 
         return $model;
     }

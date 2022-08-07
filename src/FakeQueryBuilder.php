@@ -15,11 +15,11 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereNotNull = [];
 
-    public $model = [];
+    public $modelClass = null;
 
     public function __construct($model)
     {
-        $this->model = $model;
+        $this->modelClass = $model;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
@@ -72,28 +72,28 @@ class FakeQueryBuilder extends Builder
 
     public function delete($id = null)
     {
-        return $this->filterRows($this->model)->count();
+        return $this->filterRows()->count();
     }
 
     public function update(array $values)
     {
-        return $this->filterRows($this->model)->count();
+        return $this->filterRows()->count();
     }
 
     public function updateRow($originalModel, array $attributes)
     {
-        $row = $this->filterRows($this->model);
+        $row = $this->filterRows();
 
         foreach ($row as $i) {
             $originalModel::$fakeRows[$i] = $originalModel::$fakeRows[$i] + $attributes;
         }
     }
 
-    public function filterRows($originalModel)
+    public function filterRows()
     {
-        $collection = collect(($this->model)::$fakeRows);
+        $collection = collect($this->modelClass::$fakeRows);
 
-        if (($this->model)::$ignoreWheres){
+        if ($this->modelClass::$ignoreWheres){
             return $collection;
         }
 
@@ -117,13 +117,9 @@ class FakeQueryBuilder extends Builder
             $collection = $collection->whereNotNull($_where[0]);
         }
 
-        return $collection
-            ->map(function ($item) use ($originalModel) {
-                return $this->_renameKeys(
-                    Arr::dot($item),
-                    ($originalModel)::$columnAliases
-                );
-            });
+        return $collection->map(function ($item) {
+            return $this->_renameKeys(Arr::dot($item), $this->modelClass::$columnAliases);
+        });
     }
 
     private function _renameKeys(array $array, array $replace)
@@ -145,9 +141,9 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        $key = array_key_last(($this->model)::$fakeRows);
+        $key = array_key_last($this->modelClass::$fakeRows);
 
-        $id = ($this->model)::$fakeRows[$key]['id'] ?? 0;
+        $id = $this->modelClass::$fakeRows[$key]['id'] ?? 0;
 
         return $id + 1;
     }

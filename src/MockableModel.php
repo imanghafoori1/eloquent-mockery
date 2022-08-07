@@ -30,15 +30,6 @@ trait MockableModel
 
     public static $softDeletedModels = [];
 
-    public static function getSavedModelAttributes($index = 0)
-    {
-        if (isset(self::$updatedModels[$index])) {
-            return (self::$updatedModels[$index])->getAttributes();
-        } else {
-            return [];
-        }
-    }
-
     public static function shouldRecieve($method)
     {
         return new class (self::class, $method) {
@@ -55,7 +46,7 @@ trait MockableModel
 
             public function andReturn($value)
             {
-                ($this->theClass)::$forceMocks[$this->method][] = $value;
+                $this->theClass::$forceMocks[$this->method][] = $value;
             }
         };
     }
@@ -70,8 +61,13 @@ trait MockableModel
         static::$fakeMode = true;
         static::softDeleted(function ($model) {
             self::$softDeletedModels[] = $model;
-            FakeEloquentBuilder::removeModel(static::class, $model->id);
+            FakeEloquentBuilder::removeModel(static::class, $model->getKey(), $model->getKeyName());
         });
+    }
+
+    public static function getUpdatedModel($index = 0)
+    {
+        return self::$updatedModels[$index] ?? [];
     }
 
     public static function getSoftDeletedModel($index = 0)
@@ -86,8 +82,8 @@ trait MockableModel
 
     public function newEloquentBuilder($query)
     {
-        if (self::$fakeRows || self::$fakeMode) {
-            return new FakeEloquentBuilder($this, static::class);
+        if ($this->isFakeMode()) {
+            return $this->fakeEloquentBuilder();
         } else {
             return parent::newEloquentBuilder($query);
         }
@@ -95,7 +91,7 @@ trait MockableModel
 
     protected function newBaseQueryBuilder()
     {
-        if (self::$fakeRows || self::$fakeMode) {
+        if ($this->isFakeMode()) {
             return new FakeQueryBuilder(static::class);
         } else {
             return parent::newBaseQueryBuilder();
@@ -104,7 +100,7 @@ trait MockableModel
 
     public function getConnection()
     {
-        if (self::$fakeRows || self::$fakeMode) {
+        if ($this->isFakeMode()) {
             return new FakeConnection();
         } else {
             return parent::getConnection();
@@ -129,7 +125,7 @@ trait MockableModel
 
     public static function ignoreWheres()
     {
-        return self::$ignoreWheres = true;
+        self::$ignoreWheres = true;
     }
 
     private static function parseColumn($where)
@@ -154,9 +150,9 @@ trait MockableModel
         return $this->getKeyName();
     }
 
-    public static function fakeQueryBuilder()
+    public function fakeEloquentBuilder()
     {
-        return new FakeEloquentBuilder(static::class);
+        return new FakeEloquentBuilder($this, static::class);
     }
 
     public static function stopFaking()
@@ -177,5 +173,10 @@ trait MockableModel
     public function getDateFormat()
     {
         return 'Y-m-d H:i:s';
+    }
+
+    private function isFakeMode()
+    {
+        return self::$fakeRows || self::$fakeMode;
     }
 }
