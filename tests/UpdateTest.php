@@ -189,8 +189,13 @@ class UpdateTest extends TestCase
         unset($_SERVER['updated']);
         unset($_SERVER['saving']);
 
+
         $model = UpdateyModel::query()->find(1);
-        // todo: it should return updated row.
-        $this->assertEquals('hi 1', $model->name);
+        $this->assertEquals('hello', $model->name);
+        $this->assertEquals(Carbon::now()->getTimestamp(), $model->updated_at->getTimestamp());
+
+        $model = UpdateyModel::query()->find(2);
+        $this->assertEquals('hello', $model->name);
+        $this->assertEquals(Carbon::now()->getTimestamp(), $model->updated_at->getTimestamp());
     }
 }

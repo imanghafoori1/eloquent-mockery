@@ -17,9 +17,9 @@ class FakeQueryBuilder extends Builder
 
     public $modelClass = null;
 
-    public function __construct($model)
+    public function __construct($modelClass)
     {
-        $this->modelClass = $model;
+        $this->modelClass = $modelClass;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
@@ -77,7 +77,19 @@ class FakeQueryBuilder extends Builder
 
     public function update(array $values)
     {
-        return $this->filterRows()->count();
+        $collection = $this->filterRows()->map(function ($item) use ($values) {
+            $values = collect($values)->mapWithKeys(function ($value, $key) {
+                return [ltrim($key, '.') => $value];
+            })->all();
+
+            return $values + $item;
+        });
+
+        $collection->each(function ($val, $key) {
+            $this->modelClass::$fakeRows[$key] = $val;
+        });
+
+        return $collection->count();
     }
 
     public function updateRow($originalModel, array $attributes)

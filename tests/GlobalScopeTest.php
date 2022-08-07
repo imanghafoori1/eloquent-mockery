@@ -51,4 +51,20 @@ class GlobalScopeTest extends TestCase
 
         GlobalScopeUser::stopFaking();
     }
+
+    /**
+     * @test
+     */
+    public function global_scope_raw_update()
+    {
+        GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        GlobalScopeUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 37,]);
+
+        $count = GlobalScopeUser::query()->update(['age' => 40]);
+        $this->assertEquals(2, $count);
+
+        GlobalScopeUser::stopFaking();
+    }
 }
