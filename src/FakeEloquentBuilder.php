@@ -18,8 +18,9 @@ class FakeEloquentBuilder extends Builder
 
     public function get($columns = ['*'])
     {
+        $builder = $this->applyScopes();
         $models = [];
-        foreach ($this->applyWheres() as $i => $row) {
+        foreach ($builder->applyWheres() as $i => $row) {
             $model = new $this->modelClass;
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
@@ -136,7 +137,7 @@ class FakeEloquentBuilder extends Builder
         }
     }
 
-    private function applyWheres()
+    protected function applyWheres()
     {
         return $this->query->filterRows();
     }
