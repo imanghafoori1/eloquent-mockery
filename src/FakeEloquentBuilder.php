@@ -61,6 +61,12 @@ class FakeEloquentBuilder extends Builder
 
     public function count($columns = '*')
     {
+        if ($columns !== '*') {
+            foreach ((array) $columns as $column) {
+                $this->query->whereNotNull($column);
+            }
+        }
+
         return $this->applyWheres()->count();
     }
 
@@ -166,5 +172,17 @@ class FakeEloquentBuilder extends Builder
         $this->modelClass::$createdModels[] = $model;
 
         return $model;
+    }
+
+    public function addUpdatedAtColumn(array $values)
+    {
+        $values = parent::addUpdatedAtColumn($values);
+        $updatedAt = $this->model->getUpdatedAtColumn();
+        if (isset($values['.'.$updatedAt])) {
+            $values[$updatedAt] = $values['.'.$updatedAt];
+            unset($values['.'.$updatedAt]);
+        }
+
+        return $values;
     }
 }

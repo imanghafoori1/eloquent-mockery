@@ -78,10 +78,6 @@ class FakeQueryBuilder extends Builder
     public function update(array $values)
     {
         $collection = $this->filterRows()->map(function ($item) use ($values) {
-            $values = collect($values)->mapWithKeys(function ($value, $key) {
-                return [ltrim($key, '.') => $value];
-            })->all();
-
             return $values + $item;
         });
 
