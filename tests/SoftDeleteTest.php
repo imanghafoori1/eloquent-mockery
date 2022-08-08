@@ -86,6 +86,11 @@ class SoftDeleteTest extends TestCase
 
         $this->assertEquals(4, SoftDeleteUser::withTrashed()->get()->count());
         $this->assertEquals(3, SoftDeleteUser::get()->count());
+
+        $user->restore(); // restore the soft-deleted.
+        $this->assertEquals(4, SoftDeleteUser::count());
+        $this->assertNull(SoftDeleteUser::find(1)->deleted_at);
+        $this->assertEquals(4, SoftDeleteUser::get()->count());
     }
 
     /**
