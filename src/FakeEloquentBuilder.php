@@ -103,7 +103,7 @@ class FakeEloquentBuilder extends Builder
     {
         $count = parent::delete();
         if ($count !== 0) {
-            $this->modelClass::$deletedModels[] = $this->model;
+            $this->modelClass::$changedModels['deleted'][] = $this->model;
 
             self::removeModel($this->modelClass, $this->model->getKey(), $this->model->getKeyName());
         }
@@ -159,7 +159,7 @@ class FakeEloquentBuilder extends Builder
 
     public function update(array $values)
     {
-        $this->model->getAttributes() && $this->modelClass::$updatedModels[] = $this->model;
+        $this->model->getAttributes() && $this->modelClass::$changedModels['updated'][] = $this->model;
 
         return parent::update($values);
     }
@@ -168,7 +168,7 @@ class FakeEloquentBuilder extends Builder
     {
         $model = parent::create($attributes);
         FakeEloquentBuilder::insertRow($this->modelClass, $model->getAttributes());
-        $this->modelClass::$createdModels[] = $model;
+        $this->modelClass::$changedModels['created'][] = $model;
 
         return $model;
     }

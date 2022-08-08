@@ -2,17 +2,17 @@
 
 namespace Imanghafoori\EloquentMockery;
 
-use Illuminate\Database\Eloquent\Model;
-use Imanghafoori\EloquentMockery\Concerns\FakesUpdates;
-use PHPUnit\Framework\Assert as PHPUnit;
-
 trait MockableModel
 {
-    use FakesUpdates;
+    public static $changedModels = [
+        'updated' => [],
+        'saved' => [],
+        'created' => [],
+        'deleted' => [],
+        'softDeleted' => [],
+    ];
 
     public static $fakeMode = false;
-
-    public static $createdModels = [];
 
     public static $firstModel;
 
@@ -20,15 +20,11 @@ trait MockableModel
 
     public static $fakeRelations = [];
 
-    public static $deletedModels = [];
-
     public static $ignoreWheres = false;
 
     public static $columnAliases = [];
 
     public static $forceMocks = [];
-
-    public static $softDeletedModels = [];
 
     public static function shouldRecieve($method)
     {
@@ -60,29 +56,34 @@ trait MockableModel
     {
         static::$fakeMode = true;
         static::softDeleted(function ($model) {
-            self::$softDeletedModels[] = $model;
+            self::$changedModels['softDeleted'][] = $model;
         });
     }
 
     public static function getUpdatedModel($index = 0)
     {
-        return self::$updatedModels[$index] ?? [];
+        return self::$changedModels['updated'][$index] ?? null;
+    }
+
+    public static function getCreatedModel($index = 0)
+    {
+        return self::$changedModels['created'][$index] ?? null;
     }
 
     public static function getSoftDeletedModel($index = 0)
     {
-        return self::$softDeletedModels[$index] ?? null;
+        return self::$changedModels['softDeleted'][$index] ?? null;
     }
 
     public static function getDeletedModel($index = 0)
     {
-        return self::$deletedModels[$index] ?? null;
+        return self::$changedModels['deleted'][$index] ?? null;
     }
 
     public function newEloquentBuilder($query)
     {
         if ($this->isFakeMode()) {
-            return $this->fakeEloquentBuilder();
+            return new FakeEloquentBuilder($this, static::class);
         } else {
             return parent::newEloquentBuilder($query);
         }
@@ -158,15 +159,18 @@ trait MockableModel
     {
         self::$fakeMode = false;
         self::$fakeRows = [];
-        self::$createdModels = [];
         self::$firstModel = null;
         self::$fakeRelations = [];
-        self::$deletedModels = [];
-        self::$softDeletedModels = [];
         self::$ignoreWheres = false;
         self::$columnAliases = [];
         self::$forceMocks = [];
-        self::$updatedModels = [];
+        self::$changedModels = [
+            'updated' => [],
+            'saved' => [],
+            'created' => [],
+            'deleted' => [],
+            'softDeleted' => [],
+        ];
     }
 
     public function getDateFormat()

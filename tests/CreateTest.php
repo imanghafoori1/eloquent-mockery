@@ -21,6 +21,7 @@ class CreateTest extends TestCase
      */
     public function create()
     {
+        CreatyModel::reguard();
         CreatyModel::setEventDispatcher(new Dispatcher());
         CreatyModel::addFakeRow(['id' => 1]);
         CreatyModel::addFakeRow(['id' => 2]);
@@ -37,13 +38,16 @@ class CreateTest extends TestCase
         CreatyModel::saving(function () {
             $_SERVER['saving'] = true;
         });
-        $foo = CreatyModel::query()->create(
+        $bar = CreatyModel::query()->create(
             [
                 'id' => 12,
-                'name' => 'hello'
+                'name' => 'hello',
+                'family' => 'gha'
             ]
         );
 
+        $foo = CreatyModel::getCreatedModel();
+        $this->assertSame($foo, $bar);
         $this->assertTrue($_SERVER['saved']);
         $this->assertTrue($_SERVER['saving']);
         $this->assertTrue($_SERVER['created']);
@@ -51,6 +55,7 @@ class CreateTest extends TestCase
 
         $this->assertEquals(3, $foo->id);
         $this->assertEquals('hello', $foo->name);
+        $this->assertNull($foo->family);
         $this->assertNotNull($foo->created_at);
         $this->assertNotNull($foo->updated_at);
         $this->assertTrue($foo->exists);

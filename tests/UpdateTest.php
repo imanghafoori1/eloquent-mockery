@@ -54,7 +54,7 @@ class UpdateTest extends TestCase
         $this->assertTrue($_SERVER['updated']);
         $this->assertTrue($_SERVER['updating']);
 
-        $foo = UpdateyModel::$updatedModels[0];
+        $foo = UpdateyModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
@@ -104,7 +104,7 @@ class UpdateTest extends TestCase
         $this->assertFalse($_SERVER['updated']);
         $this->assertFalse($_SERVER['updating']);
 
-        $foo = UpdateyModel::$updatedModels[0];
+        $foo = UpdateyModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
@@ -181,8 +181,8 @@ class UpdateTest extends TestCase
         $this->assertFalse($_SERVER['updated']);
         $this->assertFalse($_SERVER['updating']);
 
-        $foo = UpdateyModel::$updatedModels;
-        $this->assertEmpty($foo);
+        $foo = UpdateyModel::getUpdatedModel();
+        $this->assertNull($foo);
 
         unset($_SERVER['saved']);
         unset($_SERVER['updating']);

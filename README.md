@@ -2,12 +2,13 @@
 
 Mock your eloquent queries without the repository pattern.
 
-### Why this package was created?
+### Why this package was invented?
 - It solves the problem of "slow tests" by removing the interactions with a real database.
 - It simplifies the process of writing and running tests since you will be "DB Independent".
 
 ## Usage:
 You have to use the `MockableModel` in your model.
+
 ```php
 
 use Imanghafoori\EloquentMockery\MockableModel;
@@ -39,17 +40,17 @@ public function test_basic()
 ```
 
 
-### Mocking a `create` process:
+### Mocking a `create` query:
 ```php
 public function test_basic()
 {
     User::fake();
 
-    // Act (This query resides in your controller):
+    // in your controller:
     $user = User::create(['username' => 'iman', 'email' => 'iman@gmail.com']);   # <=== This does NOT connect to DB.
 
     // Assert:
-    $user = User::$createdModels[0];
+    $user = User::getCreatedModel();
     $this->assert($user->id === 1);
     $this->assert($user->username === 'iman');
 
@@ -59,24 +60,19 @@ public function test_basic()
 You can access the changed model instances by accessing the static properties below:
 ```php
 
-User::$deletedModels;
+$model = User::getDeletedModel();
 
-User::$softDeletedModels;
+$model = User::getSoftDeletedModel();
 
-User::$updatedModels;
+$model = User::getCreatedModel();
 
-User::$createdModels;
+$model = User::getUpdatedModel();
+
 ```
 The `User` can be any other model using the `Mockable` trait.
 
 
-For more examples take a look at the `tests` directory.
-
-<a name="credits"></a>
-## Credits
-
-- [Iman](https://github.com/imanghafoori1)
-- [All Contributors](../../contributors)
+- For more examples take a look at the `tests` directory.
 
 <a name="license"></a>
 ## License
@@ -88,7 +84,6 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 ### :raising_hand: Contributing
 If you find an issue or have a better way to do something, feel free to open an issue, or a pull request.
-If you use laravel-microscope in your open source project, create a pull request to provide its URL as a sample application in the README.md file.
 
 <a name="security"></a>
 ### :exclamation: Security

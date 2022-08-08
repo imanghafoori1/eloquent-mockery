@@ -55,7 +55,7 @@ class SaveTest extends TestCase
         $this->assertTrue($_SERVER['updated']);
         $this->assertTrue($_SERVER['updating']);
 
-        $foo = SaveModel::$updatedModels[0];
+        $foo = SaveModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
@@ -106,7 +106,7 @@ class SaveTest extends TestCase
         $this->assertFalse($_SERVER['updated']);
         $this->assertFalse($_SERVER['updating']);
 
-        $foo = SaveModel::$updatedModels[0];
+        $foo = SaveModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello2', $foo->name);
 

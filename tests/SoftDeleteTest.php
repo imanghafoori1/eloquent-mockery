@@ -36,7 +36,7 @@ class SoftDeleteTest extends TestCase
 
         $count = SoftDeleteUser::destroy(1, 2);
         $this->assertEquals(2, $count);
-        $this->assertEquals(2, count(SoftDeleteUser::$softDeletedModels));
+        $this->assertCount(2, SoftDeleteUser::$changedModels['softDeleted']);
 
         $model = SoftDeleteUser::getSoftDeletedModel(0);
         $this->assertEquals(1, $model->id);
