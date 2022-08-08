@@ -16,6 +16,11 @@ class GlobalScopeUser extends Model
     {
         static::addGlobalScope(new AncientScope);
     }
+
+    public function scopeIman($query)
+    {
+        $query->where('name', 'Iman 3');
+    }
 }
 
 class AncientScope implements Scope
@@ -57,13 +62,26 @@ class GlobalScopeTest extends TestCase
      */
     public function global_scope_raw_update()
     {
-        GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
-        GlobalScopeUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 37,]);
+        GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20]);
+        GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30]);
+        GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34]);
+        GlobalScopeUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 37]);
+        GlobalScopeUser::addFakeRow(['id' => 5, 'name' => 'Iman 5', 'age' => 40]);
 
         $count = GlobalScopeUser::query()->update(['age' => 40]);
-        $this->assertEquals(2, $count);
+        $this->assertEquals(3, $count);
+
+        $count = GlobalScopeUser::where('age', 40)->count();
+        $this->assertEquals(3, $count);
+
+        $count = GlobalScopeUser::query()->withoutGlobalScopes()->update(['age' => 40]);
+        $this->assertEquals(5, $count);
+
+        $count = GlobalScopeUser::iman()->withoutGlobalScopes()->count();
+        $this->assertEquals(1, $count);
+
+        $count = GlobalScopeUser::where('age', 40)->count();
+        $this->assertEquals(5, $count);
 
         GlobalScopeUser::stopFaking();
     }
