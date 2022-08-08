@@ -61,7 +61,6 @@ trait MockableModel
         static::$fakeMode = true;
         static::softDeleted(function ($model) {
             self::$softDeletedModels[] = $model;
-            FakeEloquentBuilder::removeModel(static::class, $model->getKey(), $model->getKeyName());
         });
     }
 

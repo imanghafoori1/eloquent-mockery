@@ -5,6 +5,7 @@ namespace Imanghafoori\EloquentMockery\Tests;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Carbon;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -66,13 +67,25 @@ class SoftDeleteTest extends TestCase
         SoftDeleteUser::fakeSoftDelete();
         $user = SoftDeleteUser::find(1);
         $this->assertNull($user->deleted_at);
-        $user->delete();
-        $this->assertNotNull($user->deleted_at);
+        $user->delete(); // soft-deleted
+        $this->assertEquals(Carbon::now()->getTimestamp(), $user->deleted_at->getTimestamp());
 
         $deletedModel = SoftDeleteUser::getSoftDeletedModel();
         $this->assertEquals($deletedModel->deleted_at, $user->deleted_at);
         $this->assertEquals($deletedModel->ff, $user->ff);
+
+        $this->assertEquals(2, SoftDeleteUser::first()->id);
+        $this->assertEquals(1, SoftDeleteUser::withTrashed()->first()->id);
+
         $this->assertNull(SoftDeleteUser::find(1));
+        $this->assertNotNull(SoftDeleteUser::withTrashed()->find(1));
+        $this->assertNotNull(SoftDeleteUser::withTrashed()->find(1)->deleted_at);
+
+        $this->assertEquals(4, SoftDeleteUser::withTrashed()->count());
+        $this->assertEquals(3, SoftDeleteUser::count());
+
+        $this->assertEquals(4, SoftDeleteUser::withTrashed()->get()->count());
+        $this->assertEquals(3, SoftDeleteUser::get()->count());
     }
 
     /**

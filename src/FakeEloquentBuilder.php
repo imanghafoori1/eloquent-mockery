@@ -9,18 +9,17 @@ use Illuminate\Support\Arr;
 
 class FakeEloquentBuilder extends Builder
 {
-    public function __construct($modelObj, $originalModel)
+    public function __construct($modelObj, $modelClass)
     {
         $this->query = new FakeQueryBuilder($modelObj);
         $this->model = $modelObj;
-        $this->modelClass = $originalModel;
+        $this->modelClass = $modelClass;
     }
 
     public function get($columns = ['*'])
     {
-        $builder = $this->applyScopes();
         $models = [];
-        foreach ($builder->applyWheres() as $i => $row) {
+        foreach ($this->applyScopes()->applyWheres() as $i => $row) {
             $model = new $this->modelClass;
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
@@ -38,7 +37,7 @@ class FakeEloquentBuilder extends Builder
 
     public function first($columns = ['*'])
     {
-        $data = $this->filterColumns($columns, $this->applyWheres())->first();
+        $data = self::filterColumns($columns, $this->applyScopes()->applyWheres())->first();
 
         if (! $data) {
             return null;
@@ -67,7 +66,7 @@ class FakeEloquentBuilder extends Builder
             }
         }
 
-        return $this->applyWheres()->count();
+        return $this->applyScopes()->applyWheres()->count();
     }
 
     public function orderBy($column, $direction = 'asc')
@@ -115,7 +114,7 @@ class FakeEloquentBuilder extends Builder
         return $this->delete();
     }
 
-    private function filterColumns($columns, $filtered)
+    private static function filterColumns($columns, $filtered)
     {
         if ($columns !== ['*']) {
             $filtered = $filtered->map(function ($item) use ($columns) {

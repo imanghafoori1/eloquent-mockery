@@ -81,6 +81,9 @@ class GlobalScopeTest extends TestCase
         $this->assertEquals(1, $count);
 
         $count = GlobalScopeUser::where('age', 40)->count();
+        $this->assertEquals(3, $count);
+
+        $count = GlobalScopeUser::withoutGlobalScopes()->count();
         $this->assertEquals(5, $count);
 
         GlobalScopeUser::stopFaking();

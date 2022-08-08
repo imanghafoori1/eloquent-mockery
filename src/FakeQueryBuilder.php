@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
 {
@@ -109,20 +110,20 @@ class FakeQueryBuilder extends Builder
             $_where = array_filter($_where, function ($val) {
                 return ! is_null($val);
             });
-
+            $_where[0] = Str::after($_where[0], '.');
             $collection = $collection->where(...$_where);
         }
 
         foreach ($this->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn($_where[0], $_where[1]);
+            $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
         }
 
         foreach ($this->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull($_where[0]);
+            $collection = $collection->whereNull(Str::after($_where[0], '.'));
         }
 
         foreach ($this->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull($_where[0]);
+            $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
         }
 
         return $collection->map(function ($item) {
