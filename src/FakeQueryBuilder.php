@@ -18,6 +18,8 @@ class FakeQueryBuilder extends Builder
 
     public $modelClass = null;
 
+    public $recordedWhereLikes = [];
+
     public function __construct($modelClass)
     {
         $this->modelClass = $modelClass;
@@ -52,7 +54,11 @@ class FakeQueryBuilder extends Builder
 
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
-        $this->recordedWheres[] = [$column, $operator, $value];
+        if ($operator === 'like') {
+            $this->recordedWhereLikes[] = [$column, $value];
+        } else {
+            $this->recordedWheres[] = [$column, $operator, $value];
+        }
 
         return $this;
     }
@@ -112,6 +118,14 @@ class FakeQueryBuilder extends Builder
             });
             $_where[0] = Str::after($_where[0], '.');
             $collection = $collection->where(...$_where);
+        }
+
+        foreach ($this->recordedWhereLikes as $like) {
+            $collection = $collection->filter(function ($item) use ($like) {
+                $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
+
+                return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
+            });
         }
 
         foreach ($this->recordedWhereIn as $_where) {
