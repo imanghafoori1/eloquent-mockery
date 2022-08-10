@@ -161,13 +161,13 @@ class FakeEloquentBuilder extends Builder
     {
         $this->model->getAttributes() && $this->modelClass::$changedModels['updated'][] = $this->model;
 
-        return parent::update($values);
+        return self::update($values);
     }
 
     public function create(array $attributes = [])
     {
-        $model = parent::create($attributes);
-        FakeEloquentBuilder::insertRow($this->modelClass, $model->getAttributes());
+        $model = self::create($attributes);
+        self::insertRow($this->modelClass, $model->getAttributes());
         $this->modelClass::$changedModels['created'][] = $model;
 
         return $model;
@@ -175,7 +175,7 @@ class FakeEloquentBuilder extends Builder
 
     public function addUpdatedAtColumn(array $values)
     {
-        $values = parent::addUpdatedAtColumn($values);
+        $values = self::addUpdatedAtColumn($values);
         $updatedAt = $this->model->getUpdatedAtColumn();
         if (isset($values['.'.$updatedAt])) {
             $values[$updatedAt] = $values['.'.$updatedAt];
