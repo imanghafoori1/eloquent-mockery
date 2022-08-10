@@ -92,7 +92,7 @@ trait MockableModel
     protected function newBaseQueryBuilder()
     {
         if ($this->isFakeMode()) {
-            return new FakeQueryBuilder(static::class);
+            return new FakeQueryBuilder($this);
         } else {
             return parent::newBaseQueryBuilder();
         }

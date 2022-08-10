@@ -16,13 +16,15 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereNotNull = [];
 
-    public $modelClass = null;
+    public $modelObj = null;
 
     public $recordedWhereLikes = [];
 
-    public function __construct($modelClass)
+    public $orderBy = [];
+
+    public function __construct($model)
     {
-        $this->modelClass = $modelClass;
+        $this->modelObj = $model;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
@@ -34,6 +36,8 @@ class FakeQueryBuilder extends Builder
 
     public function orderBy($column, $direction = 'asc')
     {
+        $this->orderBy = [$column, $direction];
+
         return $this;
     }
 
@@ -89,7 +93,7 @@ class FakeQueryBuilder extends Builder
         });
 
         $collection->each(function ($val, $key) {
-            $this->modelClass::$fakeRows[$key] = $val;
+            $this->modelObj::$fakeRows[$key] = $val;
         });
 
         return $collection->count();
@@ -106,9 +110,25 @@ class FakeQueryBuilder extends Builder
 
     public function filterRows()
     {
-        $collection = collect($this->modelClass::$fakeRows);
+        $collection = collect($this->modelObj::$fakeRows);
 
-        if ($this->modelClass::$ignoreWheres){
+        if ($this->orderBy) {
+            $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
+            $column = $this->orderBy[0];
+            $createdAt = $this->modelObj->getCreatedAtColumn();
+            $updatedAt = $this->modelObj->getUpdatedAtColumn();
+
+            if ($column === $createdAt || $column === $updatedAt || $column === 'deleted_at') {
+                $collection = $collection->sort(function ($t, $item) use ($column) {
+                    $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
+                    return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
+                });
+            } else {
+                $collection = $collection->$sortBy($column);
+            }
+        }
+
+        if ($this->modelObj::$ignoreWheres) {
             return $collection;
         }
 
@@ -141,7 +161,7 @@ class FakeQueryBuilder extends Builder
         }
 
         return $collection->map(function ($item) {
-            return $this->_renameKeys(Arr::dot($item), $this->modelClass::$columnAliases);
+            return $this->_renameKeys(Arr::dot($item), $this->modelObj::$columnAliases);
         });
     }
 
@@ -164,9 +184,9 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        $key = array_key_last($this->modelClass::$fakeRows);
+        $key = array_key_last($this->modelObj::$fakeRows);
 
-        $id = $this->modelClass::$fakeRows[$key]['id'] ?? 0;
+        $id = $this->modelObj::$fakeRows[$key]['id'] ?? 0;
 
         return $id + 1;
     }

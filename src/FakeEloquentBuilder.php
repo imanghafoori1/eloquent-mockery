@@ -71,6 +71,8 @@ class FakeEloquentBuilder extends Builder
 
     public function orderBy($column, $direction = 'asc')
     {
+        $this->query->orderBy($column, $direction);
+
         return $this;
     }
 
