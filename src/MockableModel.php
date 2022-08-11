@@ -182,4 +182,9 @@ trait MockableModel
     {
         return self::$fakeRows || self::$fakeMode;
     }
+
+    protected function newRelatedInstance($class)
+    {
+        return new $class;
+    }
 }
