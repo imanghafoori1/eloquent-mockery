@@ -24,6 +24,10 @@ class FakeQueryBuilder extends Builder
 
     public $orderBy = [];
 
+    public $recordedWhereBetween = [];
+
+    public $recordedWhereNotBetween = [];
+
     public function __construct($model)
     {
         $this->modelObj = $model;
@@ -94,6 +98,22 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
+    public function whereBetween($column, array $values, $boolean = 'and', $not = false)
+    {
+        $this->recordedWhereBetween[] = [$column, $values];
+
+        return $this;
+
+    }
+
+    public function whereNotBetween($column, array $values, $boolean = 'and')
+    {
+        $this->recordedWhereNotBetween[] = [$column, $values];
+
+        return $this;
+
+    }
+
     public function delete($id = null)
     {
         return $this->filterRows()->count();
@@ -143,6 +163,16 @@ class FakeQueryBuilder extends Builder
 
         if ($this->modelObj::$ignoreWheres) {
             return $collection;
+        }
+
+        foreach ($this->recordedWhereBetween as $_where) {
+            $_where[0] = Str::after($_where[0], '.');
+            $collection = $collection->whereBetween(...$_where);
+        }
+
+        foreach ($this->recordedWhereNotBetween as $_where) {
+            $_where[0] = Str::after($_where[0], '.');
+            $collection = $collection->whereNotBetween(...$_where);
         }
 
         foreach ($this->recordedWheres as $_where) {

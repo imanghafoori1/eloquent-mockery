@@ -31,7 +31,39 @@ class WhereKeyTest extends TestCase
         $this->assertEquals('Hello', ($users[0])->name);
         $this->assertEquals(1, ($users->count()));
 
+        $users = KeyUser::query()->whereKey(KeyUser::find(1))->get();
+        $this->assertEquals('Hello', ($users[0])->name);
+        $this->assertEquals(1, ($users->count()));
+
         $users = KeyUser::query()->whereKey([1, 2])->get();
+        $this->assertEquals(2, ($users->count()));
+    }
+
+    /**
+     * @test
+     */
+    public function whereBetween()
+    {
+        KeyUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        KeyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        KeyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+
+        $users = KeyUser::query()->whereBetween('age', [25, 31])->get();
+        $this->assertEquals('Iman 2', ($users[0])->name);
+        $this->assertEquals(1, ($users->count()));
+    }
+    /**
+     * @test
+     */
+    public function whereNotBetween()
+    {
+        KeyUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        KeyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        KeyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+
+        $users = KeyUser::query()->whereNotBetween('age', [25, 31])->get();
+        $this->assertEquals('Hello', ($users[0])->name);
+        $this->assertEquals('Iman 3', ($users[1])->name);
         $this->assertEquals(2, ($users->count()));
     }
 
