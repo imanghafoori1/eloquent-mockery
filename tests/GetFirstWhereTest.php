@@ -22,24 +22,6 @@ class GetFirstWhereTest extends TestCase
     /**
      * @test
      */
-    public function whereLike()
-    {
-        User::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
-        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
-
-        $users = User::where('name', 'like', '%man 3')->get();
-        $this->assertEquals('Iman 3', ($users[0])->name);
-        $this->assertEquals(1, ($users->count()));
-
-        $users = User::where('name', 'like', 'Iman%')->get();
-        $this->assertEquals('Iman 2', ($users[0])->name);
-        $this->assertEquals('Iman 3', ($users[1])->name);
-    }
-
-    /**
-     * @test
-     */
     public function first()
     {
         User::addFakeRow([

@@ -12,6 +12,8 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereIn = [];
 
+    public $recordedWhereNotIn = [];
+
     public $recordedWhereNull = [];
 
     public $recordedWhereNotNull = [];
@@ -29,7 +31,18 @@ class FakeQueryBuilder extends Builder
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereIn[] = [$column, $values];
+        if ($not) {
+            $this->recordedWhereNotIn[] = [$column, $values];
+        } else {
+            $this->recordedWhereIn[] = [$column, $values];
+        }
+
+        return $this;
+    }
+
+    public function whereNotIn($column, $values, $boolean = 'and', $not = false)
+    {
+        $this->recordedWhereNotIn[] = [$column, $values];
 
         return $this;
     }
@@ -150,6 +163,10 @@ class FakeQueryBuilder extends Builder
 
         foreach ($this->recordedWhereIn as $_where) {
             $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
+        }
+
+        foreach ($this->recordedWhereNotIn as $_where) {
+            $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
         }
 
         foreach ($this->recordedWhereNull as $_where) {
