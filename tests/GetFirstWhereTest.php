@@ -24,10 +24,9 @@ class GetFirstWhereTest extends TestCase
      */
     public function first()
     {
-        User::addFakeRow([
-            'id' => 1,
-            'name' => 'Iman',
-        ]);
+        User::addFakeRow(['id' => 1, 'name' => 'Iman', 'age' => 20,]);
+        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $user = User::first();
         $this->assertEquals(1, $user->id);
@@ -39,6 +38,10 @@ class GetFirstWhereTest extends TestCase
         $this->assertEquals('Iman', $user->name);
         $this->assertInstanceOf(User::class, $user);
 
+        $this->assertEquals(1, User::query()->value('id'));
+        $this->assertEquals('Iman', User::query()->value('name'));
+        $this->assertEquals(null, User::query()->value('sdfvsdb'));
+
         $user = User::query()->first(['id']);
         $attrs = $user->getAttributes();
         $this->assertEquals(['id' => 1], $attrs);
@@ -46,7 +49,7 @@ class GetFirstWhereTest extends TestCase
 
         $user = User::query()->latest('id')->first(['id']);
         $attrs = $user->getAttributes();
-        $this->assertEquals(['id' => 1], $attrs);
+        $this->assertEquals(['id' => 3], $attrs);
         $this->assertInstanceOf(User::class, $user);
 
         User::stopFaking();
