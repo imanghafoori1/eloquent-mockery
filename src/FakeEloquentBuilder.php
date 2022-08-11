@@ -24,11 +24,6 @@ class FakeEloquentBuilder extends Builder
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
             $model->setRawAttributes($row);
-            foreach (($this->modelClass)::$fakeRelations as $j => [$relName, $relModel, $relatedRow]) {
-                $relModel = new $relModel;
-                $relModel->setRawAttributes($relatedRow[$i]);
-                $model->setRelation($relName, $relModel);
-            }
             $models[] = $model;
         }
 
