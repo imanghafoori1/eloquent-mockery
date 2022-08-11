@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -143,73 +144,98 @@ class FakeQueryBuilder extends Builder
 
     public function filterRows()
     {
-        $collection = collect($this->modelObj::$fakeRows);
+        return (new Pipeline)->send($this)
+            ->through([
+                function ($fakeQueryBuilder, $next) { 
+                    $fakeQueryBuilder->collection = collect($fakeQueryBuilder->modelObj::$fakeRows);
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    if ($fakeQueryBuilder->orderBy) {
+                        $sortBy = ($fakeQueryBuilder->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
+                        $column = $fakeQueryBuilder->orderBy[0];
+                        $createdAt = $fakeQueryBuilder->modelObj->getCreatedAtColumn();
+                        $updatedAt = $fakeQueryBuilder->modelObj->getUpdatedAtColumn();
+            
+                        if ($column === $createdAt || $column === $updatedAt || $column === 'deleted_at') {
+                            $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->sort(function ($t, $item) use ($column, $fakeQueryBuilder) {
+                                $direction = ($fakeQueryBuilder->orderBy[1] === 'desc' ? 1 : -1);
+                                return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
+                            });
+                        } else {
+                            $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->$sortBy($column);
+                        }
+                    }
 
-        if ($this->orderBy) {
-            $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
-            $column = $this->orderBy[0];
-            $createdAt = $this->modelObj->getCreatedAtColumn();
-            $updatedAt = $this->modelObj->getUpdatedAtColumn();
-
-            if ($column === $createdAt || $column === $updatedAt || $column === 'deleted_at') {
-                $collection = $collection->sort(function ($t, $item) use ($column) {
-                    $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
-                    return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
-                });
-            } else {
-                $collection = $collection->$sortBy($column);
-            }
-        }
-
-        if ($this->modelObj::$ignoreWheres) {
-            return $collection;
-        }
-
-        foreach ($this->recordedWhereBetween as $_where) {
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->whereBetween(...$_where);
-        }
-
-        foreach ($this->recordedWhereNotBetween as $_where) {
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->whereNotBetween(...$_where);
-        }
-
-        foreach ($this->recordedWheres as $_where) {
-            $_where = array_filter($_where, function ($val) {
-                return ! is_null($val);
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    if ($fakeQueryBuilder->modelObj::$ignoreWheres) {
+                        return $fakeQueryBuilder;
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereBetween as $_where) {
+                        $_where[0] = Str::after($_where[0], '.');
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->whereBetween(...$_where);
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereNotBetween as $_where) {
+                        $_where[0] = Str::after($_where[0], '.');
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->whereNotBetween(...$_where);
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWheres as $_where) {
+                        $_where = array_filter($_where, function ($val) {
+                            return ! is_null($val);
+                        });
+                        $_where[0] = Str::after($_where[0], '.');
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->where(...$_where);
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereLikes as $like) {
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->filter(function ($item) use ($like) {
+                            $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
+            
+                            return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
+                        });
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereIn as $_where) {
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereNotIn as $_where) {
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereNull as $_where) {
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->whereNull(Str::after($_where[0], '.'));
+                    }
+                    return $next($fakeQueryBuilder);
+                },
+                function ($fakeQueryBuilder, $next) { 
+                    foreach ($fakeQueryBuilder->recordedWhereNotNull as $_where) {
+                        $fakeQueryBuilder->collection = $fakeQueryBuilder->collection->whereNotNull(Str::after($_where[0], '.'));
+                    }
+                    return $next($fakeQueryBuilder);
+                }
+            ])->thenReturn()->collection->map(function ($item) {
+                return $this->_renameKeys(Arr::dot($item), $this->modelObj::$columnAliases);
             });
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->where(...$_where);
-        }
-
-        foreach ($this->recordedWhereLikes as $like) {
-            $collection = $collection->filter(function ($item) use ($like) {
-                $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
-
-                return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
-            });
-        }
-
-        foreach ($this->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNotIn as $_where) {
-            $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull(Str::after($_where[0], '.'));
-        }
-
-        foreach ($this->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
-        }
-
-        return $collection->map(function ($item) {
-            return $this->_renameKeys(Arr::dot($item), $this->modelObj::$columnAliases);
-        });
     }
 
     private function _renameKeys(array $array, array $replace)
