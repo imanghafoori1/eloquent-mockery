@@ -4,41 +4,40 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
 {
-    public $recordedWheres = [];
-
-    public $recordedWhereIn = [];
-
-    public $recordedWhereNotIn = [];
-
-    public $recordedWhereNull = [];
-
-    public $recordedWhereNotNull = [];
+    public $recordedWhereConditions = [];
 
     public $modelObj = null;
-
-    public $recordedWhereLikes = [];
-
     public $orderBy = [];
-
-    public $recordedWhereBetween = [];
-
-    public $recordedWhereNotBetween = [];
 
     public function __construct($model)
     {
         $this->modelObj = $model;
     }
 
+    public function setConditions(string $type, $conditions)
+    {
+        $lastNumber = count($this->recordedWhereConditions);
+        $this->recordedWhereConditions[$type . '.' . $lastNumber] = $conditions;
+    }
+
+    public function getConditions($type = null)
+    {
+        if ($type === null) {
+            return $this->recordedWhereConditions;
+        }
+
+        return data_get($this->recordedWhereConditions, $type);
+    }
+
     public function whereIn($column, $values, $boolean = 'and', $not = false)
     {
         if ($not) {
-            $this->recordedWhereNotIn[] = [$column, $values];
+            $this->setConditions(Filters::WHERE_NOT_IN, [$column, $values]);
         } else {
-            $this->recordedWhereIn[] = [$column, $values];
+            $this->setConditions(Filters::WHERE_IN, [$column, $values]);
         }
 
         return $this;
@@ -46,7 +45,7 @@ class FakeQueryBuilder extends Builder
 
     public function whereNotIn($column, $values, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereNotIn[] = [$column, $values];
+        $this->setConditions(Filters::WHERE_NOT_IN, [$column, $values]);
 
         return $this;
     }
@@ -76,9 +75,9 @@ class FakeQueryBuilder extends Builder
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
         if ($operator === 'like') {
-            $this->recordedWhereLikes[] = [$column, $value];
+            $this->setConditions(Filters::WHERE_LIKES, [$column, $value]);
         } else {
-            $this->recordedWheres[] = [$column, $operator, $value];
+            $this->setConditions(Filters::WHERES, [$column, $operator, $value]);
         }
 
         return $this;
@@ -86,32 +85,30 @@ class FakeQueryBuilder extends Builder
 
     public function whereNull($columns, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereNull[] = [$columns];
+        $this->setConditions(Filters::WHERE_NULL, [$columns]);
 
         return $this;
     }
 
     public function whereNotNull($columns, $boolean = 'and')
     {
-        $this->recordedWhereNotNull[] = [$columns];
+        $this->setConditions(Filters::WHERE_NOT_NULL, [$columns]);
 
         return $this;
     }
 
     public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereBetween[] = [$column, $values];
+        $this->setConditions(Filters::WHERE_BETWEEN, [$column, $values]);
 
         return $this;
-
     }
 
     public function whereNotBetween($column, iterable $values, $boolean = 'and')
     {
-        $this->recordedWhereNotBetween[] = [$column, $values];
+        $this->setConditions(Filters::WHERE_NOT_BETWEEN, [$column, $values]);
 
         return $this;
-
     }
 
     public function delete($id = null)
@@ -166,48 +163,10 @@ class FakeQueryBuilder extends Builder
             return $collection;
         }
 
-        $conditions = array_merge(
-            Arr::prependKeysWith($this->recordedWhereIn,'recordedWhereIn'),
-            Arr::prependKeysWith($this->recordedWhereNotIn,'recordedWhereNotIn'),
-            Arr::prependKeysWith($this->recordedWhereNull,'recordedWhereNull'),
-            Arr::prependKeysWith($this->recordedWhereNotNull,'recordedWhereNotNull'),
-            Arr::prependKeysWith($this->recordedWhereLikes,'recordedWhereLikes'),
-            Arr::prependKeysWith($this->recordedWhereBetween,'recordedWhereBetween'),
-            Arr::prependKeysWith($this->recordedWhereNotBetween,'recordedWhereNotBetween'),
-            Arr::prependKeysWith($this->recordedWheres,'recordedWheres'),
-        );
+        $conditions = $this->getConditions();
 
         foreach ($conditions as $conditionTypeKey => $_where) {
-            if (empty($_where)) {
-                continue;
-            }
-
-            switch ($conditionTypeKey) {
-                case Str::startsWith($conditionTypeKey, 'recordedWhereBetween'):
-                    $collection = Filters::whereBetween($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWhereNotBetween'):
-                    $collection = Filters::whereNotBetween($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWheres'):
-                    $collection = Filters::wheres($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWhereLikes'):
-                    $collection = Filters::whereLikes($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWhereIn'):
-                    $collection = Filters::whereIn($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWhereNotIn'):
-                    $collection = Filters::whereNotIn($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWhereNull'):
-                    $collection = Filters::whereNull($collection, $_where);
-                    break;
-                case Str::startsWith($conditionTypeKey, 'recordedWhereNotNull'):
-                    $collection = Filters::whereNotNull($collection, $_where);
-                    break;
-            }
+            $collection = Filters::filterConditions($conditionTypeKey, $collection, $_where);
         }
 
         return $collection->map(function ($item) {

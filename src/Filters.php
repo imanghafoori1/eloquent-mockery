@@ -6,6 +6,22 @@ use Illuminate\Support\Str;
 
 class Filters
 {
+    const WHERES = 'wheres';
+    const WHERE_IN = 'where_in';
+    const WHERE_NOT_IN = 'where_not_in';
+    const WHERE_NULL = 'where_null';
+    const WHERE_NOT_NULL = 'where_not_null';
+    const WHERE_LIKES = 'where_likes';
+    const WHERE_BETWEEN = 'where_between';
+    const WHERE_NOT_BETWEEN = 'where_not_between';
+
+    public static function filterConditions(string $key, $conditions, $_where)
+    {
+        $methodName = Str::camel(explode('.', $key)[0]);
+
+        return self::$methodName($conditions, $_where);
+    }
+
     public static function whereBetween($collection, $_where)
     {
         $_where[0] = Str::after($_where[0], '.');
