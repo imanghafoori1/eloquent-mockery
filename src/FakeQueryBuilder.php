@@ -98,7 +98,7 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
-    public function whereBetween($column, array $values, $boolean = 'and', $not = false)
+    public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
     {
         $this->recordedWhereBetween[] = [$column, $values];
 
@@ -106,7 +106,7 @@ class FakeQueryBuilder extends Builder
 
     }
 
-    public function whereNotBetween($column, array $values, $boolean = 'and')
+    public function whereNotBetween($column, iterable $values, $boolean = 'and')
     {
         $this->recordedWhereNotBetween[] = [$column, $values];
 
@@ -151,9 +151,10 @@ class FakeQueryBuilder extends Builder
             $createdAt = $this->modelObj->getCreatedAtColumn();
             $updatedAt = $this->modelObj->getUpdatedAtColumn();
 
-            if ($column === $createdAt || $column === $updatedAt || $column === 'deleted_at') {
+            if (in_array($column, [$createdAt, $updatedAt, 'deleted_at'])) {
                 $collection = $collection->sort(function ($t, $item) use ($column) {
                     $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
+
                     return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
                 });
             } else {
@@ -165,46 +166,48 @@ class FakeQueryBuilder extends Builder
             return $collection;
         }
 
-        foreach ($this->recordedWhereBetween as $_where) {
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->whereBetween(...$_where);
-        }
+        $conditions = array_merge(
+            Arr::prependKeysWith($this->recordedWhereIn,'recordedWhereIn'),
+            Arr::prependKeysWith($this->recordedWhereNotIn,'recordedWhereNotIn'),
+            Arr::prependKeysWith($this->recordedWhereNull,'recordedWhereNull'),
+            Arr::prependKeysWith($this->recordedWhereNotNull,'recordedWhereNotNull'),
+            Arr::prependKeysWith($this->recordedWhereLikes,'recordedWhereLikes'),
+            Arr::prependKeysWith($this->recordedWhereBetween,'recordedWhereBetween'),
+            Arr::prependKeysWith($this->recordedWhereNotBetween,'recordedWhereNotBetween'),
+            Arr::prependKeysWith($this->recordedWheres,'recordedWheres'),
+        );
 
-        foreach ($this->recordedWhereNotBetween as $_where) {
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->whereNotBetween(...$_where);
-        }
+        foreach ($conditions as $conditionTypeKey => $_where) {
+            if (empty($_where)) {
+                continue;
+            }
 
-        foreach ($this->recordedWheres as $_where) {
-            $_where = array_filter($_where, function ($val) {
-                return ! is_null($val);
-            });
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->where(...$_where);
-        }
-
-        foreach ($this->recordedWhereLikes as $like) {
-            $collection = $collection->filter(function ($item) use ($like) {
-                $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
-
-                return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
-            });
-        }
-
-        foreach ($this->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNotIn as $_where) {
-            $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull(Str::after($_where[0], '.'));
-        }
-
-        foreach ($this->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
+            switch ($conditionTypeKey) {
+                case Str::startsWith($conditionTypeKey, 'recordedWhereBetween'):
+                    $collection = Filters::whereBetween($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWhereNotBetween'):
+                    $collection = Filters::whereNotBetween($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWheres'):
+                    $collection = Filters::wheres($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWhereLikes'):
+                    $collection = Filters::whereLikes($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWhereIn'):
+                    $collection = Filters::whereIn($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWhereNotIn'):
+                    $collection = Filters::whereNotIn($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWhereNull'):
+                    $collection = Filters::whereNull($collection, $_where);
+                    break;
+                case Str::startsWith($conditionTypeKey, 'recordedWhereNotNull'):
+                    $collection = Filters::whereNotNull($collection, $_where);
+                    break;
+            }
         }
 
         return $collection->map(function ($item) {
