@@ -174,4 +174,15 @@ trait MockableModel
     {
         return self::$fakeRows || self::$fakeMode;
     }
+
+    protected function finishSave(array $options)
+    {
+        if ($this->wasRecentlyCreated) {
+            static::$changedModels['created'][] = $this;
+        } else {
+            static::$changedModels['updated'][] = $this;
+        }
+
+        return parent::finishSave($options);
+    }
 }

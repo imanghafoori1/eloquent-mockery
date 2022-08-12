@@ -149,7 +149,6 @@ class FakeEloquentBuilder extends Builder
     {
         $model = parent::create($attributes);
         FakeEloquentBuilder::insertRow($this->modelClass, $model->getAttributes());
-        $this->modelClass::$changedModels['created'][] = $model;
 
         return $model;
     }

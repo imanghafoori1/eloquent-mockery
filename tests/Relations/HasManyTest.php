@@ -101,17 +101,18 @@ class HasManyTest extends TestCase
         $this->assertEquals(2, HasManyComment::query()->find(3)->user->id);
         $this->assertEquals(1, HasManyComment::query()->find(3)->user()->count());
 
-        $f = HasManyComment::query()->find(3)->user()->create([
+        $newUser = HasManyComment::query()->find(3)->user()->create([
             'name' => 'created'
         ]);
 
-        $this->assertNotNull($f->created_at);
-        $this->assertNotNull($f->updated_at);
+        $this->assertNotNull($newUser->created_at);
+        $this->assertNotNull($newUser->updated_at);
         $this->assertNotNull(HasManyUser::find(5));
-        $this->assertEquals(5, $f->id);
-        $this->assertEquals('created', $f->name);
+        $this->assertEquals(5, $newUser->id);
+        $this->assertEquals('created', $newUser->name);
 
-        $this->assertEquals('created', $f->name);
+        $this->assertEquals('created', $newUser->name);
+        $this->assertSame(HasManyUser::getCreatedModel(), $newUser);
         $this->assertEquals(5, HasManyUser::count());
 
 
@@ -123,5 +124,7 @@ class HasManyTest extends TestCase
         $this->assertEquals(4, $comment->user_id);
         $this->assertNotNull($comment->created_at);
         $this->assertNotNull($comment->updated_at);
+        $this->assertSame(HasManyComment::getCreatedModel(), $comment);
+        $this->assertNull(HasManyComment::getCreatedModel(1));
     }
 }

@@ -61,6 +61,7 @@ class CreateTest extends TestCase
         $this->assertTrue($foo->exists);
         $this->assertTrue($foo->wasRecentlyCreated);
 
+        $this->assertNull(CreatyModel::getCreatedModel(1));
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
 
