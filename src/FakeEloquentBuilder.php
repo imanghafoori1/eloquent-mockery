@@ -32,24 +32,6 @@ class FakeEloquentBuilder extends Builder
         return Collection::make($models);
     }
 
-    public function first($columns = ['*'])
-    {
-        $data = self::filterColumns($columns, $this->applyScopes()->applyWheres())->first();
-
-        if (! $data) {
-            return null;
-        }
-
-        $this->modelClass::unguard();
-
-        $model = new $this->modelClass($data);
-        $model->exists = true;
-
-        ($this->modelClass)::$firstModel = $model;
-
-        return $this->eagerLoadRelations([$model])[0];
-    }
-
     public function select($columns = ['*'])
     {
         return $this;

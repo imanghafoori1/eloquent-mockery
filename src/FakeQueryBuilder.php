@@ -33,6 +33,20 @@ class FakeQueryBuilder extends Builder
         $this->modelObj = $model;
     }
 
+    public function offset($value)
+    {
+        $this->offset = $value;
+
+        return $this;
+    }
+
+    public function limit($value)
+    {
+        $this->limit = $value;
+
+        return $this;
+    }
+
     public function whereIn($column, $values, $boolean = 'and', $not = false)
     {
         if ($not) {
@@ -207,9 +221,15 @@ class FakeQueryBuilder extends Builder
             $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
         }
 
-        return $collection->map(function ($item) {
+        $collection = $collection->map(function ($item) {
             return $this->_renameKeys(Arr::dot($item), $this->modelObj::$columnAliases);
         });
+
+        $this->offset && $collection = $collection->skip($this->offset);
+
+        $this->limit && $collection = $collection->take($this->limit);
+
+        return $collection;
     }
 
     private function _renameKeys(array $array, array $replace)

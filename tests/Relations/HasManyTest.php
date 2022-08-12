@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 
 class HasManyUser extends Model
 {
+    public $fillable = ['name'];
+
     use MockableModel;
 
     public function comments()
@@ -20,6 +22,8 @@ class HasManyUser extends Model
 class HasManyComment extends Model
 {
     use MockableModel;
+
+    public $fillable = ['comment'];
 
     public function user()
     {
