@@ -27,6 +27,8 @@ class FakeEloquentBuilder extends Builder
             $models[] = $model;
         }
 
+        $models = $this->eagerLoadRelations($models);
+
         return Collection::make($models);
     }
 
@@ -45,7 +47,7 @@ class FakeEloquentBuilder extends Builder
 
         ($this->modelClass)::$firstModel = $model;
 
-        return $model;
+        return $this->eagerLoadRelations([$model])[0];
     }
 
     public function select($columns = ['*'])

@@ -2,6 +2,7 @@
 
 namespace Imanghafoori\EloquentMockery\Tests;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +44,29 @@ class HasManyTest extends TestCase
         HasManyComment::addFakeRow(['id' => 3, 'user_id' => 2,'comment' => 'bbb']);
         HasManyComment::addFakeRow(['id' => 4, 'user_id' => 2,'comment' => 'ccc']);
         HasManyComment::addFakeRow(['id' => 5, 'user_id' => 3, 'comment' => 'ddd']);
+
+        $user = HasManyUser::with('comments')->where('id', 1)->first();
+
+        $this->assertInstanceOf(Collection::class, $user->comments);
+        $this->assertEquals(2, $user->comments->count());
+        $this->assertInstanceOf(HasManyComment::class, $user->comments[0]);
+        $this->assertInstanceOf(HasManyComment::class, $user->comments[1]);
+        $this->assertEquals(2, $user->comments[1]->id);
+
+        $user = HasManyUser::with('comments')->where('id', 1)->get()->first();
+
+        $this->assertInstanceOf(Collection::class, $user->comments);
+        $this->assertEquals(2, $user->comments->count());
+        $this->assertInstanceOf(HasManyComment::class, $user->comments[0]);
+        $this->assertInstanceOf(HasManyComment::class, $user->comments[1]);
+        $this->assertEquals(2, $user->comments[1]->id);
+
+        $comments = HasManyUser::find(1)->load('comments');
+        $this->assertInstanceOf(Collection::class, $comments->comments);
+        $this->assertEquals(2, $comments->comments->count());
+        $this->assertInstanceOf(HasManyComment::class, $comments->comments[0]);
+        $this->assertInstanceOf(HasManyComment::class, $comments->comments[1]);
+        $this->assertEquals(2, $comments->comments[1]->id);
 
         $this->assertEquals(2, HasManyUser::find(1)->comments()->count());
         $this->assertEquals(1, HasManyUser::find(1)->comments()->where('comment', 'aaa')->count());
