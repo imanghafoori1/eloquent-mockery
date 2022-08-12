@@ -4,8 +4,6 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\MockableModel;
-use PhpParser\Builder\Class_;
-use PhpParser\Comment;
 use PHPUnit\Framework\TestCase;
 
 class HasManyUser extends Model
@@ -35,17 +33,16 @@ class HasManyTest extends TestCase
      */
     public function has_many()
     {
-        HasManyUser::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        HasManyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        HasManyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-        HasManyUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
+        HasManyUser::addFakeRow(['id' => 1, 'name' => 'Iman 1']);
+        HasManyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2']);
+        HasManyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3']);
+        HasManyUser::addFakeRow(['id' => 4, 'name' => 'Iman 4']);
 
         HasManyComment::addFakeRow(['id' => 1, 'user_id' => 1,'comment' => 'sss']);
         HasManyComment::addFakeRow(['id' => 2, 'user_id' => 1,'comment' => 'aaa']);
         HasManyComment::addFakeRow(['id' => 3, 'user_id' => 2,'comment' => 'bbb']);
         HasManyComment::addFakeRow(['id' => 4, 'user_id' => 2,'comment' => 'ccc']);
         HasManyComment::addFakeRow(['id' => 5, 'user_id' => 3, 'comment' => 'ddd']);
-
 
         $this->assertEquals(2, HasManyUser::find(1)->comments()->count());
         $this->assertEquals(1, HasManyUser::find(1)->comments()->where('comment', 'aaa')->count());
@@ -75,5 +72,28 @@ class HasManyTest extends TestCase
 
         $this->assertEquals(2, HasManyComment::query()->find(3)->user->id);
         $this->assertEquals(1, HasManyComment::query()->find(3)->user()->count());
+
+        $f = HasManyComment::query()->find(3)->user()->create([
+            'name' => 'created'
+        ]);
+
+        $this->assertNotNull($f->created_at);
+        $this->assertNotNull($f->updated_at);
+        $this->assertNotNull(HasManyUser::find(5));
+        $this->assertEquals(5, $f->id);
+        $this->assertEquals('created', $f->name);
+
+        $this->assertEquals('created', $f->name);
+        $this->assertEquals(5, HasManyUser::count());
+
+
+        $comment = HasManyUser::find(4)->comments()->create([
+            'comment' => 'created!'
+        ]);
+        $this->assertEquals('created!', $comment->comment);
+        $this->assertEquals(6, $comment->id);
+        $this->assertEquals(4, $comment->user_id);
+        $this->assertNotNull($comment->created_at);
+        $this->assertNotNull($comment->updated_at);
     }
 }
