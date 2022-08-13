@@ -257,4 +257,9 @@ class FakeQueryBuilder extends Builder
 
         return $id + 1;
     }
+
+    public function pluck($column, $key = null)
+    {
+        return $this->filterRows()->pluck($column, $key);
+    }
 }
