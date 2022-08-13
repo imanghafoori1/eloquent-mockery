@@ -2,6 +2,8 @@
 
 Mock your eloquent queries without the repository pattern.
 
+[![tests](https://github.com/imanghafoori1/eloquent-mockery/actions/workflows/tests.yml/badge.svg)](https://github.com/imanghafoori1/eloquent-mockery/actions/workflows/tests.yml)
+
 ### Why this package was invented?
 - It solves the problem of "slow tests" by removing the interactions with a real database.
 - It simplifies the process of writing and running tests since you will be "DB Independent".
