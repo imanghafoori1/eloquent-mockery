@@ -24,33 +24,12 @@ class FakeEloquentBuilder extends Builder
             $model->exists = true;
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
             $model->setRawAttributes($row);
-            foreach (($this->modelClass)::$fakeRelations as $j => [$relName, $relModel, $relatedRow]) {
-                $relModel = new $relModel;
-                $relModel->setRawAttributes($relatedRow[$i]);
-                $model->setRelation($relName, $relModel);
-            }
             $models[] = $model;
         }
 
+        $models = $this->eagerLoadRelations($models);
+
         return Collection::make($models);
-    }
-
-    public function first($columns = ['*'])
-    {
-        $data = self::filterColumns($columns, $this->applyScopes()->applyWheres())->first();
-
-        if (! $data) {
-            return null;
-        }
-
-        $this->modelClass::unguard();
-
-        $model = new $this->modelClass($data);
-        $model->exists = true;
-
-        ($this->modelClass)::$firstModel = $model;
-
-        return $model;
     }
 
     public function select($columns = ['*'])
@@ -71,6 +50,8 @@ class FakeEloquentBuilder extends Builder
 
     public function orderBy($column, $direction = 'asc')
     {
+        $this->query->orderBy($column, $direction);
+
         return $this;
     }
 
@@ -168,7 +149,6 @@ class FakeEloquentBuilder extends Builder
     {
         $model = parent::create($attributes);
         FakeEloquentBuilder::insertRow($this->modelClass, $model->getAttributes());
-        $this->modelClass::$changedModels['created'][] = $model;
 
         return $model;
     }

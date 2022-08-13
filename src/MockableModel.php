@@ -18,8 +18,6 @@ trait MockableModel
 
     public static $fakeRows = [];
 
-    public static $fakeRelations = [];
-
     public static $ignoreWheres = false;
 
     public static $columnAliases = [];
@@ -45,11 +43,6 @@ trait MockableModel
                 $this->theClass::$forceMocks[$this->method][] = $value;
             }
         };
-    }
-
-    public static function addRelation(string $relation, $model, array $row)
-    {
-        self::$fakeRelations[] = [$relation, $model, $row];
     }
 
     public static function fakeSoftDelete()
@@ -92,7 +85,7 @@ trait MockableModel
     protected function newBaseQueryBuilder()
     {
         if ($this->isFakeMode()) {
-            return new FakeQueryBuilder(static::class);
+            return new FakeQueryBuilder($this);
         } else {
             return parent::newBaseQueryBuilder();
         }
@@ -160,7 +153,6 @@ trait MockableModel
         self::$fakeMode = false;
         self::$fakeRows = [];
         self::$firstModel = null;
-        self::$fakeRelations = [];
         self::$ignoreWheres = false;
         self::$columnAliases = [];
         self::$forceMocks = [];
@@ -181,5 +173,16 @@ trait MockableModel
     private function isFakeMode()
     {
         return self::$fakeRows || self::$fakeMode;
+    }
+
+    protected function finishSave(array $options)
+    {
+        if ($this->wasRecentlyCreated) {
+            static::$changedModels['created'][] = $this;
+        } else {
+            static::$changedModels['updated'][] = $this;
+        }
+
+        return parent::finishSave($options);
     }
 }

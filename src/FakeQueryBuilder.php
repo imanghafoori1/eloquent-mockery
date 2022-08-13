@@ -12,28 +12,63 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereIn = [];
 
+    public $recordedWhereNotIn = [];
+
     public $recordedWhereNull = [];
 
     public $recordedWhereNotNull = [];
 
-    public $modelClass = null;
+    public $modelObj = null;
 
     public $recordedWhereLikes = [];
 
-    public function __construct($modelClass)
+    public $orderBy = [];
+
+    public $recordedWhereBetween = [];
+
+    public $recordedWhereNotBetween = [];
+
+    public function __construct($model)
     {
-        $this->modelClass = $modelClass;
+        $this->modelObj = $model;
+    }
+
+    public function offset($value)
+    {
+        $this->offset = $value;
+
+        return $this;
+    }
+
+    public function limit($value)
+    {
+        $this->limit = $value;
+
+        return $this;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereIn[] = [$column, $values];
+        if ($not) {
+            $this->recordedWhereNotIn[] = [$column, $values];
+        } else {
+            $this->recordedWhereIn[] = [$column, $values];
+        }
+
+        return $this;
+    }
+
+    public function whereNotIn($column, $values, $boolean = 'and', $not = false)
+    {
+        $this->recordedWhereNotIn[] = [$column, $values];
 
         return $this;
     }
 
     public function orderBy($column, $direction = 'asc')
     {
+        $this->orderBy = [$column, $direction];
+
         return $this;
     }
 
@@ -77,6 +112,22 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
+    public function whereBetween($column, array $values, $boolean = 'and', $not = false)
+    {
+        $this->recordedWhereBetween[] = [$column, $values];
+
+        return $this;
+
+    }
+
+    public function whereNotBetween($column, array $values, $boolean = 'and')
+    {
+        $this->recordedWhereNotBetween[] = [$column, $values];
+
+        return $this;
+
+    }
+
     public function delete($id = null)
     {
         return $this->filterRows()->count();
@@ -89,7 +140,7 @@ class FakeQueryBuilder extends Builder
         });
 
         $collection->each(function ($val, $key) {
-            $this->modelClass::$fakeRows[$key] = $val;
+            $this->modelObj::$fakeRows[$key] = $val;
         });
 
         return $collection->count();
@@ -106,10 +157,36 @@ class FakeQueryBuilder extends Builder
 
     public function filterRows()
     {
-        $collection = collect($this->modelClass::$fakeRows);
+        $collection = collect($this->modelObj::$fakeRows);
 
-        if ($this->modelClass::$ignoreWheres){
+        if ($this->orderBy) {
+            $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
+            $column = $this->orderBy[0];
+            $createdAt = $this->modelObj->getCreatedAtColumn();
+            $updatedAt = $this->modelObj->getUpdatedAtColumn();
+
+            if ($column === $createdAt || $column === $updatedAt || $column === 'deleted_at') {
+                $collection = $collection->sort(function ($t, $item) use ($column) {
+                    $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
+                    return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
+                });
+            } else {
+                $collection = $collection->$sortBy($column);
+            }
+        }
+
+        if ($this->modelObj::$ignoreWheres) {
             return $collection;
+        }
+
+        foreach ($this->recordedWhereBetween as $_where) {
+            $_where[0] = Str::after($_where[0], '.');
+            $collection = $collection->whereBetween(...$_where);
+        }
+
+        foreach ($this->recordedWhereNotBetween as $_where) {
+            $_where[0] = Str::after($_where[0], '.');
+            $collection = $collection->whereNotBetween(...$_where);
         }
 
         foreach ($this->recordedWheres as $_where) {
@@ -132,6 +209,10 @@ class FakeQueryBuilder extends Builder
             $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
         }
 
+        foreach ($this->recordedWhereNotIn as $_where) {
+            $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
+        }
+
         foreach ($this->recordedWhereNull as $_where) {
             $collection = $collection->whereNull(Str::after($_where[0], '.'));
         }
@@ -140,9 +221,15 @@ class FakeQueryBuilder extends Builder
             $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
         }
 
-        return $collection->map(function ($item) {
-            return $this->_renameKeys(Arr::dot($item), $this->modelClass::$columnAliases);
+        $collection = $collection->map(function ($item) {
+            return $this->_renameKeys(Arr::dot($item), $this->modelObj::$columnAliases);
         });
+
+        $this->offset && $collection = $collection->skip($this->offset);
+
+        $this->limit && $collection = $collection->take($this->limit);
+
+        return $collection;
     }
 
     private function _renameKeys(array $array, array $replace)
@@ -167,7 +254,7 @@ class FakeQueryBuilder extends Builder
         end($this->modelClass::$fakeRows);
         $key = key($this->modelClass::$fakeRows);
 
-        $id = $this->modelClass::$fakeRows[$key]['id'] ?? 0;
+        $id = $this->modelObj::$fakeRows[$key]['id'] ?? 0;
 
         reset($this->modelClass::$fakeRows);
 
