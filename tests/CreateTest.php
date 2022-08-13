@@ -26,16 +26,16 @@ class CreateTest extends TestCase
         CreatyModel::addFakeRow(['id' => 1]);
         CreatyModel::addFakeRow(['id' => 2]);
 
-        CreatyModel::saved(function () {
+        CreatyModel::saved(static function () {
             $_SERVER['saved'] = true;
         });
-        CreatyModel::creating(function () {
+        CreatyModel::creating(static function () {
             $_SERVER['creating'] = true;
         });
-        CreatyModel::created(function () {
+        CreatyModel::created(static function () {
             $_SERVER['created'] = true;
         });
-        CreatyModel::saving(function () {
+        CreatyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
         $bar = CreatyModel::query()->create(
@@ -64,9 +64,6 @@ class CreateTest extends TestCase
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['saving']);
-        unset($_SERVER['created']);
-        unset($_SERVER['creating']);
+        unset($_SERVER['saved'], $_SERVER['saving'], $_SERVER['created'], $_SERVER['creating']);
     }
 }

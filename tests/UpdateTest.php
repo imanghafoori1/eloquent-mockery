@@ -31,16 +31,16 @@ class UpdateTest extends TestCase
         UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
 
-        UpdateyModel::saved(function () {
+        UpdateyModel::saved(static function () {
             $_SERVER['saved'] = true;
         });
-        UpdateyModel::updating(function () {
+        UpdateyModel::updating(static function () {
             $_SERVER['updating'] = true;
         });
-        UpdateyModel::updated(function () {
+        UpdateyModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
-        UpdateyModel::saving(function () {
+        UpdateyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
         $result = UpdateyModel::query()
@@ -61,10 +61,7 @@ class UpdateTest extends TestCase
         $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
         $this->assertTrue($foo->exists);
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
+        unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
     }
 
     /**
@@ -81,16 +78,16 @@ class UpdateTest extends TestCase
         $_SERVER['updated'] = false;
         $_SERVER['saving'] = false;
 
-        UpdateyModel::saved(function () {
+        UpdateyModel::saved(static function () {
             $_SERVER['saved'] = true;
         });
-        UpdateyModel::updating(function () {
+        UpdateyModel::updating(static function () {
             $_SERVER['updating'] = true;
         });
-        UpdateyModel::updated(function () {
+        UpdateyModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
-        UpdateyModel::saving(function () {
+        UpdateyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
         $result = UpdateyModel::query()
@@ -111,10 +108,7 @@ class UpdateTest extends TestCase
         $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
         $this->assertTrue($foo->exists);
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
+        unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
     }
 
     /**
@@ -126,11 +120,11 @@ class UpdateTest extends TestCase
         UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
 
-        UpdateyModel::updating(function () {
+        UpdateyModel::updating(static function () {
             return false;
         });
         $_SERVER['updated'] = false;
-        UpdateyModel::updated(function () {
+        UpdateyModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
 
@@ -157,16 +151,16 @@ class UpdateTest extends TestCase
         $_SERVER['updated'] = false;
         $_SERVER['saving'] = false;
 
-        UpdateyModel::saved(function () {
+        UpdateyModel::saved(static function () {
             $_SERVER['saved'] = true;
         });
-        UpdateyModel::updating(function () {
+        UpdateyModel::updating(static function () {
             $_SERVER['updating'] = true;
         });
-        UpdateyModel::updated(function () {
+        UpdateyModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
-        UpdateyModel::saving(function () {
+        UpdateyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
 
@@ -184,10 +178,7 @@ class UpdateTest extends TestCase
         $foo = UpdateyModel::getUpdatedModel();
         $this->assertNull($foo);
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
+        unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
 
 
         $model = UpdateyModel::query()->find(1);

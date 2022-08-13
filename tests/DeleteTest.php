@@ -75,7 +75,7 @@ class DeleteTest extends TestCase
 
         $std = new \stdClass();
         $std->deleting = false;
-        DeleteUser::deleting(function () use ($std) {
+        DeleteUser::deleting(static function () use ($std) {
             $std->deleting = true;
             return false;
         });
@@ -139,11 +139,11 @@ class DeleteTest extends TestCase
         $std = new \stdClass();
         $std->deleting = false;
         $std->deleted = false;
-        DeleteUser::deleting(function () use ($std) {
+        DeleteUser::deleting(static function () use ($std) {
             $std->deleting = true;
         });
 
-        DeleteUser::deleted(function () use ($std) {
+        DeleteUser::deleted(static function () use ($std) {
             $std->deleted = true;
         });
 

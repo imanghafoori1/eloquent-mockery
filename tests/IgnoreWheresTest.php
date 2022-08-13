@@ -35,7 +35,7 @@ class IgnoreWheresTest extends TestCase
         $this->assertEquals('Iman 1', $user->name);
         $this->assertInstanceOf(IgnoreWheresUser::class, $user);
 
-        // Previous wheres are not applied here in this query.
+        // Previous where's are not applied here in this query.
         $user = IgnoreWheresUser::first();
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman 1', $user->name);

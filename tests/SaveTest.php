@@ -31,16 +31,16 @@ class SaveTest extends TestCase
         SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
 
-        SaveModel::saved(function () {
+        SaveModel::saved(static function () {
             $_SERVER['saved'] = true;
         });
-        SaveModel::updating(function () {
+        SaveModel::updating(static function () {
             $_SERVER['updating'] = true;
         });
-        SaveModel::updated(function () {
+        SaveModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
-        SaveModel::saving(function () {
+        SaveModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
 
@@ -62,10 +62,7 @@ class SaveTest extends TestCase
         $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
         $this->assertTrue($foo->exists);
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
+        unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
     }
 
     /**
@@ -82,16 +79,16 @@ class SaveTest extends TestCase
         $_SERVER['updated'] = false;
         $_SERVER['saving'] = false;
 
-        SaveModel::saved(function () {
+        SaveModel::saved(static function () {
             $_SERVER['saved'] = true;
         });
-        SaveModel::updating(function () {
+        SaveModel::updating(static function () {
             $_SERVER['updating'] = true;
         });
-        SaveModel::updated(function () {
+        SaveModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
-        SaveModel::saving(function () {
+        SaveModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
 
@@ -113,10 +110,7 @@ class SaveTest extends TestCase
         $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
         $this->assertTrue($foo->exists);
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
+        unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
     }
 
     /**
@@ -128,11 +122,11 @@ class SaveTest extends TestCase
         SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
 
-        SaveModel::updating(function () {
+        SaveModel::updating(static function () {
             return false;
         });
         $_SERVER['updated'] = false;
-        SaveModel::updated(function () {
+        SaveModel::updated(static function () {
             $_SERVER['updated'] = true;
         });
 
