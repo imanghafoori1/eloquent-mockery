@@ -169,6 +169,8 @@ class FakeQueryBuilder extends Builder
 
         $id = $this->modelClass::$fakeRows[$key]['id'] ?? 0;
 
+        reset($this->modelClass::$fakeRows);
+
         return $id + 1;
     }
 }
