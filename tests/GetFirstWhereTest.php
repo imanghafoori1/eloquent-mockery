@@ -132,6 +132,14 @@ class GetFirstWhereTest extends TestCase
         $this->assertEquals(20, ($users[0])->age);
         $this->assertEquals(1, $users->count());
 
+        $users = User::whereNull('name')->select('age')->first();
+        $this->assertEquals(null, $users->id);
+        $this->assertEquals(20, $users->age);
+
+        $users = User::whereNull('name')->select('age')->addSelect('id')->first();
+        $this->assertEquals(1, $users->id);
+        $this->assertEquals(20, $users->age);
+
         User::stopFaking();
     }
 }

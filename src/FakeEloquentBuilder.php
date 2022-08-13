@@ -9,6 +9,8 @@ use Illuminate\Support\Arr;
 
 class FakeEloquentBuilder extends Builder
 {
+    private $select = [];
+
     public function __construct($modelObj, $modelClass)
     {
         $this->query = new FakeQueryBuilder($modelObj);
@@ -22,6 +24,9 @@ class FakeEloquentBuilder extends Builder
         foreach ($this->applyScopes()->applyWheres() as $i => $row) {
             $model = new $this->modelClass;
             $model->exists = true;
+            if ($this->select) {
+                $row = Arr::only($row, $this->select);
+            }
             $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
             $model->setRawAttributes($row);
             $models[] = $model;
@@ -34,6 +39,17 @@ class FakeEloquentBuilder extends Builder
 
     public function select($columns = ['*'])
     {
+        $columns = is_array($columns) ? $columns : func_get_args();
+        $this->select = $columns;
+
+        return $this;
+    }
+
+    public function addSelect($columns = ['*'])
+    {
+        $columns = is_array($columns) ? $columns : func_get_args();
+        $this->select = array_merge($this->select, $columns);
+
         return $this;
     }
 
