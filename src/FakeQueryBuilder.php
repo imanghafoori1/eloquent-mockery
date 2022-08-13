@@ -112,7 +112,7 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
-    public function whereBetween($column, array $values, $boolean = 'and', $not = false)
+    public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
     {
         $this->recordedWhereBetween[] = [$column, $values];
 
@@ -120,7 +120,7 @@ class FakeQueryBuilder extends Builder
 
     }
 
-    public function whereNotBetween($column, array $values, $boolean = 'and')
+    public function whereNotBetween($column, iterable $values, $boolean = 'and')
     {
         $this->recordedWhereNotBetween[] = [$column, $values];
 
