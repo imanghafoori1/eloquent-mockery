@@ -48,9 +48,14 @@ trait MockableModel
     public static function fakeSoftDelete()
     {
         static::$fakeMode = true;
-        static::softDeleted(function ($model) {
+        $cb = function ($model) {
             self::$changedModels['softDeleted'][] = $model;
-        });
+        };
+        if (method_exists(static::class, 'softDeleted')) {
+            static::softDeleted($cb);
+        } else {
+            static::deleted($cb);
+        }
     }
 
     public static function getUpdatedModel($index = 0)

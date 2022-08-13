@@ -187,6 +187,9 @@ class DeleteTest extends TestCase
         DeleteUser::addFakeRow(['id' => 1]);
         $user = DeleteUser::find(1);
 
+        if (! method_exists($user, 'deleteOrFail')) {
+            $this->markTestSkipped();
+        }
         $result = $user->deleteOrFail();
         $deletedModel = DeleteUser::getDeletedModel();
 
