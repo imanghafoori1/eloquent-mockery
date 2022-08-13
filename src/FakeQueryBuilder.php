@@ -251,11 +251,9 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        $key = array_key_last($this->modelObj::$fakeRows);
+        foreach($this->modelObj::$fakeRows as $row) {}
 
-        $id = $this->modelObj::$fakeRows[$key]['id'] ?? 0;
-
-        return $id + 1;
+        return ($row['id'] ?? 0) + 1;
     }
 
     public function pluck($column, $key = null)
