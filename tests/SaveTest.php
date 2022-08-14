@@ -19,6 +19,7 @@ class SaveTest extends TestCase
 {
     public function tearDown(): void
     {
+        unset($_SERVER['forTest']);
         SaveModel::stopFaking();
     }
 
@@ -32,28 +33,40 @@ class SaveTest extends TestCase
         SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
 
         SaveModel::saved(function () {
-            $_SERVER['saved'] = true;
+            $_SERVER['forTest']['saved'] = true;
         });
         SaveModel::updating(function () {
-            $_SERVER['updating'] = true;
-        });
-        SaveModel::updated(function () {
-            $_SERVER['updated'] = true;
-        });
-        SaveModel::saving(function () {
-            $_SERVER['saving'] = true;
+            $_SERVER['forTest']['updating'] = true;
         });
 
-        $result = SaveModel::query()->find(1);
-        $result->name = 'hello';
-        $result = $result->save();
+        SaveModel::updated(function () {
+            $_SERVER['forTest']['updated'] = true;
+        });
+        SaveModel::saving(function () {
+            $_SERVER['forTest']['saving'] = true;
+        });
+
+        SaveModel::creating(function () {
+            $_SERVER['forTest']['creating'] = true;
+        });
+        SaveModel::created(function () {
+            $_SERVER['forTest']['created'] = true;
+        });
+
+        $model = SaveModel::query()->find(1);
+        $model->name = 'hello';
+
+        $result = $model->save();
+        $this->assertFalse($model->wasRecentlyCreated);
 
         $this->assertTrue($result);
 
-        $this->assertTrue($_SERVER['saved']);
-        $this->assertTrue($_SERVER['saving']);
-        $this->assertTrue($_SERVER['updated']);
-        $this->assertTrue($_SERVER['updating']);
+        $this->assertTrue($_SERVER['forTest']['saved']);
+        $this->assertTrue($_SERVER['forTest']['saving']);
+        $this->assertTrue($_SERVER['forTest']['updated']);
+        $this->assertTrue($_SERVER['forTest']['updating']);
+        $this->assertTrue(! isset($_SERVER['forTest']['created']));
+        $this->assertTrue(! isset($_SERVER['forTest']['creating']));
 
         $foo = SaveModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
@@ -61,11 +74,58 @@ class SaveTest extends TestCase
 
         $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
         $this->assertTrue($foo->exists);
+    }
 
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
+    /**
+     * @test
+     */
+    public function save_a_new_model()
+    {
+        SaveModel::setEventDispatcher(new Dispatcher());
+        SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
+        SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+
+        SaveModel::saved(function () {
+            $_SERVER['forTest']['saved'] = true;
+        });
+        SaveModel::saving(function () {
+            $_SERVER['forTest']['saving'] = true;
+        });
+
+        SaveModel::creating(function () {
+            $_SERVER['forTest']['creating'] = true;
+        });
+        SaveModel::created(function () {
+            $_SERVER['forTest']['created'] = true;
+        });
+
+        SaveModel::updating(function () {
+            $_SERVER['forTest']['updating'] = true;
+        });
+        SaveModel::updated(function () {
+            $_SERVER['forTest']['updated'] = true;
+        });
+
+        $newModel = new SaveModel();
+        $newModel->name = 'hello';
+        $result = $newModel->save();
+
+        $this->assertTrue($result);
+        $this->assertTrue($newModel->wasRecentlyCreated);
+        $this->assertTrue($newModel->exists);
+
+        $this->assertTrue($_SERVER['forTest']['saved']);
+        $this->assertTrue($_SERVER['forTest']['saving']);
+        $this->assertTrue(! isset($_SERVER['forTest']['updated']));
+        $this->assertTrue(! isset($_SERVER['forTest']['updating']));
+        $this->assertTrue($_SERVER['forTest']['created']);
+        $this->assertTrue($_SERVER['forTest']['creating']);
+
+        $foo = SaveModel::getUpdatedModel();
+        $this->assertEquals(null, $foo);
+
+        $foo = SaveModel::getCreatedModel();
+        $this->assertSame($foo, $newModel);
     }
 
     /**
@@ -77,22 +137,22 @@ class SaveTest extends TestCase
         SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
         SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
 
-        $_SERVER['saved'] = false;
-        $_SERVER['updating'] = false;
-        $_SERVER['updated'] = false;
-        $_SERVER['saving'] = false;
+        $_SERVER['forTest']['saved'] = false;
+        $_SERVER['forTest']['updating'] = false;
+        $_SERVER['forTest']['updated'] = false;
+        $_SERVER['forTest']['saving'] = false;
 
         SaveModel::saved(function () {
-            $_SERVER['saved'] = true;
+            $_SERVER['forTest']['saved'] = true;
         });
         SaveModel::updating(function () {
-            $_SERVER['updating'] = true;
+            $_SERVER['forTest']['updating'] = true;
         });
         SaveModel::updated(function () {
-            $_SERVER['updated'] = true;
+            $_SERVER['forTest']['updated'] = true;
         });
         SaveModel::saving(function () {
-            $_SERVER['saving'] = true;
+            $_SERVER['forTest']['saving'] = true;
         });
 
         $result = SaveModel::query()->find(1);
@@ -101,10 +161,10 @@ class SaveTest extends TestCase
 
         $this->assertTrue($result);
 
-        $this->assertFalse($_SERVER['saved']);
-        $this->assertFalse($_SERVER['saving']);
-        $this->assertFalse($_SERVER['updated']);
-        $this->assertFalse($_SERVER['updating']);
+        $this->assertFalse($_SERVER['forTest']['saved']);
+        $this->assertFalse($_SERVER['forTest']['saving']);
+        $this->assertFalse($_SERVER['forTest']['updated']);
+        $this->assertFalse($_SERVER['forTest']['updating']);
 
         $foo = SaveModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
@@ -112,17 +172,12 @@ class SaveTest extends TestCase
 
         $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
         $this->assertTrue($foo->exists);
-
-        unset($_SERVER['saved']);
-        unset($_SERVER['updating']);
-        unset($_SERVER['updated']);
-        unset($_SERVER['saving']);
     }
 
     /**
      * @test
      */
-    public function saving_event()
+    public function updating_event_can_halt()
     {
         SaveModel::setEventDispatcher(new Dispatcher());
         SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
@@ -131,19 +186,20 @@ class SaveTest extends TestCase
         SaveModel::updating(function () {
             return false;
         });
-        $_SERVER['updated'] = false;
+        $_SERVER['forTest']['updated'] = false;
         SaveModel::updated(function () {
-            $_SERVER['updated'] = true;
+            $_SERVER['forTest']['updated'] = true;
         });
 
         $result = SaveModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertFalse($result);
-        $this->assertFalse($_SERVER['updated']);
+        $this->assertFalse($_SERVER['forTest']['updated']);
 
         $result = SaveModel::query()->find(1);
         $result->name = 'hello 3';
 
         $this->assertFalse($result->save());
+        $this->assertFalse($_SERVER['forTest']['updated']);
     }
 }
