@@ -162,10 +162,8 @@ class FakeQueryBuilder extends Builder
         if ($this->orderBy) {
             $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
             $column = $this->orderBy[0];
-            $createdAt = $this->modelObj->getCreatedAtColumn();
-            $updatedAt = $this->modelObj->getUpdatedAtColumn();
 
-            if ($column === $createdAt || $column === $updatedAt || $column === 'deleted_at') {
+            if (in_array($column, $this->modelObj->getDates())) {
                 $collection = $collection->sort(function ($t, $item) use ($column) {
                     $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
                     return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
