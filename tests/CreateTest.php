@@ -38,13 +38,11 @@ class CreateTest extends TestCase
         CreatyModel::saving(function () {
             $_SERVER['saving'] = true;
         });
-        $bar = CreatyModel::query()->create(
-            [
+        $bar = CreatyModel::query()->create([
                 'id' => 12,
                 'name' => 'hello',
-                'family' => 'gha'
-            ]
-        );
+                'family' => 'gha',
+            ]);
 
         $foo = CreatyModel::getCreatedModel();
         $this->assertSame($foo, $bar);

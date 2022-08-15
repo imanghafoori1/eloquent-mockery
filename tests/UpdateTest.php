@@ -43,9 +43,7 @@ class UpdateTest extends TestCase
         UpdateyModel::saving(function () {
             $_SERVER['saving'] = true;
         });
-        $result = UpdateyModel::query()
-            ->find(1)
-            ->update(['name' => 'hello']);
+        $result = UpdateyModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertTrue($result);
 
@@ -93,9 +91,7 @@ class UpdateTest extends TestCase
         UpdateyModel::saving(function () {
             $_SERVER['saving'] = true;
         });
-        $result = UpdateyModel::query()
-            ->find(1)
-            ->update(['name' => 'hello']);
+        $result = UpdateyModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertTrue($result);
 
@@ -170,9 +166,7 @@ class UpdateTest extends TestCase
             $_SERVER['saving'] = true;
         });
 
-        $result = UpdateyModel::query()
-            ->whereIn('id', [1, 2])
-            ->update(['name' => 'hello']);
+        $result = UpdateyModel::query()->whereIn('id', [1, 2])->update(['name' => 'hello']);
 
         $this->assertEquals(2, $result);
 
@@ -188,7 +182,6 @@ class UpdateTest extends TestCase
         unset($_SERVER['updating']);
         unset($_SERVER['updated']);
         unset($_SERVER['saving']);
-
 
         $model = UpdateyModel::query()->find(1);
         $this->assertEquals('hello', $model->name);

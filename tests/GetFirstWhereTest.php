@@ -24,22 +24,22 @@ class GetFirstWhereTest extends TestCase
      */
     public function first()
     {
-        User::addFakeRow(['id' => 1, 'name' => 'Iman', 'age' => 20,]);
+        User::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
         User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
         User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $user = User::first();
         $this->assertEquals(1, $user->id);
-        $this->assertEquals('Iman', $user->name);
+        $this->assertEquals('Iman 1', $user->name);
         $this->assertInstanceOf(User::class, $user);
 
         $user = User::query()->first();
         $this->assertEquals(1, $user->id);
-        $this->assertEquals('Iman', $user->name);
+        $this->assertEquals('Iman 1', $user->name);
         $this->assertInstanceOf(User::class, $user);
 
         $this->assertEquals(1, User::query()->value('id'));
-        $this->assertEquals('Iman', User::query()->value('name'));
+        $this->assertEquals('Iman 1', User::query()->value('name'));
         $this->assertEquals(null, User::query()->value('sdfvsdb'));
 
         $user = User::query()->first(['id']);

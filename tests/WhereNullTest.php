@@ -25,6 +25,7 @@ class WhereNullTest extends TestCase
     {
         WhereNullUser::stopFaking();
     }
+
     /**
      * @test
      */

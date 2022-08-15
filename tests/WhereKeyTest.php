@@ -52,6 +52,7 @@ class WhereKeyTest extends TestCase
         $this->assertEquals('Iman 2', ($users[0])->name);
         $this->assertEquals(1, ($users->count()));
     }
+
     /**
      * @test
      */

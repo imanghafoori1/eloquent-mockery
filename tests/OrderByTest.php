@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
-
 class OrderUser extends Model
 {
     use MockableModel;
@@ -14,6 +13,11 @@ class OrderUser extends Model
 
 class OrderByTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        OrderUser::stopFaking();
+    }
+
     /**
      * @test
      */
@@ -32,8 +36,20 @@ class OrderByTest extends TestCase
         $user = $users[0];
         $this->assertEquals(3, $user->id);
         $this->assertEquals('Iman 3', $user->name);
+    }
 
-        OrderUser::stopFaking();
+    /**
+     * @test
+     */
+    public function reorderBy()
+    {
+        OrderUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 40,]);
+        OrderUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        OrderUser::addFakeRow(['id' => 3, 'name' => 'a Iman 3', 'age' => 34,]);
+
+        $users = OrderUser::query()->orderBy('id')->reorder('age')->get();
+        $user = $users[0];
+        $this->assertEquals(2, $user->id);
     }
 
     /**
@@ -45,13 +61,13 @@ class OrderByTest extends TestCase
             'id' => 1,
             'name' => 'Hello',
             'age' => 20,
-            'created_at' => '2022-08-14 16:59:29'
+            'created_at' => '2022-08-14 16:59:29',
         ]);
         OrderUser::addFakeRow([
             'id' => 2,
             'name' => 'Iman 2',
             'age' => 30,
-            'created_at' => '2022-08-22 16:59:29'
+            'created_at' => '2022-08-22 16:59:29',
         ]);
         OrderUser::addFakeRow([
             'id' => 3,
@@ -71,7 +87,5 @@ class OrderByTest extends TestCase
 
         $user = OrderUser::query()->oldest()->first();
         $this->assertEquals(3, $user->id);
-
-        OrderUser::stopFaking();
     }
 }

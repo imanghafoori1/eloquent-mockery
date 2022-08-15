@@ -77,6 +77,7 @@ class DeleteTest extends TestCase
         $std->deleting = false;
         DeleteUser::deleting(function () use ($std) {
             $std->deleting = true;
+
             return false;
         });
 
@@ -102,18 +103,20 @@ class DeleteTest extends TestCase
         DeleteUser::setEventDispatcher(new Dispatcher);
         DeleteUser::addFakeRow([
             'id' => 1,
-            'name' => 'mocky'
+            'name' => 'mocky',
         ]);
         $std = new \stdClass();
         $std->deleting = false;
         $std->deleted = false;
         DeleteUser::deleting(function () use ($std) {
             $std->deleting = true;
+
             return false;
         });
 
         DeleteUser::deleted(function () use ($std) {
             $std->deleted = true;
+
             return false;
         });
 

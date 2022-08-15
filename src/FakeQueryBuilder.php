@@ -28,6 +28,8 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereNotBetween = [];
 
+    public $shuffle = false;
+
     public function __construct($model)
     {
         $this->modelObj = $model;
@@ -155,23 +157,10 @@ class FakeQueryBuilder extends Builder
         }
     }
 
-    public function filterRows()
+    public function filterRows($sort = true)
     {
         $collection = collect($this->modelObj::$fakeRows);
-
-        if ($this->orderBy) {
-            $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
-            $column = $this->orderBy[0];
-
-            if (in_array($column, $this->modelObj->getDates())) {
-                $collection = $collection->sort(function ($t, $item) use ($column) {
-                    $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
-                    return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
-                });
-            } else {
-                $collection = $collection->$sortBy($column);
-            }
-        }
+        $sort && ($collection = $this->sortRows($collection));
 
         if ($this->modelObj::$ignoreWheres) {
             return $collection;
@@ -257,5 +246,64 @@ class FakeQueryBuilder extends Builder
     public function pluck($column, $key = null)
     {
         return $this->filterRows()->pluck($column, $key);
+    }
+
+    public function sum($column)
+    {
+        return $this->filterRows(false)->sum($column);
+    }
+
+    public function avg($column)
+    {
+        return $this->filterRows(false)->avg($column);
+    }
+
+    public function max($column)
+    {
+        return $this->filterRows(false)->max($column);
+    }
+
+    public function min($column)
+    {
+        return $this->filterRows(false)->min($column);
+    }
+
+    public function exists()
+    {
+        return $this->filterRows(false)->count() > 0;
+    }
+
+    public function inRandomOrder($seed = '')
+    {
+        return $this->shuffle = [true, ($seed ?: null)];
+    }
+
+    public function reorder($column = null, $direction = 'asc')
+    {
+        $this->orderBy = [$column, $direction];
+
+        return $this;
+    }
+
+    public function sortRows($collection)
+    {
+        if ($this->orderBy) {
+            $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
+            $column = $this->orderBy[0];
+
+            if (in_array($column, $this->modelObj->getDates())) {
+                $collection = $collection->sort(function ($t, $item) use ($column) {
+                    $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
+
+                    return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
+                });
+            } else {
+                $collection = $collection->$sortBy($column);
+            }
+        } elseif ($this->shuffle !== false) {
+            $collection->shuffle($this->shuffle[1]);
+        }
+
+        return $collection;
     }
 }

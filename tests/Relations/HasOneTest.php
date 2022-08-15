@@ -43,9 +43,9 @@ class HasOneTest extends TestCase
         HasOneUser::addFakeRow(['id' => 3, 'name' => 'Iman 3']);
         HasOneUser::addFakeRow(['id' => 4, 'name' => 'Iman 4']);
 
-        HasOneComment::addFakeRow(['id' => 1, 'user_id' => 1,'comment' => 'sss']);
-        HasOneComment::addFakeRow(['id' => 2, 'user_id' => 1,'comment' => 'aaa']);
-        HasOneComment::addFakeRow(['id' => 3, 'user_id' => 3,'comment' => 'bbb']);
+        HasOneComment::addFakeRow(['id' => 1, 'user_id' => 1, 'comment' => 'sss']);
+        HasOneComment::addFakeRow(['id' => 2, 'user_id' => 1, 'comment' => 'aaa']);
+        HasOneComment::addFakeRow(['id' => 3, 'user_id' => 3, 'comment' => 'bbb']);
 
         $user = HasOneUser::with('comments')->where('id', 1)->first();
 
@@ -63,7 +63,7 @@ class HasOneTest extends TestCase
         $time = Carbon::now()->getTimestamp();
 
         $newUser = HasOneComment::query()->find(3)->user()->create([
-            'name' => 'created'
+            'name' => 'created',
         ]);
 
         $this->assertEquals($time, $newUser->created_at->getTimestamp());
@@ -74,7 +74,7 @@ class HasOneTest extends TestCase
         $this->assertEquals(5, HasOneUser::count());
 
         $comment = HasOneUser::find(4)->comments()->create([
-            'comment' => 'created!'
+            'comment' => 'created!',
         ]);
 
         $this->assertEquals('created!', $comment->comment);
