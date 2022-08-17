@@ -4,9 +4,11 @@ namespace Imanghafoori\EloquentMockery;
 
 class FakeDB
 {
-    public static $rows = [];
+    public static $ignoreWheres = false;
 
     public static $fakeRows = [];
+
+    public static $columnAliases = [];
 
     public static function table($table)
     {
@@ -20,10 +22,14 @@ class FakeDB
 
             public function addRow($row)
             {
-                FakeDB::$rows[$this->table][] = $row;
+                FakeDB::$fakeRows[$this->table][] = $row;
             }
         };
     }
 
+    public static function truncate()
+    {
+        self::$fakeRows = [];
+    }
 
 }

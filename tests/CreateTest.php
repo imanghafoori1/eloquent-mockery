@@ -62,6 +62,9 @@ class CreateTest extends TestCase
         $this->assertNull(CreatyModel::getCreatedModel(1));
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
+        $this->assertEquals(3, $model->id);
+        $this->assertNotNull($model->created_at);
+        $this->assertNotNull($model->updated_at);
 
         unset($_SERVER['saved']);
         unset($_SERVER['saving']);

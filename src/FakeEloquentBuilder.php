@@ -11,9 +11,9 @@ class FakeEloquentBuilder extends Builder
 {
     private $select = [];
 
-    public function __construct($modelObj, $modelClass)
+    public function __construct(Model $modelObj, $modelClass)
     {
-        $this->query = new FakeQueryBuilder($modelObj);
+        $this->query = new FakeQueryBuilder($modelObj->getDates());
         $this->model = $modelObj;
         $this->modelClass = $modelClass;
     }
@@ -122,14 +122,6 @@ class FakeEloquentBuilder extends Builder
         return $filtered;
     }
 
-    public function setModel(Model $model)
-    {
-        $this->model = $model;
-        $this->query->from = '';
-
-        return $this;
-    }
-
     public static function removeModel($modelId, $table, $keyName = 'id')
     {
         foreach (FakeDB::$fakeRows[$table] as $i => $row) {
@@ -167,17 +159,5 @@ class FakeEloquentBuilder extends Builder
         FakeEloquentBuilder::insertRow($model->getAttributes(), $model->getTable());
 
         return $model;
-    }
-
-    public function addUpdatedAtColumn(array $values)
-    {
-        $values = parent::addUpdatedAtColumn($values);
-        $updatedAt = $this->model->getUpdatedAtColumn();
-        if (isset($values['.'.$updatedAt])) {
-            $values[$updatedAt] = $values['.'.$updatedAt];
-            unset($values['.'.$updatedAt]);
-        }
-
-        return $values;
     }
 }

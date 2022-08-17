@@ -50,7 +50,6 @@ class ManyToManyTest extends TestCase
         ManyToManyCity::addFakeRow(['id' => 5, 'user_id' => 3, 'comment' => 'ddd']);
 
         $user = ManyToManyUser::where('id', 1)->first();
-        dd($user->city()->first());
 
         $this->assertInstanceOf(Collection::class, $user->comments);
         $this->assertEquals(2, $user->comments->count());

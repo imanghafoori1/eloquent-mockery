@@ -14,12 +14,6 @@ trait MockableModel
 
     public static $fakeMode = false;
 
-    public static $firstModel;
-
-    public static $ignoreWheres = false;
-
-    public static $columnAliases = [];
-
     public static $forceMocks = [];
 
     public static function shouldRecieve($method)
@@ -88,7 +82,7 @@ trait MockableModel
     protected function newBaseQueryBuilder()
     {
         if ($this->isFakeMode()) {
-            return new FakeQueryBuilder($this);
+            return new FakeQueryBuilder($this->getDates());
         } else {
             return parent::newBaseQueryBuilder();
         }
@@ -123,7 +117,7 @@ trait MockableModel
 
     public static function ignoreWheres()
     {
-        self::$ignoreWheres = true;
+        FakeDB::$ignoreWheres = true;
     }
 
     private static function parseColumn($where, $table)
@@ -133,19 +127,9 @@ trait MockableModel
         }
 
         [$tableCol, $alias] = explode(' as ', $where);
-        self::$columnAliases[$table][trim($tableCol)] = trim($alias);
+        FakeDB::$columnAliases[$table][trim($tableCol)] = trim($alias);
 
         return $tableCol;
-    }
-
-    /**
-     * Get the table qualified key name.
-     *
-     * @return string
-     */
-    public function getQualifiedKeyName()
-    {
-        return $this->getKeyName();
     }
 
     public function fakeEloquentBuilder()
@@ -157,9 +141,8 @@ trait MockableModel
     {
         self::$fakeMode = false;
         FakeDB::$fakeRows = [];
-        self::$firstModel = null;
-        self::$ignoreWheres = false;
-        self::$columnAliases = [];
+        FakeDB::$ignoreWheres = false;
+        FakeDB::$columnAliases = [];
         self::$forceMocks = [];
         self::$changedModels = [
             'updated' => [],
@@ -177,7 +160,7 @@ trait MockableModel
 
     private function isFakeMode()
     {
-        return FakeDB::$fakeRows || self::$fakeMode || isset(FakeDB::$rows[$this->getTable()]);
+        return FakeDB::$fakeRows || self::$fakeMode || isset(FakeDB::$fakeRows[$this->getTable()]);
     }
 
     protected function finishSave(array $options)

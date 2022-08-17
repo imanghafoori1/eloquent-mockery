@@ -2,6 +2,7 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -18,8 +19,6 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereNotNull = [];
 
-    public $modelObj = null;
-
     public $recordedWhereLikes = [];
 
     public $orderBy = [];
@@ -30,9 +29,11 @@ class FakeQueryBuilder extends Builder
 
     public $shuffle = false;
 
-    public function __construct($model)
+    private $dates;
+
+    public function __construct($dates)
     {
-        $this->modelObj = $model;
+        $this->dates = $dates;
     }
 
     public function offset($value)
@@ -142,27 +143,25 @@ class FakeQueryBuilder extends Builder
         });
 
         $collection->each(function ($val, $key) {
-            FakeDB::$fakeRows[$this->modelObj->getTable()][$key] = $val;
+            // rename keys: table.column to column.
+            foreach ($val as $k => $v) {
+                $k1 = str_replace($this->from.'.', '', $k);
+                unset($val[$k]);
+                $val[$k1] = $v;
+            }
+
+            FakeDB::$fakeRows[$this->from][$key] = $val;
         });
 
         return $collection->count();
     }
 
-    public function updateRow($originalModel, array $attributes)
-    {
-        $row = $this->filterRows();
-
-        foreach ($row as $i) {
-            FakeDB::$fakeRows[$this->modelObj->getTable()][$i] = FakeDB::$fakeRows[$this->modelObj->getTable()][$i] + $attributes;
-        }
-    }
-
     public function filterRows($sort = true)
     {
-        $collection = collect(FakeDB::$fakeRows[$this->modelObj->getTable()] ?? []);
+        $collection = collect(FakeDB::$fakeRows[$this->from] ?? []);
         $sort && ($collection = $this->sortRows($collection));
 
-        if ($this->modelObj::$ignoreWheres) {
+        if (FakeDB::$ignoreWheres) {
             return $collection;
         }
 
@@ -211,7 +210,7 @@ class FakeQueryBuilder extends Builder
         $collection = $collection->map(function ($item) {
             return $this->_renameKeys(
                 Arr::dot($item),
-                $this->modelObj::$columnAliases[$this->modelObj->getTable()] ?? []
+                FakeDB::$columnAliases[$this->from] ?? []
             );
         });
 
@@ -241,7 +240,7 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        foreach(FakeDB::$fakeRows[$this->modelObj->getTable()] as $row) {}
+        foreach(FakeDB::$fakeRows[$this->from] as $row) {}
 
         return ($row['id'] ?? 0) + 1;
     }
@@ -294,7 +293,7 @@ class FakeQueryBuilder extends Builder
             $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
             $column = $this->orderBy[0];
 
-            if (in_array($column, $this->modelObj->getDates())) {
+            if (in_array($column, $this->dates)) {
                 $collection = $collection->sort(function ($t, $item) use ($column) {
                     $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
 
