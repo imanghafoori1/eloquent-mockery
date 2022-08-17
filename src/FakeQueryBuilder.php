@@ -2,7 +2,6 @@
 
 namespace Imanghafoori\EloquentMockery;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;

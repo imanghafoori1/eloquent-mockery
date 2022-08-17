@@ -111,17 +111,6 @@ class FakeEloquentBuilder extends Builder
         return $this->delete();
     }
 
-    private static function filterColumns($columns, $filtered)
-    {
-        if ($columns !== ['*']) {
-            $filtered = $filtered->map(function ($item) use ($columns) {
-                return Arr::only($item, $columns);
-            });
-        }
-
-        return $filtered;
-    }
-
     public static function removeModel($modelId, $table, $keyName = 'id')
     {
         foreach (FakeDB::$fakeRows[$table] as $i => $row) {

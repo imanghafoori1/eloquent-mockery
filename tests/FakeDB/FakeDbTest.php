@@ -16,7 +16,6 @@ class FakeDbUser extends Model
 
 class FakeDbTest extends TestCase
 {
-
     /**
      * @test
      */
