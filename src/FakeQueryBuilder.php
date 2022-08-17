@@ -142,7 +142,7 @@ class FakeQueryBuilder extends Builder
         });
 
         $collection->each(function ($val, $key) {
-            $this->modelObj::$fakeRows[$key] = $val;
+            FakeDB::$fakeRows[$this->modelObj->getTable()][$key] = $val;
         });
 
         return $collection->count();
@@ -153,13 +153,13 @@ class FakeQueryBuilder extends Builder
         $row = $this->filterRows();
 
         foreach ($row as $i) {
-            $originalModel::$fakeRows[$i] = $originalModel::$fakeRows[$i] + $attributes;
+            FakeDB::$fakeRows[$this->modelObj->getTable()][$i] = FakeDB::$fakeRows[$this->modelObj->getTable()][$i] + $attributes;
         }
     }
 
     public function filterRows($sort = true)
     {
-        $collection = collect($this->modelObj::$fakeRows);
+        $collection = collect(FakeDB::$fakeRows[$this->modelObj->getTable()] ?? []);
         $sort && ($collection = $this->sortRows($collection));
 
         if ($this->modelObj::$ignoreWheres) {
@@ -209,7 +209,10 @@ class FakeQueryBuilder extends Builder
         }
 
         $collection = $collection->map(function ($item) {
-            return $this->_renameKeys(Arr::dot($item), $this->modelObj::$columnAliases);
+            return $this->_renameKeys(
+                Arr::dot($item),
+                $this->modelObj::$columnAliases[$this->modelObj->getTable()] ?? []
+            );
         });
 
         $this->offset && $collection = $collection->skip($this->offset);
@@ -238,7 +241,7 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        foreach($this->modelObj::$fakeRows as $row) {}
+        foreach(FakeDB::$fakeRows[$this->modelObj->getTable()] as $row) {}
 
         return ($row['id'] ?? 0) + 1;
     }

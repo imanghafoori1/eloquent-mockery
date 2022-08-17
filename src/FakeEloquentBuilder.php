@@ -102,7 +102,7 @@ class FakeEloquentBuilder extends Builder
         if ($count !== 0) {
             $this->modelClass::$changedModels['deleted'][] = $this->model;
 
-            self::removeModel($this->modelClass, $this->model->getKey(), $this->model->getKeyName());
+            self::removeModel($this->model->getKey(), $this->model->getTable(), $this->model->getKeyName());
         }
     }
 
@@ -130,11 +130,11 @@ class FakeEloquentBuilder extends Builder
         return $this;
     }
 
-    public static function removeModel($modelClass, $modelId, $keyName = 'id')
+    public static function removeModel($modelId, $table, $keyName = 'id')
     {
-        foreach ($modelClass::$fakeRows as $i => $row) {
+        foreach (FakeDB::$fakeRows[$table] as $i => $row) {
             if ($row[$keyName] === $modelId) {
-                unset($modelClass::$fakeRows[$i]);
+                unset(FakeDB::$fakeRows[$table][$i]);
             }
         }
     }
@@ -149,9 +149,9 @@ class FakeEloquentBuilder extends Builder
         return $this->model->newInstance($attributes);
     }
 
-    public static function insertRow($originalModel, array $attributes)
+    public static function insertRow(array $attributes, $table)
     {
-        $originalModel::$fakeRows[] = $attributes;
+        FakeDB::$fakeRows[$table][] = $attributes;
     }
 
     public function update(array $values)
@@ -164,7 +164,7 @@ class FakeEloquentBuilder extends Builder
     public function create(array $attributes = [])
     {
         $model = parent::create($attributes);
-        FakeEloquentBuilder::insertRow($this->modelClass, $model->getAttributes());
+        FakeEloquentBuilder::insertRow($model->getAttributes(), $model->getTable());
 
         return $model;
     }

@@ -16,8 +16,6 @@ trait MockableModel
 
     public static $firstModel;
 
-    public static $fakeRows = [];
-
     public static $ignoreWheres = false;
 
     public static $columnAliases = [];
@@ -107,13 +105,15 @@ trait MockableModel
 
     public static function addFakeRow(array $attributes)
     {
+        $table = (new static())->getTable();
         $row = [];
         self::$fakeMode = true;
         foreach ($attributes as $key => $value) {
-            $col = self::parseColumn($key);
+            $col = self::parseColumn($key, $table);
             $row[$col] = $value;
         }
-        self::$fakeRows[] = $row;
+        //FakeDB::$fakeRows[] = $row;
+        FakeDB::$fakeRows[$table][] = $row;
     }
 
     public static function fake()
@@ -126,14 +126,14 @@ trait MockableModel
         self::$ignoreWheres = true;
     }
 
-    private static function parseColumn($where)
+    private static function parseColumn($where, $table)
     {
         if (! strpos($where,' as ')) {
             return $where;
         }
 
         [$tableCol, $alias] = explode(' as ', $where);
-        self::$columnAliases[trim($tableCol)] = trim($alias);
+        self::$columnAliases[$table][trim($tableCol)] = trim($alias);
 
         return $tableCol;
     }
@@ -156,7 +156,7 @@ trait MockableModel
     public static function stopFaking()
     {
         self::$fakeMode = false;
-        self::$fakeRows = [];
+        FakeDB::$fakeRows = [];
         self::$firstModel = null;
         self::$ignoreWheres = false;
         self::$columnAliases = [];
@@ -177,7 +177,7 @@ trait MockableModel
 
     private function isFakeMode()
     {
-        return self::$fakeRows || self::$fakeMode;
+        return FakeDB::$fakeRows || self::$fakeMode || isset(FakeDB::$rows[$this->getTable()]);
     }
 
     protected function finishSave(array $options)
