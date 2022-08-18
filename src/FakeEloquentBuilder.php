@@ -3,9 +3,7 @@
 namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 
 class FakeEloquentBuilder extends Builder
 {
@@ -18,29 +16,10 @@ class FakeEloquentBuilder extends Builder
         $this->modelClass = $modelClass;
     }
 
-    public function get($columns = ['*'])
-    {
-        $models = [];
-        foreach ($this->applyScopes()->applyWheres() as $i => $row) {
-            $model = new $this->modelClass;
-            $model->exists = true;
-            if ($this->select) {
-                $row = Arr::only($row, $this->select);
-            }
-            $row = $columns === ['*'] ? $row : Arr::only($row, $columns);
-            $model->setRawAttributes($row);
-            $models[] = $model;
-        }
-
-        $models = $this->eagerLoadRelations($models);
-
-        return Collection::make($models);
-    }
-
     public function select($columns = ['*'])
     {
         $columns = is_array($columns) ? $columns : func_get_args();
-        $this->select = $columns;
+        $this->query->columns = $columns;
 
         return $this;
     }
@@ -48,7 +27,7 @@ class FakeEloquentBuilder extends Builder
     public function addSelect($columns = ['*'])
     {
         $columns = is_array($columns) ? $columns : func_get_args();
-        $this->select = array_merge($this->select, $columns);
+        $this->query->columns = array_merge($this->query->columns, $columns);
 
         return $this;
     }
@@ -61,7 +40,7 @@ class FakeEloquentBuilder extends Builder
             }
         }
 
-        return $this->applyScopes()->applyWheres()->count();
+        return $this->applyScopes()->query->filterRows(false)->count();
     }
 
     public function orderBy($column, $direction = 'asc')
@@ -120,9 +99,9 @@ class FakeEloquentBuilder extends Builder
         }
     }
 
-    protected function applyWheres()
+    protected function applyWheres($sort = true)
     {
-        return $this->query->filterRows();
+        return $this->query->filterRows($sort, $this->select);
     }
 
     public function newModelInstance($attributes = [])

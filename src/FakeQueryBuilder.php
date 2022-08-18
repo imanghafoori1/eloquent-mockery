@@ -30,23 +30,9 @@ class FakeQueryBuilder extends Builder
 
     private $dates;
 
-    public function __construct($dates)
+    public function __construct($dates = [])
     {
         $this->dates = $dates;
-    }
-
-    public function offset($value)
-    {
-        $this->offset = $value;
-
-        return $this;
-    }
-
-    public function limit($value)
-    {
-        $this->limit = $value;
-
-        return $this;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
@@ -155,58 +141,62 @@ class FakeQueryBuilder extends Builder
         return $collection->count();
     }
 
-    public function filterRows($sort = true)
+    public function filterRows($sort = true, $columns = ['*'])
     {
         $collection = collect(FakeDB::$fakeRows[$this->from] ?? []);
         $sort && ($collection = $this->sortRows($collection));
 
-        if (FakeDB::$ignoreWheres) {
-            return $collection;
+        if (! FakeDB::$ignoreWheres) {
+            foreach ($this->recordedWhereBetween as $_where) {
+                $_where[0] = Str::after($_where[0], '.');
+                $collection = $collection->whereBetween(...$_where);
+            }
+
+            foreach ($this->recordedWhereNotBetween as $_where) {
+                $_where[0] = Str::after($_where[0], '.');
+                $collection = $collection->whereNotBetween(...$_where);
+            }
+
+            foreach ($this->recordedWheres as $_where) {
+                $_where = array_filter($_where, function ($val) {
+                    return ! is_null($val);
+                });
+                $_where[0] = Str::after($_where[0], '.');
+                $collection = $collection->where(...$_where);
+            }
+
+            foreach ($this->recordedWhereLikes as $like) {
+                $collection = $collection->filter(function ($item) use ($like) {
+                    $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
+
+                    return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
+                });
+            }
+
+            foreach ($this->recordedWhereIn as $_where) {
+                $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
+            }
+
+            foreach ($this->recordedWhereNotIn as $_where) {
+                $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
+            }
+
+            foreach ($this->recordedWhereNull as $_where) {
+                $collection = $collection->whereNull(Str::after($_where[0], '.'));
+            }
+
+            foreach ($this->recordedWhereNotNull as $_where) {
+                $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
+            }
         }
 
-        foreach ($this->recordedWhereBetween as $_where) {
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->whereBetween(...$_where);
-        }
+        $collection = $collection->map(function ($item) use ($columns) {
+            if ($this->columns) {
+                $item = Arr::only($item, $this->columns);
+            }
 
-        foreach ($this->recordedWhereNotBetween as $_where) {
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->whereNotBetween(...$_where);
-        }
+            $item = $columns === ['*'] ? $item : Arr::only($item, $columns);
 
-        foreach ($this->recordedWheres as $_where) {
-            $_where = array_filter($_where, function ($val) {
-                return ! is_null($val);
-            });
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->where(...$_where);
-        }
-
-        foreach ($this->recordedWhereLikes as $like) {
-            $collection = $collection->filter(function ($item) use ($like) {
-                $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
-
-                return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
-            });
-        }
-
-        foreach ($this->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNotIn as $_where) {
-            $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull(Str::after($_where[0], '.'));
-        }
-
-        foreach ($this->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
-        }
-
-        $collection = $collection->map(function ($item) {
             return $this->_renameKeys(
                 Arr::dot($item),
                 FakeDB::$columnAliases[$this->from] ?? []
@@ -235,6 +225,11 @@ class FakeQueryBuilder extends Builder
         }
 
         return $newArray;
+    }
+
+    public function get($columns = ['*'])
+    {
+        return $this->filterRows(true, $columns)->values();
     }
 
     public function insertGetId(array $values, $sequence = null)

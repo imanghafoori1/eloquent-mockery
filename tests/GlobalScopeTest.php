@@ -65,6 +65,9 @@ class GlobalScopeTest extends TestCase
         GlobalScopeUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 37]);
         GlobalScopeUser::addFakeRow(['id' => 5, 'name' => 'Iman 5', 'age' => 40]);
 
+        $count = GlobalScopeUser::where('age', 40)->count();
+        $this->assertEquals(1, $count);
+
         $count = GlobalScopeUser::query()->update(['age' => 40]);
         $this->assertEquals(3, $count);
 

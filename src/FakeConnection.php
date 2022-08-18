@@ -16,4 +16,9 @@ class FakeConnection extends Connection
     {
         return $callback();
     }
+
+    public function query()
+    {
+        return new FakeQueryBuilder([]);
+    }
 }
