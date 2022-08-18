@@ -71,24 +71,22 @@ class FakeEloquentBuilder extends Builder
 
     public function delete()
     {
-        $count = parent::delete();
-        if ($count !== 0) {
-            $this->modelClass::$changedModels['deleted'][] = $this->model;
-
-            self::removeModel($this->model->getKey(), $this->model->getTable(), $this->model->getKeyName());
+        try {
+            return $count = parent::delete();
+        } finally {
+            if ($count !== 0) {
+                $this->modelClass::$changedModels['deleted'][] = $this->model;
+            }
         }
     }
 
     public function forceDelete()
     {
-        return $this->delete();
-    }
-
-    public static function removeModel($modelId, $table, $keyName = 'id')
-    {
-        foreach (FakeDB::$fakeRows[$table] as $i => $row) {
-            if ($row[$keyName] === $modelId) {
-                unset(FakeDB::$fakeRows[$table][$i]);
+        try {
+            return $count = parent::forceDelete();
+        } finally {
+            if ($count !== 0) {
+                $this->modelClass::$changedModels['deleted'][] = $this->model;
             }
         }
     }

@@ -118,7 +118,18 @@ class FakeQueryBuilder extends Builder
 
     public function delete($id = null)
     {
-        return $this->filterRows()->count();
+        // If an ID is passed to the method, we will set the where clause to check the
+        // ID to let developers to simply and quickly remove a single row from this
+        // database without manually specifying the "where" clauses on the query.
+        if (! is_null($id)) {
+            $this->where($this->from.'.id', '=', $id);
+        }
+
+        $rowsForDelete = $this->filterRows();
+        $count = $rowsForDelete->count();
+        FakeDB::$fakeRows[$this->from] = array_diff_key(FakeDB::$fakeRows[$this->from] ?? [], $rowsForDelete->all());
+
+        return $count;
     }
 
     public function update(array $values)
