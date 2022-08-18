@@ -302,4 +302,15 @@ class FakeQueryBuilder extends Builder
 
         return $collection;
     }
+
+    public function count($columns = '*')
+    {
+        if ($columns !== '*') {
+            foreach ((array) $columns as $column) {
+                $this->whereNotNull($column);
+            }
+        }
+
+        return $this->filterRows(false)->count();
+    }
 }

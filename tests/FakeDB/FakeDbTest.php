@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery\Tests\FakeDB;
 
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeConnection;
 use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,11 @@ class FakeDbUser extends Model
 
 class FakeDbTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        FakeDB::truncate();
+    }
+
     /**
      * @test
      */
@@ -24,10 +30,7 @@ class FakeDbTest extends TestCase
         FakeDB::table('users')->addRow(['id' => 1, 'username' => 'Iman']);
         FakeDB::table('users')->addRow(['id' => 2, 'username' => 'Ghafoori']);
 
-        $users = FakeDbUser::get();
-        $this->assertEquals(2, $users->count());
-
-        FakeDB::truncate();
+        $this->assertEquals(2, FakeDbUser::get()->count());
     }
 
     /**

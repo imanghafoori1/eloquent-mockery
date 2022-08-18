@@ -34,13 +34,7 @@ class FakeEloquentBuilder extends Builder
 
     public function count($columns = '*')
     {
-        if ($columns !== '*') {
-            foreach ((array) $columns as $column) {
-                $this->query->whereNotNull($column);
-            }
-        }
-
-        return $this->applyScopes()->query->filterRows(false)->count();
+        return $this->applyScopes()->query->count($columns);
     }
 
     public function orderBy($column, $direction = 'asc')
