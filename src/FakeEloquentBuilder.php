@@ -16,14 +16,6 @@ class FakeEloquentBuilder extends Builder
         $this->modelClass = $modelClass;
     }
 
-    public function select($columns = ['*'])
-    {
-        $columns = is_array($columns) ? $columns : func_get_args();
-        $this->query->columns = $columns;
-
-        return $this;
-    }
-
     public function addSelect($columns = ['*'])
     {
         $columns = is_array($columns) ? $columns : func_get_args();

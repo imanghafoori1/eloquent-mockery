@@ -116,30 +116,4 @@ class GetFirstWhereTest extends TestCase
 
         User::stopFaking();
     }
-
-    /**
-     * @test
-     */
-    public function test_get()
-    {
-        User::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-        User::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
-
-        $users = User::whereNull('name')->get(['age']);
-        $this->assertEquals(null, ($users[0])->id);
-        $this->assertEquals(20, ($users[0])->age);
-        $this->assertEquals(1, $users->count());
-
-        $users = User::whereNull('name')->select('age')->first();
-        $this->assertEquals(null, $users->id);
-        $this->assertEquals(20, $users->age);
-
-        $users = User::whereNull('name')->select('age')->addSelect('id')->first();
-        $this->assertEquals(1, $users->id);
-        $this->assertEquals(20, $users->age);
-
-        User::stopFaking();
-    }
 }

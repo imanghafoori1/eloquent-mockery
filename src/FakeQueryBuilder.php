@@ -105,7 +105,6 @@ class FakeQueryBuilder extends Builder
         $this->recordedWhereBetween[] = [$column, $values];
 
         return $this;
-
     }
 
     public function whereNotBetween($column, iterable $values, $boolean = 'and')
@@ -113,7 +112,6 @@ class FakeQueryBuilder extends Builder
         $this->recordedWhereNotBetween[] = [$column, $values];
 
         return $this;
-
     }
 
     public function delete($id = null)
@@ -201,17 +199,16 @@ class FakeQueryBuilder extends Builder
             }
         }
 
-        $collection = $collection->map(function ($item) use ($columns) {
-            if ($this->columns) {
-                $item = Arr::only($item, $this->columns);
+        [$cols, $aliases] = $this->parseSelects($columns);
+
+        $collection = $collection->map(function ($item) use ($cols, $aliases) {
+            if ($cols !== ['*']) {
+                $item = Arr::only($item, $cols);
             }
 
-            $item = $columns === ['*'] ? $item : Arr::only($item, $columns);
+            $item = $this->aliasColumns($aliases, $item);
 
-            return $this->_renameKeys(
-                Arr::dot($item),
-                FakeDB::$columnAliases[$this->from] ?? []
-            );
+            return $this->_renameKeys(Arr::dot($item), FakeDB::$columnAliases[$this->from] ?? []);
         });
 
         $this->offset && $collection = $collection->skip($this->offset);
@@ -245,7 +242,7 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        foreach(FakeDB::$fakeRows[$this->from] as $row) {}
+        foreach (FakeDB::$fakeRows[$this->from] as $row) {}
 
         return ($row['id'] ?? 0) + 1;
     }
@@ -323,5 +320,35 @@ class FakeQueryBuilder extends Builder
         }
 
         return $this->filterRows(false)->count();
+    }
+
+    private function parseSelects($columns): array
+    {
+        $cols = array_merge($this->columns ?: [], (array) $columns);
+        $aliases = [];
+        foreach ($cols as $i => $col) {
+            $segments = explode(' as ', $col);
+            if (count($segments) === 2) {
+                [$tableCol, $alias] = $segments;
+                $aliases[trim($alias)] = trim($tableCol);
+                $cols[$i] = trim($tableCol);
+            }
+        }
+
+        return [$cols, $aliases];
+    }
+
+    function aliasColumns($aliases, $item)
+    {
+        if ($aliases) {
+            foreach ($aliases as $alias => $col) {
+                if (isset($item[$col])) {
+                    $item[$alias] = $item[$col];
+                    unset($item[$col]);
+                }
+            }
+        }
+
+        return $item;
     }
 }
