@@ -242,7 +242,7 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        foreach (FakeDB::$fakeRows[$this->from] as $row) {}
+        foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {}
 
         return ($row['id'] ?? 0) + 1;
     }
