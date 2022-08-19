@@ -12,6 +12,8 @@ class FakeDB
 
     public static $columnAliases = [];
 
+    private static $originalConnection;
+
     public static function table($table)
     {
         return new class ($table) {
