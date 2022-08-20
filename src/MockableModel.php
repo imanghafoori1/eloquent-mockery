@@ -60,6 +60,11 @@ trait MockableModel
         return self::$changedModels['created'][$index] ?? null;
     }
 
+    public static function getSavedModel($index = 0)
+    {
+        return self::$changedModels['saved'][$index] ?? null;
+    }
+
     public static function getSoftDeletedModel($index = 0)
     {
         return self::$changedModels['softDeleted'][$index] ?? null;
@@ -166,9 +171,8 @@ trait MockableModel
     {
         if ($this->wasRecentlyCreated) {
             static::$changedModels['created'][] = $this;
-        } else {
-            static::$changedModels['updated'][] = $this;
         }
+        static::$changedModels['saved'][] = $this;
 
         return parent::finishSave($options);
     }
