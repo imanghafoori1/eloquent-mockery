@@ -171,6 +171,7 @@ trait MockableModel
     {
         if ($this->wasRecentlyCreated) {
             static::$changedModels['created'][] = $this;
+            FakeEloquentBuilder::insertRow($this->getAttributes(), $this->getTable());
         }
         static::$changedModels['saved'][] = $this;
 

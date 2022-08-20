@@ -104,12 +104,4 @@ class FakeEloquentBuilder extends Builder
 
         return parent::update($values);
     }
-
-    public function create(array $attributes = [])
-    {
-        $model = parent::create($attributes);
-        FakeEloquentBuilder::insertRow($model->getAttributes(), $model->getTable());
-
-        return $model;
-    }
 }
