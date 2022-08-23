@@ -19,7 +19,7 @@ class FakeEloquentBuilder extends Builder
     public function addSelect($columns = ['*'])
     {
         $columns = is_array($columns) ? $columns : func_get_args();
-        $this->query->columns = array_merge($this->query->columns, $columns);
+        $this->query->columns = array_merge($this->query->columns ?? [], $columns);
 
         return $this;
     }

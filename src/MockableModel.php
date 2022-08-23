@@ -169,11 +169,13 @@ trait MockableModel
 
     protected function finishSave(array $options)
     {
-        if ($this->wasRecentlyCreated) {
-            static::$changedModels['created'][] = $this;
-            FakeEloquentBuilder::insertRow($this->getAttributes(), $this->getTable());
+        if ($this->isFakeMode()) {
+            if ($this->wasRecentlyCreated) {
+                static::$changedModels['created'][] = $this;
+                FakeEloquentBuilder::insertRow($this->getAttributes(), $this->getTable());
+            }
+            static::$changedModels['saved'][] = $this;
         }
-        static::$changedModels['saved'][] = $this;
 
         return parent::finishSave($options);
     }
