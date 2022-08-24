@@ -30,6 +30,8 @@ class FakeQueryBuilder extends Builder
 
     private $dates;
 
+    private $recordedJoin = [];
+
     public function __construct($dates = [])
     {
         $this->dates = $dates;
@@ -37,6 +39,7 @@ class FakeQueryBuilder extends Builder
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
     {
+        $column = $this->prefixColumn($column);
         if ($not) {
             $this->recordedWhereNotIn[] = [$column, $values];
         } else {
@@ -48,6 +51,7 @@ class FakeQueryBuilder extends Builder
 
     public function whereNotIn($column, $values, $boolean = 'and', $not = false)
     {
+        $column = $this->prefixColumn($column);
         $this->recordedWhereNotIn[] = [$column, $values];
 
         return $this;
@@ -55,6 +59,7 @@ class FakeQueryBuilder extends Builder
 
     public function orderBy($column, $direction = 'asc')
     {
+        $column = $this->prefixColumn($column);
         $this->orderBy = [$column, $direction];
 
         return $this;
@@ -62,6 +67,8 @@ class FakeQueryBuilder extends Builder
 
     public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
     {
+        $this->recordedJoin[] = [$table, $first, $operator, $second];
+
         return $this;
     }
 
@@ -77,6 +84,8 @@ class FakeQueryBuilder extends Builder
 
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
+        $column = $this->prefixColumn($column);
+
         if ($operator === 'like') {
             $this->recordedWhereLikes[] = [$column, $value];
         } else {
@@ -88,6 +97,8 @@ class FakeQueryBuilder extends Builder
 
     public function whereNull($columns, $boolean = 'and', $not = false)
     {
+        $columns = $this->prefixColumn($columns);
+
         $this->recordedWhereNull[] = [$columns];
 
         return $this;
@@ -95,6 +106,8 @@ class FakeQueryBuilder extends Builder
 
     public function whereNotNull($columns, $boolean = 'and')
     {
+        $columns = $this->prefixColumn($columns);
+
         $this->recordedWhereNotNull[] = [$columns];
 
         return $this;
@@ -102,6 +115,7 @@ class FakeQueryBuilder extends Builder
 
     public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
     {
+        $column = $this->prefixColumn($column);
         $this->recordedWhereBetween[] = [$column, $values];
 
         return $this;
@@ -109,6 +123,7 @@ class FakeQueryBuilder extends Builder
 
     public function whereNotBetween($column, iterable $values, $boolean = 'and')
     {
+        $column = $this->prefixColumn($column);
         $this->recordedWhereNotBetween[] = [$column, $values];
 
         return $this;
@@ -144,7 +159,7 @@ class FakeQueryBuilder extends Builder
                 $val[$k1] = $v;
             }
 
-            FakeDB::$fakeRows[$this->from][$key] = $val;
+            FakeDB::$fakeRows[$this->from][$key] = [$this->from => $val];
         });
 
         return $collection->count();
@@ -153,16 +168,31 @@ class FakeQueryBuilder extends Builder
     public function filterRows($sort = true, $columns = ['*'])
     {
         $collection = collect(FakeDB::$fakeRows[$this->from] ?? []);
+
+        foreach ($this->recordedJoin as $join) {
+            [$table, $first, $operator, $second] = $join;
+            [$table1, $columns1] = explode('.', $first);
+            [$table2, $columns2] = explode('.', $second);
+            $joined = [];
+            foreach (FakeDB::$fakeRows[$table1] ?? [] as $row1) {
+                foreach (FakeDB::$fakeRows[$table2] ?? [] as $row2) {
+                    if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
+                        $joined[] = $row1 + $row2;
+                    }
+                }
+            }
+
+            $collection = collect($joined);
+        }
+
         $sort && ($collection = $this->sortRows($collection));
 
         if (! FakeDB::$ignoreWheres) {
             foreach ($this->recordedWhereBetween as $_where) {
-                $_where[0] = Str::after($_where[0], '.');
                 $collection = $collection->whereBetween(...$_where);
             }
 
             foreach ($this->recordedWhereNotBetween as $_where) {
-                $_where[0] = Str::after($_where[0], '.');
                 $collection = $collection->whereNotBetween(...$_where);
             }
 
@@ -170,7 +200,7 @@ class FakeQueryBuilder extends Builder
                 $_where = array_filter($_where, function ($val) {
                     return ! is_null($val);
                 });
-                $_where[0] = Str::after($_where[0], '.');
+
                 $collection = $collection->where(...$_where);
             }
 
@@ -178,24 +208,24 @@ class FakeQueryBuilder extends Builder
                 $collection = $collection->filter(function ($item) use ($like) {
                     $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
 
-                    return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
+                    return (bool) preg_match("/^{$pattern}$/i", data_get($item, $like[0]) ?? '');
                 });
             }
 
             foreach ($this->recordedWhereIn as $_where) {
-                $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
+                $collection = $collection->whereIn($_where[0], $_where[1]);
             }
 
             foreach ($this->recordedWhereNotIn as $_where) {
-                $collection = $collection->whereNotIn(Str::after($_where[0], '.'), $_where[1]);
+                $collection = $collection->whereNotIn($_where[0], $_where[1]);
             }
 
             foreach ($this->recordedWhereNull as $_where) {
-                $collection = $collection->whereNull(Str::after($_where[0], '.'));
+                $collection = $collection->whereNull($_where[0]);
             }
 
             foreach ($this->recordedWhereNotNull as $_where) {
-                $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
+                $collection = $collection->whereNotNull($_where[0]);
             }
         }
 
@@ -203,10 +233,20 @@ class FakeQueryBuilder extends Builder
 
         $collection = $collection->map(function ($item) use ($cols, $aliases) {
             if ($cols !== ['*']) {
-                $item = Arr::only($item, $cols);
+                foreach ($cols as $i => $col) {
+                    ! Str::contains($col, '.') && $cols[$i] = $this->from.'.'.$col;
+                }
+                $o = [];
+                foreach ($cols as $col) {
+                    [$table, $c] = explode('.', $col);
+                    if (array_key_exists($c, $item[$table])) {
+                        $o[$table][$c] = $item[$table][$c];
+                    }
+                }
+                $item = $o;
             }
 
-            $item = $this->aliasColumns($aliases, $item);
+            $item = $this->aliasColumns($aliases, $item, $this->from);
 
             return $this->_renameKeys(Arr::dot($item), FakeDB::$columnAliases[$this->from] ?? []);
         });
@@ -221,9 +261,6 @@ class FakeQueryBuilder extends Builder
     private function _renameKeys(array $array, array $replace)
     {
         $newArray = [];
-        if (! $replace) {
-            return $array;
-        }
 
         foreach ($array as $key => $value) {
             $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
@@ -244,7 +281,7 @@ class FakeQueryBuilder extends Builder
     {
         foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {}
 
-        return ($row['id'] ?? 0) + 1;
+        return ($row[$this->from]['id'] ?? 0) + 1;
     }
 
     public function pluck($column, $key = null)
@@ -284,6 +321,7 @@ class FakeQueryBuilder extends Builder
 
     public function reorder($column = null, $direction = 'asc')
     {
+        $column = $this->prefixColumn($column);
         $this->orderBy = [$column, $direction];
 
         return $this;
@@ -338,17 +376,43 @@ class FakeQueryBuilder extends Builder
         return [$cols, $aliases];
     }
 
-    function aliasColumns($aliases, $item)
+    public function aliasColumns($aliases, $item, $table)
     {
         if ($aliases) {
             foreach ($aliases as $alias => $col) {
-                if (isset($item[$col])) {
-                    $item[$alias] = $item[$col];
-                    unset($item[$col]);
+                if (isset($item[$table][$col])) {
+                    $item[$table][$alias] = $item[$table][$col];
+                    unset($item[$table][$col]);
                 }
             }
         }
 
-        return $item;
+        $newItem = [];
+        foreach ($item as $c => $it) {
+            if (Str::contains($c, '.')) {
+                $c = Str::afterLast($c, '.');
+            }
+            $newItem[$c] = $it;
+        }
+
+        return $newItem;
+    }
+
+    private function prefixColumn($column)
+    {
+        if (! Str::contains($column, '.') && ! isset(FakeDB::$fakeRows[$this->from][0][$this->from][$column])) {
+            foreach ($this->recordedJoin as $joined) {
+                [$table] = $joined;
+                if (isset(FakeDB::$fakeRows[$table][0][$table][$column])) {
+                    $column = $table.'.'.$column;
+                }
+            }
+        }
+
+        if (! Str::contains($column, '.')) {
+            $column = $this->from.'.'.$column;
+        }
+
+        return $column;
     }
 }

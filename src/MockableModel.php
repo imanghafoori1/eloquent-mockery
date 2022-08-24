@@ -111,7 +111,7 @@ trait MockableModel
             $col = self::parseColumn($key, $table);
             $row[$col] = $value;
         }
-        FakeDB::$fakeRows[$table][] = $row;
+        FakeDB::$fakeRows[$table][] = [$table => $row];
     }
 
     public static function fake()

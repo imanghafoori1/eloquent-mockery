@@ -95,7 +95,7 @@ class FakeEloquentBuilder extends Builder
 
     public static function insertRow(array $attributes, $table)
     {
-        FakeDB::$fakeRows[$table][] = $attributes;
+        FakeDB::$fakeRows[$table][] = [$table => $attributes];
     }
 
     public function update(array $values)

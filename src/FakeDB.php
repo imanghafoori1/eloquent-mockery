@@ -26,7 +26,7 @@ class FakeDB
 
             public function addRow($row)
             {
-                FakeDB::$fakeRows[$this->table][] = $row;
+                FakeDB::$fakeRows[$this->table][] = [$this->table => $row];
             }
         };
     }
