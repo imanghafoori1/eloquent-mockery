@@ -158,8 +158,7 @@ class FakeQueryBuilder extends Builder
                 unset($val[$k]);
                 $val[$k1] = $v;
             }
-
-            FakeDB::$fakeRows[$this->from][$key] = [$this->from => $val];
+            $this->addFakeRow($this->from, $val, $key);
         });
 
         return $collection->count();
@@ -380,10 +379,13 @@ class FakeQueryBuilder extends Builder
     {
         if ($aliases) {
             foreach ($aliases as $alias => $col) {
-                if (isset($item[$table][$col])) {
-                    $item[$table][$alias] = $item[$table][$col];
-                    unset($item[$table][$col]);
+                $segments = explode('.', $col);
+
+                if (count($segments) === 1) {
+                    $segments = [$table, $segments[0]];
                 }
+                $item[$segments[0]][$alias] = $item[$segments[0]][$segments[1]];
+                unset($item[$segments[0]][$segments[1]]);
             }
         }
 
@@ -414,5 +416,10 @@ class FakeQueryBuilder extends Builder
         }
 
         return $column;
+    }
+
+    function addFakeRow(string $table, $val, $key): void
+    {
+        FakeDB::$fakeRows[$table][$key] = [$table => $val];
     }
 }

@@ -91,7 +91,7 @@ class JoinTest extends TestCase
     public function join_select_where()
     {
         $results = (new FakeQueryBuilder())
-            ->select('users.common as sd')
+            ->select('users.common as uc', 'comments.common as cc')
             ->from('users')
             ->join('comments', 'users.id', '=', 'comments.user_id')
             ->where('comments.user_id', 3)
@@ -100,7 +100,8 @@ class JoinTest extends TestCase
 
         $this->assertEquals([
             [
-                "common" => "u3",
+                'uc' => 'u3',
+                'cc' => 'c3',
             ],
         ], $results);
     }

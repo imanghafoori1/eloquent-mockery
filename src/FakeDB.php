@@ -26,7 +26,7 @@ class FakeDB
 
             public function addRow($row)
             {
-                FakeDB::$fakeRows[$this->table][] = [$this->table => $row];
+                FakeDB::addRow($this->table, $row);
             }
         };
     }
@@ -50,5 +50,10 @@ class FakeDB
     public static function stopMockQueryBuider()
     {
         config()->set('database.default', self::$originalConnection);
+    }
+
+    public static function addRow(string $table, array $row)
+    {
+        FakeDB::$fakeRows[$table][] = [$table => $row];
     }
 }

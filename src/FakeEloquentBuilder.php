@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class FakeEloquentBuilder extends Builder
 {
-    private $select = [];
-
     public function __construct(Model $modelObj, $modelClass)
     {
         $this->query = new FakeQueryBuilder($modelObj->getDates());
@@ -38,7 +36,7 @@ class FakeEloquentBuilder extends Builder
 
     public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
     {
-        return $this;
+        return $this->query->join($table, $first, $operator, $second);
     }
 
     public function leftJoin($table, $first, $operator = null, $second = null)
@@ -83,19 +81,9 @@ class FakeEloquentBuilder extends Builder
         }
     }
 
-    protected function applyWheres($sort = true)
-    {
-        return $this->query->filterRows($sort, $this->select);
-    }
-
     public function newModelInstance($attributes = [])
     {
         return $this->model->newInstance($attributes);
-    }
-
-    public static function insertRow(array $attributes, $table)
-    {
-        FakeDB::$fakeRows[$table][] = [$table => $attributes];
     }
 
     public function update(array $values)

@@ -111,7 +111,7 @@ trait MockableModel
             $col = self::parseColumn($key, $table);
             $row[$col] = $value;
         }
-        FakeDB::$fakeRows[$table][] = [$table => $row];
+        FakeDB::addRow($table, $row);
     }
 
     public static function fake()
@@ -172,7 +172,7 @@ trait MockableModel
         if ($this->isFakeMode()) {
             if ($this->wasRecentlyCreated) {
                 static::$changedModels['created'][] = $this;
-                FakeEloquentBuilder::insertRow($this->getAttributes(), $this->getTable());
+                FakeDB::addRow($this->getTable(), $this->getAttributes());
             }
             static::$changedModels['saved'][] = $this;
         }
