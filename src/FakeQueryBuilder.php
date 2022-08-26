@@ -252,6 +252,8 @@ class FakeQueryBuilder extends Builder
                     [$table, $c] = explode('.', $col);
                     if (array_key_exists($c, $item[$table])) {
                         $newItem[$table][$c] = $item[$table][$c];
+                    } elseif ($c === '*') {
+                        $newItem[$table] = $item[$table];
                     }
                 }
                 $item = $newItem;
@@ -374,7 +376,13 @@ class FakeQueryBuilder extends Builder
 
     private function parseSelects($columns): array
     {
-        $cols = array_merge($this->columns ?: [], (array) $columns);
+        $columns = (array) $columns;
+        if ($columns === ['*'] && $this->columns) {
+            $columns = [];
+        }
+
+        $cols = array_merge($this->columns ?: [], $columns);
+
         $aliases = [];
         foreach ($cols as $i => $col) {
             $segments = explode(' as ', $col);

@@ -109,6 +109,46 @@ class JoinTest extends TestCase
     /**
      * @test
      */
+    public function join_select_star()
+    {
+        $results = (new FakeQueryBuilder())
+            ->select('comments.*')
+            ->from('users')
+            ->join('comments', 'users.id', '=', 'comments.user_id')
+            ->where('comments.user_id', 3)
+            ->get()
+            ->all();
+
+        $this->assertEquals([
+            [
+                'id' => 3,
+                'user_id' => 3,
+                'my_text' => 'orphan',
+                'common' => 'c3',
+            ],
+        ], $results);
+
+        $results = (new FakeQueryBuilder())
+            ->from('users')
+            ->join('comments', 'users.id', '=', 'comments.user_id')
+            ->where('comments.user_id', 3)
+            ->get(['comments.*', 'users.id as uid'])
+            ->all();
+
+        $this->assertEquals([
+            [
+                'id' => 3,
+                'user_id' => 3,
+                'my_text' => 'orphan',
+                'common' => 'c3',
+                'uid' => 3
+            ],
+        ], $results);
+    }
+
+    /**
+     * @test
+     */
     public function join_with_multi_wheres()
     {
         $results = (new FakeQueryBuilder())
@@ -188,6 +228,7 @@ class JoinTest extends TestCase
             ->where('comments.user_id', 3)
             ->where('comments.common', 'c33')
             ->get()
-            ->all());
+            ->all()
+        );
     }
 }
