@@ -18,7 +18,7 @@ trait MockableModel
 
     public static function shouldRecieve($method)
     {
-        return new class (self::class, $method) {
+        return new class (self::class, $method){
 
             private $theClass;
 
@@ -78,18 +78,9 @@ trait MockableModel
     public function newEloquentBuilder($query)
     {
         if ($this->isFakeMode()) {
-            return new FakeEloquentBuilder($this, static::class);
+            return new FakeEloquentBuilder($query, $this);
         } else {
             return parent::newEloquentBuilder($query);
-        }
-    }
-
-    protected function newBaseQueryBuilder()
-    {
-        if ($this->isFakeMode()) {
-            return new FakeQueryBuilder($this->getDates());
-        } else {
-            return parent::newBaseQueryBuilder();
         }
     }
 
@@ -105,13 +96,8 @@ trait MockableModel
     public static function addFakeRow(array $attributes)
     {
         $table = (new static())->getTable();
-        $row = [];
         self::$fakeMode = true;
-        foreach ($attributes as $key => $value) {
-            $col = self::parseColumn($key, $table);
-            $row[$col] = $value;
-        }
-        FakeDB::addRow($table, $row);
+        FakeDB::addRow($table, $attributes);
     }
 
     public static function fake()
@@ -126,7 +112,7 @@ trait MockableModel
 
     private static function parseColumn($where, $table)
     {
-        if (! strpos($where,' as ')) {
+        if (! strpos($where, ' as ')) {
             return $where;
         }
 
@@ -134,11 +120,6 @@ trait MockableModel
         FakeDB::$columnAliases[$table][trim($tableCol)] = trim($alias);
 
         return $tableCol;
-    }
-
-    public function fakeEloquentBuilder()
-    {
-        return new FakeEloquentBuilder($this, static::class);
     }
 
     public static function stopFaking()

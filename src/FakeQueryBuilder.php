@@ -2,6 +2,7 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -32,8 +33,9 @@ class FakeQueryBuilder extends Builder
 
     private $recordedJoin = [];
 
-    public function __construct($dates = [])
+    public function __construct(ConnectionInterface $connection = null, $dates = [])
     {
+        $this->connection = ($connection ?: new FakeConnection());
         $this->dates = $dates;
     }
 
@@ -59,14 +61,24 @@ class FakeQueryBuilder extends Builder
 
     public function orderBy($column, $direction = 'asc')
     {
-        $column = $this->prefixColumn($column);
-        $this->orderBy = [$column, $direction];
+        $this->orderBy = [$this->prefixColumn($column), $direction];
 
+        return parent::orderBy($column, $direction);
+    }
+
+    public function crossJoin($table, $first = null, $operator = null, $second = null)
+    {
         return $this;
     }
 
-    public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
-    {
+    public function join(
+        $table,
+        $first,
+        $operator = null,
+        $second = null,
+        $type = 'inner',
+        $where = false
+    ) {
         $this->recordedJoin[] = [$table, $first, $operator, $second];
 
         return $this;
@@ -235,14 +247,14 @@ class FakeQueryBuilder extends Builder
                 foreach ($cols as $i => $col) {
                     ! Str::contains($col, '.') && $cols[$i] = $this->from.'.'.$col;
                 }
-                $o = [];
+                $newItem = [];
                 foreach ($cols as $col) {
                     [$table, $c] = explode('.', $col);
                     if (array_key_exists($c, $item[$table])) {
-                        $o[$table][$c] = $item[$table][$c];
+                        $newItem[$table][$c] = $item[$table][$c];
                     }
                 }
-                $item = $o;
+                $item = $newItem;
             }
 
             $item = $this->aliasColumns($aliases, $item, $this->from);
@@ -278,7 +290,8 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {}
+        foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {
+        }
 
         return ($row[$this->from]['id'] ?? 0) + 1;
     }
@@ -418,7 +431,7 @@ class FakeQueryBuilder extends Builder
         return $column;
     }
 
-    function addFakeRow(string $table, $val, $key): void
+    public function addFakeRow(string $table, $val, $key): void
     {
         FakeDB::$fakeRows[$table][$key] = [$table => $val];
     }

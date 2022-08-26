@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class FakeEloquentBuilder extends Builder
 {
-    public function __construct(Model $modelObj, $modelClass)
+    public function __construct($query, Model $modelObj)
     {
-        $this->query = new FakeQueryBuilder($modelObj->getDates());
+        $this->query = $query;
         $this->model = $modelObj;
-        $this->modelClass = $modelClass;
+        $this->modelClass = get_class($modelObj);
     }
 
     public function addSelect($columns = ['*'])
@@ -27,43 +27,12 @@ class FakeEloquentBuilder extends Builder
         return $this->applyScopes()->query->count($columns);
     }
 
-    public function orderBy($column, $direction = 'asc')
-    {
-        $this->query->orderBy($column, $direction);
-
-        return $this;
-    }
-
-    public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
-    {
-        return $this->query->join($table, $first, $operator, $second);
-    }
-
-    public function leftJoin($table, $first, $operator = null, $second = null)
-    {
-        return $this;
-    }
-
-    public function rightJoin($table, $first, $operator = null, $second = null)
-    {
-        return $this;
-    }
-
-    public function innerJoin()
-    {
-        return $this;
-    }
-
-    public function crossJoin()
-    {
-        return $this;
-    }
-
     public function delete()
     {
         try {
             return $count = parent::delete();
-        } finally {
+        }
+        finally {
             if ($count !== 0) {
                 $this->modelClass::$changedModels['deleted'][] = $this->model;
             }
@@ -74,16 +43,12 @@ class FakeEloquentBuilder extends Builder
     {
         try {
             return $count = parent::forceDelete();
-        } finally {
+        }
+        finally {
             if ($count !== 0) {
                 $this->modelClass::$changedModels['deleted'][] = $this->model;
             }
         }
-    }
-
-    public function newModelInstance($attributes = [])
-    {
-        return $this->model->newInstance($attributes);
     }
 
     public function update(array $values)
