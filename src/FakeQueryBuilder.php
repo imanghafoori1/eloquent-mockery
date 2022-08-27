@@ -86,12 +86,12 @@ class FakeQueryBuilder extends Builder
 
     public function leftJoin($table, $first, $operator = null, $second = null)
     {
-        return $this;
+        return $this->join($table, $first, $operator, $second);
     }
 
     public function rightJoin($table, $first, $operator = null, $second = null)
     {
-        return $this;
+        return $this->join($table, $first, $operator, $second);
     }
 
     public function where($column, $operator = null, $value = null, $boolean = 'and')
@@ -178,23 +178,23 @@ class FakeQueryBuilder extends Builder
 
     public function filterRows($sort = true, $columns = ['*'])
     {
-        $collection = collect(FakeDB::$fakeRows[$this->from] ?? []);
-
+        $base = FakeDB::$fakeRows[$this->from] ?? [];
         foreach ($this->recordedJoin as $join) {
+            $joined = [];
             [$table, $first, $operator, $second] = $join;
             [$table1, $columns1] = explode('.', $first);
             [$table2, $columns2] = explode('.', $second);
-            $joined = [];
-            foreach (FakeDB::$fakeRows[$table1] ?? [] as $row1) {
+            foreach ($base as $row1) {
                 foreach (FakeDB::$fakeRows[$table2] ?? [] as $row2) {
                     if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
                         $joined[] = $row1 + $row2;
                     }
                 }
             }
-
-            $collection = collect($joined);
+            $base = $joined;
         }
+
+        $collection = collect($base);
 
         $sort && ($collection = $this->sortRows($collection));
 
@@ -374,7 +374,7 @@ class FakeQueryBuilder extends Builder
         return $this->filterRows(false)->count();
     }
 
-    private function parseSelects($columns): array
+    private function parseSelects($columns)
     {
         $columns = (array) $columns;
         if ($columns === ['*'] && $this->columns) {
