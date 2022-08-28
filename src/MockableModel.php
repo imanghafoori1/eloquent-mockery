@@ -40,13 +40,13 @@ trait MockableModel
     public static function fakeSoftDelete()
     {
         static::$fakeMode = true;
-        $cb = function ($model) {
+        $callback = function ($model) {
             self::$changedModels['softDeleted'][] = $model;
         };
         if (method_exists(static::class, 'softDeleted')) {
-            static::softDeleted($cb);
+            static::softDeleted($callback);
         } else {
-            static::deleted($cb);
+            static::deleted($callback);
         }
     }
 
@@ -79,18 +79,18 @@ trait MockableModel
     {
         if ($this->isFakeMode()) {
             return new FakeEloquentBuilder($query, $this);
-        } else {
-            return parent::newEloquentBuilder($query);
         }
+
+        return parent::newEloquentBuilder($query);
     }
 
     public function getConnection()
     {
         if ($this->isFakeMode()) {
             return new FakeConnection();
-        } else {
-            return parent::getConnection();
         }
+
+        return parent::getConnection();
     }
 
     public static function addFakeRow(array $attributes)
@@ -108,18 +108,6 @@ trait MockableModel
     public static function ignoreWheres()
     {
         FakeDB::$ignoreWheres = true;
-    }
-
-    private static function parseColumn($where, $table)
-    {
-        if (! strpos($where, ' as ')) {
-            return $where;
-        }
-
-        [$tableCol, $alias] = explode(' as ', $where);
-        FakeDB::$columnAliases[$table][trim($tableCol)] = trim($alias);
-
-        return $tableCol;
     }
 
     public static function stopFaking()

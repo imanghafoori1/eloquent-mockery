@@ -179,65 +179,12 @@ class FakeQueryBuilder extends Builder
     public function filterRows($sort = true, $columns = ['*'])
     {
         $base = FakeDB::$fakeRows[$this->from] ?? [];
-        foreach ($this->recordedJoin as $join) {
-            $joined = [];
-            [$table, $first, $operator, $second] = $join;
-            [$table1, $columns1] = explode('.', $first);
-            [$table2, $columns2] = explode('.', $second);
-            foreach ($base as $row1) {
-                foreach (FakeDB::$fakeRows[$table2] ?? [] as $row2) {
-                    if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
-                        $joined[] = $row1 + $row2;
-                    }
-                }
-            }
-            $base = $joined;
-        }
-
-        $collection = collect($base);
+        $collection = $this->performJoins($base);
 
         $sort && ($collection = $this->sortRows($collection));
 
         if (! FakeDB::$ignoreWheres) {
-            foreach ($this->recordedWhereBetween as $_where) {
-                $collection = $collection->whereBetween(...$_where);
-            }
-
-            foreach ($this->recordedWhereNotBetween as $_where) {
-                $collection = $collection->whereNotBetween(...$_where);
-            }
-
-            foreach ($this->recordedWheres as $_where) {
-                $_where = array_filter($_where, function ($val) {
-                    return ! is_null($val);
-                });
-
-                $collection = $collection->where(...$_where);
-            }
-
-            foreach ($this->recordedWhereLikes as $like) {
-                $collection = $collection->filter(function ($item) use ($like) {
-                    $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
-
-                    return (bool) preg_match("/^{$pattern}$/i", data_get($item, $like[0]) ?? '');
-                });
-            }
-
-            foreach ($this->recordedWhereIn as $_where) {
-                $collection = $collection->whereIn($_where[0], $_where[1]);
-            }
-
-            foreach ($this->recordedWhereNotIn as $_where) {
-                $collection = $collection->whereNotIn($_where[0], $_where[1]);
-            }
-
-            foreach ($this->recordedWhereNull as $_where) {
-                $collection = $collection->whereNull($_where[0]);
-            }
-
-            foreach ($this->recordedWhereNotNull as $_where) {
-                $collection = $collection->whereNotNull($_where[0]);
-            }
+            $collection = $this->applyWheres($collection);
         }
 
         [$cols, $aliases] = $this->parseSelects($columns);
@@ -303,24 +250,9 @@ class FakeQueryBuilder extends Builder
         return $this->filterRows()->pluck($column, $key);
     }
 
-    public function sum($column)
+    public function aggregate($function, $columns = ['*'])
     {
-        return $this->filterRows(false)->sum($column);
-    }
-
-    public function avg($column)
-    {
-        return $this->filterRows(false)->avg($column);
-    }
-
-    public function max($column)
-    {
-        return $this->filterRows(false)->max($column);
-    }
-
-    public function min($column)
-    {
-        return $this->filterRows(false)->min($column);
+        return $this->filterRows(false)->$function($columns);
     }
 
     public function exists()
@@ -442,5 +374,75 @@ class FakeQueryBuilder extends Builder
     public function addFakeRow(string $table, $val, $key): void
     {
         FakeDB::$fakeRows[$table][$key] = [$table => $val];
+    }
+
+    private function performJoins($base)
+    {
+        foreach ($this->recordedJoin as $join) {
+            $joined = [];
+            [$table, $first, $operator, $second] = $join;
+            [$table1, $columns1] = explode('.', $first);
+            [$table2, $columns2] = explode('.', $second);
+            foreach ($base as $row1) {
+                foreach (FakeDB::$fakeRows[$table2] ?? [] as $row2) {
+                    if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
+                        $joined[] = $row1 + $row2;
+                    }
+                }
+            }
+            $base = $joined;
+        }
+
+        return collect($base);
+    }
+
+    public function isLike($like, $item): bool
+    {
+        $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
+
+        return (bool) preg_match("/^{$pattern}$/i", data_get($item, $like[0]) ?? '');
+    }
+
+    private function applyWheres($collection)
+    {
+        foreach ($this->recordedWhereBetween as $_where) {
+            $collection = $collection->whereBetween(...$_where);
+        }
+
+        foreach ($this->recordedWhereNotBetween as $_where) {
+            $collection = $collection->whereNotBetween(...$_where);
+        }
+
+        foreach ($this->recordedWheres as $_where) {
+            $_where = array_filter($_where, function ($val) {
+                return ! is_null($val);
+            });
+
+            $collection = $collection->where(...$_where);
+        }
+
+        foreach ($this->recordedWhereLikes as $like) {
+            $collection = $collection->filter(function ($item) use ($like) {
+                return $this->isLike($like, $item);
+            });
+        }
+
+        foreach ($this->recordedWhereIn as $_where) {
+            $collection = $collection->whereIn($_where[0], $_where[1]);
+        }
+
+        foreach ($this->recordedWhereNotIn as $_where) {
+            $collection = $collection->whereNotIn($_where[0], $_where[1]);
+        }
+
+        foreach ($this->recordedWhereNull as $_where) {
+            $collection = $collection->whereNull($_where[0]);
+        }
+
+        foreach ($this->recordedWhereNotNull as $_where) {
+            $collection = $collection->whereNotNull($_where[0]);
+        }
+
+        return $collection;
     }
 }
