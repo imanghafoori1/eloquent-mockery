@@ -109,34 +109,28 @@ class FakeQueryBuilder extends Builder
 
     public function whereNull($columns, $boolean = 'and', $not = false)
     {
-        $columns = $this->prefixColumn($columns);
-
-        $this->recordedWhereNull[] = [$columns];
+        $this->recordedWhereNull[] = [$this->prefixColumn($columns)];
 
         return $this;
     }
 
     public function whereNotNull($columns, $boolean = 'and')
     {
-        $columns = $this->prefixColumn($columns);
-
-        $this->recordedWhereNotNull[] = [$columns];
+        $this->recordedWhereNotNull[] = [$this->prefixColumn($columns)];
 
         return $this;
     }
 
     public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
     {
-        $column = $this->prefixColumn($column);
-        $this->recordedWhereBetween[] = [$column, $values];
+        $this->recordedWhereBetween[] = [$this->prefixColumn($column), $values];
 
         return $this;
     }
 
     public function whereNotBetween($column, iterable $values, $boolean = 'and')
     {
-        $column = $this->prefixColumn($column);
-        $this->recordedWhereNotBetween[] = [$column, $values];
+        $this->recordedWhereNotBetween[] = [$this->prefixColumn($column), $values];
 
         return $this;
     }
@@ -163,17 +157,7 @@ class FakeQueryBuilder extends Builder
             return $values + $item;
         });
 
-        $collection->each(function ($val, $key) {
-            // rename keys: table.column to column.
-            foreach ($val as $k => $v) {
-                $k1 = str_replace($this->from.'.', '', $k);
-                unset($val[$k]);
-                $val[$k1] = $v;
-            }
-            $this->addFakeRow($this->from, $val, $key);
-        });
-
-        return $collection->count();
+        return $this->updateFakeDb($collection);
     }
 
     public function filterRows($sort = true, $columns = ['*'])
@@ -239,6 +223,22 @@ class FakeQueryBuilder extends Builder
         return $this->filterRows(true, $columns)->values();
     }
 
+    public function increment($column, $amount = 1, array $extra = [])
+    {
+        $collection = $this->filterRows()->map(function ($item) use ($amount, $column) {
+            $item[$column] =  $item[$column] + $amount;
+
+            return $item;
+        });
+
+        return $this->updateFakeDb($collection);
+    }
+
+    public function decrement($column, $amount = 1, array $extra = [])
+    {
+        return $this->increment($column, $amount * -1);
+    }
+
     public function insertGetId(array $values, $sequence = null)
     {
         foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {
@@ -259,7 +259,7 @@ class FakeQueryBuilder extends Builder
 
     public function exists()
     {
-        return $this->filterRows(false)->count() > 0;
+        return $this->count() > 0;
     }
 
     public function inRandomOrder($seed = '')
@@ -269,8 +269,7 @@ class FakeQueryBuilder extends Builder
 
     public function reorder($column = null, $direction = 'asc')
     {
-        $column = $this->prefixColumn($column);
-        $this->orderBy = [$column, $direction];
+        $this->orderBy = [$this->prefixColumn($column), $direction];
 
         return $this;
     }
@@ -441,5 +440,20 @@ class FakeQueryBuilder extends Builder
         }
 
         return $collection;
+    }
+
+    private function updateFakeDb(\Illuminate\Support\Collection $collection): int
+    {
+        $collection->each(function ($val, $key) {
+            // rename keys: table.column to column.
+            foreach ($val as $k => $v) {
+                $k1 = str_replace($this->from.'.', '', $k);
+                unset($val[$k]);
+                $val[$k1] = $v;
+            }
+            $this->addFakeRow($this->from, $val, $key);
+        });
+
+        return $collection->count();
     }
 }
