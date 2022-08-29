@@ -78,6 +78,10 @@ class JoinTest extends TestCase
         ];
 
         $this->assertEquals($expected, $results);
+
+        $results = (new FakeQueryBuilder())->from('users')->join('comments', 'comments.user_id', '=', 'users.id')->where('user_id', 1)->get()->all();
+
+        $this->assertEquals($expected, $results);
     }
 
     /**

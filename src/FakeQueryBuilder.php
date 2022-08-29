@@ -383,6 +383,10 @@ class FakeQueryBuilder extends Builder
             [$table, $first, $operator, $second] = $join;
             [$table1, $columns1] = explode('.', $first);
             [$table2, $columns2] = explode('.', $second);
+            if ($table === $table1) {
+                [$table1, $table2] = [$table2, $table1];
+                [$columns1, $columns2] = [$columns2, $columns1];
+            }
             foreach ($base as $row1) {
                 foreach (FakeDB::$fakeRows[$table2] ?? [] as $row2) {
                     if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
