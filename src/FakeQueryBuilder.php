@@ -337,8 +337,9 @@ class FakeQueryBuilder extends Builder
                 if (count($segments) === 1) {
                     $segments = [$table, $segments[0]];
                 }
-                $item[$segments[0]][$alias] = $item[$segments[0]][$segments[1]];
+                $value = $item[$segments[0]][$segments[1]];
                 unset($item[$segments[0]][$segments[1]]);
+                $item[$segments[0]][$alias] = $value;
             }
         }
 

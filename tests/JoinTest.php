@@ -49,9 +49,26 @@ class JoinTest extends TestCase
     /**
      * @test
      */
+    public function join_empty_table()
+    {
+        $results = (new FakeQueryBuilder())->from('users')
+            ->join('comments', 'users.id', '=', 'comments.user_id')
+            ->join('non_comments', 'non_comments.user_id', '=', 'users.id')
+            ->where('user_id', 1)->get()->all();
+
+        $this->assertEquals([], $results);
+    }
+
+    /**
+     * @test
+     */
     public function where_join()
     {
-        $results = (new FakeQueryBuilder())->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('user_id', 1)->get()->all();
+        $results = (new FakeQueryBuilder())->from('users')
+            ->join('comments', 'users.id', '=', 'comments.user_id')
+            ->where('user_id', 1)
+            ->get()
+            ->all();
 
         $expected = [
             [
@@ -89,11 +106,11 @@ class JoinTest extends TestCase
      */
     public function join_select_where()
     {
-        $results = (new FakeQueryBuilder())->select('users.common as uc', 'comments.common as cc')->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get()->all();
+        $results = (new FakeQueryBuilder())->select('users.common as common', 'comments.common as cc')->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get()->all();
 
         $this->assertEquals([
             [
-                'uc' => 'u3',
+                'common' => 'u3',
                 'cc' => 'c3',
             ],
         ], $results);
