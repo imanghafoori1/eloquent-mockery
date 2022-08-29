@@ -22,11 +22,6 @@ class FakeEloquentBuilder extends Builder
         return $this;
     }
 
-    public function count($columns = '*')
-    {
-        return $this->applyScopes()->query->count($columns);
-    }
-
     public function delete()
     {
         try {

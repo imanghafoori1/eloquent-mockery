@@ -18,10 +18,10 @@ class CountTest extends TestCase
      */
     public function basic_count()
     {
-        CountUser::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        CountUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        CountUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-        CountUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
+        CountUser::addFakeRow(['id' => 1, 'name' => null, 'age' => -20,]);
+        CountUser::addFakeRow(['id' => 2, 'name' => '', 'age' => 30,]);
+        CountUser::addFakeRow(['id' => 3, 'name' => [], 'age' => null,]);
+        CountUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 0,]);
 
         $this->assertEquals(4, CountUser::count());
         $this->assertEquals(4, CountUser::query()->count());
