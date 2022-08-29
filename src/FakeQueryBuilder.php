@@ -206,7 +206,9 @@ class FakeQueryBuilder extends Builder
                 $item = $newItem;
             }
 
-            $item = $this->aliasColumns($aliases, $item, $this->from);
+            if ($aliases) {
+                $item = $this->aliasColumns($aliases, $item, $this->from);
+            }
 
             return $this->_renameKeys(Arr::dot($item), FakeDB::$columnAliases[$this->from] ?? []);
         });
@@ -330,28 +332,18 @@ class FakeQueryBuilder extends Builder
 
     public function aliasColumns($aliases, $item, $table)
     {
-        if ($aliases) {
-            foreach ($aliases as $alias => $col) {
-                $segments = explode('.', $col);
+        foreach ($aliases as $alias => $col) {
+            $segments = explode('.', $col);
 
-                if (count($segments) === 1) {
-                    $segments = [$table, $segments[0]];
-                }
-                $value = $item[$segments[0]][$segments[1]];
-                unset($item[$segments[0]][$segments[1]]);
-                $item[$segments[0]][$alias] = $value;
+            if (count($segments) === 1) {
+                $segments = [$table, $segments[0]];
             }
+            $value = $item[$segments[0]][$segments[1]];
+            unset($item[$segments[0]][$segments[1]]);
+            $item[$segments[0]][$alias] = $value;
         }
 
-        $newItem = [];
-        foreach ($item as $c => $it) {
-            if (Str::contains($c, '.')) {
-                $c = Str::afterLast($c, '.');
-            }
-            $newItem[$c] = $it;
-        }
-
-        return $newItem;
+        return $item;
     }
 
     private function prefixColumn($column)
