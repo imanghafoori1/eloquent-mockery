@@ -4,7 +4,6 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
@@ -53,8 +52,7 @@ class FakeQueryBuilder extends Builder
 
     public function whereNotIn($column, $values, $boolean = 'and', $not = false)
     {
-        $column = $this->prefixColumn($column);
-        $this->recordedWhereNotIn[] = [$column, $values];
+        $this->recordedWhereNotIn[] = [$this->prefixColumn($column), $values];
 
         return $this;
     }
@@ -157,13 +155,13 @@ class FakeQueryBuilder extends Builder
             return $values + $item;
         });
 
-        return $this->updateFakeDb($collection);
+        return FakeDB::syncTable($collection, $this->from);
     }
 
     public function filterRows($sort = true, $columns = ['*'])
     {
         $base = FakeDB::$fakeRows[$this->from] ?? [];
-        $collection = $this->performJoins($base);
+        $collection = FakeDB::performJoins($base, $this->recordedJoin);
 
         $sort && ($collection = $this->sortRows($collection));
 
@@ -171,51 +169,13 @@ class FakeQueryBuilder extends Builder
             $collection = $this->applyWheres($collection);
         }
 
-        [$cols, $aliases] = $this->parseSelects($columns);
-
-        $collection = $collection->map(function ($item) use ($cols, $aliases) {
-            if ($cols !== ['*']) {
-                foreach ($cols as $i => $col) {
-                    ! Str::contains($col, '.') && $cols[$i] = $this->from.'.'.$col;
-                }
-                $newItem = [];
-                foreach ($cols as $col) {
-                    [$table, $c] = explode('.', $col);
-                    if (array_key_exists($c, $item[$table])) {
-                        $newItem[$table][$c] = $item[$table][$c];
-                    } elseif ($c === '*') {
-                        $newItem[$table] = $item[$table];
-                    }
-                }
-                $item = $newItem;
-            }
-
-            if ($aliases) {
-                $item = $this->aliasColumns($aliases, $item, $this->from);
-            }
-
-            return $this->_renameKeys(Arr::dot($item), FakeDB::$columnAliases[$this->from] ?? []);
-        });
+        $collection = FakeDB::performSelects($collection, $columns, $this->columns, $this->from);
 
         $this->offset && $collection = $collection->skip($this->offset);
 
         $this->limit && $collection = $collection->take($this->limit);
 
         return $collection;
-    }
-
-    private function _renameKeys(array $array, array $replace)
-    {
-        $newArray = [];
-
-        foreach ($array as $key => $value) {
-            $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
-            $key = explode('.', $key);
-            $key = array_pop($key);
-            $newArray[$key] = $value;
-        }
-
-        return $newArray;
     }
 
     public function get($columns = ['*'])
@@ -231,7 +191,7 @@ class FakeQueryBuilder extends Builder
             return $item;
         });
 
-        return $this->updateFakeDb($collection);
+        return FakeDB::syncTable($collection, $this->from);
     }
 
     public function decrement($column, $amount = 1, array $extra = [])
@@ -277,18 +237,9 @@ class FakeQueryBuilder extends Builder
     public function sortRows($collection)
     {
         if ($this->orderBy) {
-            $sortBy = ($this->orderBy[1] === 'desc' ? 'sortByDesc' : 'sortBy');
             $column = $this->orderBy[0];
 
-            if (in_array($column, $this->dates)) {
-                $collection = $collection->sort(function ($t, $item) use ($column) {
-                    $direction = ($this->orderBy[1] === 'desc' ? 1 : -1);
-
-                    return (strtotime($item[$column]) <=> strtotime($t[$column])) * $direction;
-                });
-            } else {
-                $collection = $collection->$sortBy($column);
-            }
+            $collection = FakeDB::sort($column, $collection, $this->orderBy[1], in_array($column, $this->dates));
         } elseif ($this->shuffle !== false) {
             $collection->shuffle($this->shuffle[1]);
         }
@@ -305,44 +256,6 @@ class FakeQueryBuilder extends Builder
         }
 
         return $this->filterRows(false)->count();
-    }
-
-    private function parseSelects($columns)
-    {
-        $columns = (array) $columns;
-        if ($columns === ['*'] && $this->columns) {
-            $columns = [];
-        }
-
-        $cols = array_merge($this->columns ?: [], $columns);
-
-        $aliases = [];
-        foreach ($cols as $i => $col) {
-            $segments = explode(' as ', $col);
-            if (count($segments) === 2) {
-                [$tableCol, $alias] = $segments;
-                $aliases[trim($alias)] = trim($tableCol);
-                $cols[$i] = trim($tableCol);
-            }
-        }
-
-        return [$cols, $aliases];
-    }
-
-    public function aliasColumns($aliases, $item, $table)
-    {
-        foreach ($aliases as $alias => $col) {
-            $segments = explode('.', $col);
-
-            if (count($segments) === 1) {
-                $segments = [$table, $segments[0]];
-            }
-            $value = $item[$segments[0]][$segments[1]];
-            unset($item[$segments[0]][$segments[1]]);
-            $item[$segments[0]][$alias] = $value;
-        }
-
-        return $item;
     }
 
     private function prefixColumn($column)
@@ -363,33 +276,9 @@ class FakeQueryBuilder extends Builder
         return $column;
     }
 
-    public function addFakeRow(string $table, $val, $key): void
+    public function addFakeRow(string $table, $val, $key)
     {
-        FakeDB::$fakeRows[$table][$key] = [$table => $val];
-    }
-
-    private function performJoins($base)
-    {
-        foreach ($this->recordedJoin as $join) {
-            $joined = [];
-            [$table, $first, $operator, $second] = $join;
-            [$table1, $columns1] = explode('.', $first);
-            [$table2, $columns2] = explode('.', $second);
-            if ($table === $table1) {
-                [$table1, $table2] = [$table2, $table1];
-                [$columns1, $columns2] = [$columns2, $columns1];
-            }
-            foreach ($base as $row1) {
-                foreach (FakeDB::$fakeRows[$table2] ?? [] as $row2) {
-                    if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
-                        $joined[] = $row1 + $row2;
-                    }
-                }
-            }
-            $base = $joined;
-        }
-
-        return collect($base);
+        FakeDB::changeFakeRow($table, $val, $key);
     }
 
     public function isLike($like, $item): bool
@@ -440,20 +329,5 @@ class FakeQueryBuilder extends Builder
         }
 
         return $collection;
-    }
-
-    private function updateFakeDb(\Illuminate\Support\Collection $collection): int
-    {
-        $collection->each(function ($val, $key) {
-            // rename keys: table.column to column.
-            foreach ($val as $k => $v) {
-                $k1 = str_replace($this->from.'.', '', $k);
-                unset($val[$k]);
-                $val[$k1] = $v;
-            }
-            $this->addFakeRow($this->from, $val, $key);
-        });
-
-        return $collection->count();
     }
 }

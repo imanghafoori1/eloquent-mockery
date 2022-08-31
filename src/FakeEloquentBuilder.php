@@ -28,7 +28,7 @@ class FakeEloquentBuilder extends Builder
             return $count = parent::delete();
         }
         finally {
-            if ($count !== 0) {
+            if (is_int($count) && $count > 0) {
                 $this->modelClass::$changedModels['deleted'][] = $this->model;
             }
         }
