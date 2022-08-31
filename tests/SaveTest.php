@@ -56,6 +56,7 @@ class SaveTest extends TestCase
         $model = SaveModel::query()->find(1);
         $model->name = 'hello';
 
+        $time = Carbon::now()->timestamp;
         $result = $model->save();
         $this->assertFalse($model->wasRecentlyCreated);
 
@@ -72,7 +73,7 @@ class SaveTest extends TestCase
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
-        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
     }
 
@@ -157,6 +158,7 @@ class SaveTest extends TestCase
 
         $result = SaveModel::query()->find(1);
         $result->name = 'hello2';
+        $time = Carbon::now()->timestamp;
         $result = $result->save();
 
         $this->assertTrue($result);
@@ -170,7 +172,7 @@ class SaveTest extends TestCase
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello2', $foo->name);
 
-        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
     }
 

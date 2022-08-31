@@ -13,7 +13,7 @@ class FakeDB
 
     public static $fakeRows = [];
 
-    public static $columnAliases = [];
+    public static $changedModels = [];
 
     private static $originalConnection;
 
@@ -37,6 +37,7 @@ class FakeDB
     public static function truncate()
     {
         self::$fakeRows = [];
+        self::$changedModels = [];
     }
 
     public static function mockQueryBuilder()
@@ -146,7 +147,7 @@ class FakeDB
                 $item = self::aliasColumns($aliases, $item, $_table);
             }
 
-            return self::_renameKeys(Arr::dot($item), FakeDB::$columnAliases[$_table] ?? []);
+            return self::removeTableName(Arr::dot($item));
         });
     }
 
@@ -166,12 +167,11 @@ class FakeDB
         return $item;
     }
 
-    public static function _renameKeys(array $array, array $replace)
+    public static function removeTableName(array $array)
     {
         $newArray = [];
 
         foreach ($array as $key => $value) {
-            $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
             $key = explode('.', $key);
             $key = array_pop($key);
             $newArray[$key] = $value;
@@ -184,12 +184,11 @@ class FakeDB
     {
         $collection->each(function ($val, $key) use ($table){
             // rename keys: table.column to column.
+            $newVal = [];
             foreach ($val as $k => $v) {
-                $k1 = str_replace($table.'.', '', $k);
-                unset($val[$k]);
-                $val[$k1] = $v;
+                $newVal[str_replace($table.'.', '', $k)] = $v;
             }
-            self::changeFakeRow($table, $val, $key);
+            self::changeFakeRow($table, $newVal, $key);
         });
 
         return $collection->count();

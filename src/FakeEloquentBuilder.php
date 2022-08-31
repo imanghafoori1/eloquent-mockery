@@ -29,7 +29,7 @@ class FakeEloquentBuilder extends Builder
         }
         finally {
             if (is_int($count) && $count > 0) {
-                $this->modelClass::$changedModels['deleted'][] = $this->model;
+                FakeDB::$changedModels[$this->modelClass]['deleted'][] = $this->model;
             }
         }
     }
@@ -41,14 +41,14 @@ class FakeEloquentBuilder extends Builder
         }
         finally {
             if ($count !== 0) {
-                $this->modelClass::$changedModels['deleted'][] = $this->model;
+                FakeDB::$changedModels[$this->modelClass]['deleted'][] = $this->model;
             }
         }
     }
 
     public function update(array $values)
     {
-        $this->model->getAttributes() && $this->modelClass::$changedModels['updated'][] = $this->model;
+        $this->model->getAttributes() && FakeDB::$changedModels[$this->modelClass]['updated'][] = $this->model;
 
         return parent::update($values);
     }

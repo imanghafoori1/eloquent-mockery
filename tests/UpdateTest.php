@@ -43,6 +43,7 @@ class UpdateTest extends TestCase
         UpdateyModel::saving(function () {
             $_SERVER['saving'] = true;
         });
+        $time = Carbon::now()->timestamp;
         $result = UpdateyModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertTrue($result);
@@ -56,7 +57,7 @@ class UpdateTest extends TestCase
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
-        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
 
         $this->assertNull(UpdateyModel::getUpdatedModel(1));
@@ -94,6 +95,7 @@ class UpdateTest extends TestCase
         UpdateyModel::saving(function () {
             $_SERVER['saving'] = true;
         });
+        $time = Carbon::now()->timestamp;
         $result = UpdateyModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertTrue($result);
@@ -107,7 +109,7 @@ class UpdateTest extends TestCase
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
-        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
 
         $this->assertNull(UpdateyModel::getUpdatedModel(1));

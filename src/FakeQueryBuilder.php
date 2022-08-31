@@ -238,8 +238,8 @@ class FakeQueryBuilder extends Builder
     {
         if ($this->orderBy) {
             $column = $this->orderBy[0];
-
-            $collection = FakeDB::sort($column, $collection, $this->orderBy[1], in_array($column, $this->dates));
+            $isDates = in_array($column, $this->dates);
+            $collection = FakeDB::sort($column, $collection, $this->orderBy[1], $isDates);
         } elseif ($this->shuffle !== false) {
             $collection->shuffle($this->shuffle[1]);
         }

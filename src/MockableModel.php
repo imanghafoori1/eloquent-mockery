@@ -4,13 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 trait MockableModel
 {
-    public static $changedModels = [
-        'updated' => [],
-        'saved' => [],
-        'created' => [],
-        'deleted' => [],
-        'softDeleted' => [],
-    ];
+    public static $changedModels = [];
 
     public static $fakeMode = false;
 
@@ -41,7 +35,7 @@ trait MockableModel
     {
         static::$fakeMode = true;
         $callback = function ($model) {
-            self::$changedModels['softDeleted'][] = $model;
+            FakeDB::$changedModels[static::class]['softDeleted'][] = $model;
         };
         if (method_exists(static::class, 'softDeleted')) {
             static::softDeleted($callback);
@@ -52,27 +46,27 @@ trait MockableModel
 
     public static function getUpdatedModel($index = 0)
     {
-        return self::$changedModels['updated'][$index] ?? null;
+        return FakeDB::$changedModels[static::class]['updated'][$index] ?? null;
     }
 
     public static function getCreatedModel($index = 0)
     {
-        return self::$changedModels['created'][$index] ?? null;
+        return FakeDB::$changedModels[static::class]['created'][$index] ?? null;
     }
 
     public static function getSavedModel($index = 0)
     {
-        return self::$changedModels['saved'][$index] ?? null;
+        return FakeDB::$changedModels[static::class]['saved'][$index] ?? null;
     }
 
     public static function getSoftDeletedModel($index = 0)
     {
-        return self::$changedModels['softDeleted'][$index] ?? null;
+        return FakeDB::$changedModels[static::class]['softDeleted'][$index] ?? null;
     }
 
     public static function getDeletedModel($index = 0)
     {
-        return self::$changedModels['deleted'][$index] ?? null;
+        return FakeDB::$changedModels[static::class]['deleted'][$index] ?? null;
     }
 
     public function newEloquentBuilder($query)
@@ -95,9 +89,8 @@ trait MockableModel
 
     public static function addFakeRow(array $attributes)
     {
-        $table = (new static())->getTable();
         self::$fakeMode = true;
-        FakeDB::addRow($table, $attributes);
+        FakeDB::addRow((new static())->getTable(), $attributes);
     }
 
     public static function fake()
@@ -115,15 +108,8 @@ trait MockableModel
         self::$fakeMode = false;
         FakeDB::$fakeRows = [];
         FakeDB::$ignoreWheres = false;
-        FakeDB::$columnAliases = [];
         self::$forceMocks = [];
-        self::$changedModels = [
-            'updated' => [],
-            'saved' => [],
-            'created' => [],
-            'deleted' => [],
-            'softDeleted' => [],
-        ];
+        FakeDB::$changedModels = [];
     }
 
     public function getDateFormat()
@@ -140,10 +126,10 @@ trait MockableModel
     {
         if ($this->isFakeMode()) {
             if ($this->wasRecentlyCreated) {
-                static::$changedModels['created'][] = $this;
+                FakeDB::$changedModels[static::class]['created'][] = $this;
                 FakeDB::addRow($this->getTable(), $this->getAttributes());
             }
-            static::$changedModels['saved'][] = $this;
+            FakeDB::$changedModels[static::class]['saved'][] = $this;
         }
 
         return parent::finishSave($options);

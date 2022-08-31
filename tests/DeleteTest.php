@@ -31,7 +31,8 @@ class DeleteTest extends TestCase
 
         $count = DeleteUser::destroy(1, 2);
         $this->assertEquals(2, $count);
-        $this->assertCount(2, DeleteUser::$changedModels['deleted']);
+        $this->assertNotNull(DeleteUser::getDeletedModel(1));
+        $this->assertNull(DeleteUser::getDeletedModel(2));
 
         $model = DeleteUser::getDeletedModel(0);
         $this->assertEquals($model->id, 1);
