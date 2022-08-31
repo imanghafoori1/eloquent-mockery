@@ -34,6 +34,16 @@ class FakeDB
         };
     }
 
+    public static function getChangedModel(string $action, $index, $model)
+    {
+        return FakeDB::$changedModels[$model][$action][$index] ?? null;
+    }
+
+    public static function setChangedModel(string $action, $model)
+    {
+        FakeDB::$changedModels[get_class($model)][$action][] = $model;
+    }
+
     public static function truncate()
     {
         self::$fakeRows = [];

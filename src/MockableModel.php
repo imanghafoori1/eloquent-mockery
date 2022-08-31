@@ -4,8 +4,6 @@ namespace Imanghafoori\EloquentMockery;
 
 trait MockableModel
 {
-    public static $changedModels = [];
-
     public static $fakeMode = false;
 
     public static $forceMocks = [];
@@ -35,7 +33,7 @@ trait MockableModel
     {
         static::$fakeMode = true;
         $callback = function ($model) {
-            FakeDB::$changedModels[static::class]['softDeleted'][] = $model;
+            FakeDB::setChangedModel('softDeleted', $model);
         };
         if (method_exists(static::class, 'softDeleted')) {
             static::softDeleted($callback);
@@ -46,27 +44,27 @@ trait MockableModel
 
     public static function getUpdatedModel($index = 0)
     {
-        return FakeDB::$changedModels[static::class]['updated'][$index] ?? null;
+        return FakeDB::getChangedModel('updated', $index, static::class);
     }
 
     public static function getCreatedModel($index = 0)
     {
-        return FakeDB::$changedModels[static::class]['created'][$index] ?? null;
+        return FakeDB::getChangedModel('created', $index, static::class);
     }
 
     public static function getSavedModel($index = 0)
     {
-        return FakeDB::$changedModels[static::class]['saved'][$index] ?? null;
+        return FakeDB::getChangedModel('saved', $index, static::class);
     }
 
     public static function getSoftDeletedModel($index = 0)
     {
-        return FakeDB::$changedModels[static::class]['softDeleted'][$index] ?? null;
+        return FakeDB::getChangedModel('softDeleted', $index, static::class);
     }
 
     public static function getDeletedModel($index = 0)
     {
-        return FakeDB::$changedModels[static::class]['deleted'][$index] ?? null;
+        return FakeDB::getChangedModel('deleted', $index, static::class);
     }
 
     public function newEloquentBuilder($query)
@@ -126,10 +124,10 @@ trait MockableModel
     {
         if ($this->isFakeMode()) {
             if ($this->wasRecentlyCreated) {
-                FakeDB::$changedModels[static::class]['created'][] = $this;
+                FakeDB::setChangedModel('created', $this);
                 FakeDB::addRow($this->getTable(), $this->getAttributes());
             }
-            FakeDB::$changedModels[static::class]['saved'][] = $this;
+            FakeDB::setChangedModel('saved', $this);
         }
 
         return parent::finishSave($options);
