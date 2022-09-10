@@ -90,6 +90,9 @@ class FakeDB
                         $joined[] = $row1 + $row2;
                     }
                 }
+                if ($type === 'left') {
+                    $joined[] = $row1 + [$table2 => array_fill_keys(array_keys($row2[$table2]), null)];
+                }
             }
             $base = $joined;
         }
@@ -209,5 +212,55 @@ class FakeDB
     public static function changeFakeRow(string $table, $val, $key): void
     {
         FakeDB::$fakeRows[$table][$key] = [$table => $val];
+    }
+
+    public static function applyWheres($query, $collection)
+    {
+        foreach ($query->recordedWhereBetween as $_where) {
+            $collection = $collection->whereBetween(...$_where);
+        }
+
+        foreach ($query->recordedWhereNotBetween as $_where) {
+            $collection = $collection->whereNotBetween(...$_where);
+        }
+
+        foreach ($query->recordedWheres as $_where) {
+            $_where = array_filter($_where, function ($val) {
+                return ! is_null($val);
+            });
+
+            if ($_where[1] === 'like') {
+                $collection = $collection->filter(function ($item) use ($_where) {
+                    return FakeDB::isLike($_where[0], $_where[2], $item);
+                });
+            } else {
+                $collection = $collection->where(...$_where);
+            }
+        }
+
+        foreach ($query->recordedWhereIn as $_where) {
+            $collection = $collection->whereIn($_where[0], $_where[1]);
+        }
+
+        foreach ($query->recordedWhereNotIn as $_where) {
+            $collection = $collection->whereNotIn($_where[0], $_where[1]);
+        }
+
+        foreach ($query->recordedWhereNull as $_where) {
+            $collection = $collection->whereNull($_where[0]);
+        }
+
+        foreach ($query->recordedWhereNotNull as $_where) {
+            $collection = $collection->whereNotNull($_where[0]);
+        }
+
+        return $collection;
+    }
+
+    public static function isLike($value, $pattern, $item): bool
+    {
+        $pattern = str_replace('%', '.*', preg_quote($pattern, '/'));
+
+        return (bool) preg_match("/^{$pattern}$/i", data_get($item, $value) ?? '');
     }
 }

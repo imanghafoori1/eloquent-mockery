@@ -7,18 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class FakeEloquentBuilder extends Builder
 {
-    public function __construct($query, Model $modelObj)
+    public function __construct(FakeQueryBuilder $query, Model $modelObj)
     {
         $this->query = $query;
         $this->model = $modelObj;
-    }
-
-    public function addSelect($columns = ['*'])
-    {
-        $columns = is_array($columns) ? $columns : func_get_args();
-        $this->query->columns = array_merge($this->query->columns ?? [], $columns);
-
-        return $this;
     }
 
     public function delete()
