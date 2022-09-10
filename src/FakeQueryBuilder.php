@@ -69,27 +69,21 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
-    public function join(
-        $table,
-        $first,
-        $operator = null,
-        $second = null,
-        $type = 'inner',
-        $where = false
-    ) {
-        $this->recordedJoin[] = [$table, $first, $operator, $second];
+    public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
+    {
+        $this->recordedJoin[] = [$table, $first, $operator, $second, $type];
 
         return $this;
     }
 
     public function leftJoin($table, $first, $operator = null, $second = null)
     {
-        return $this->join($table, $first, $operator, $second);
+        return $this->join($table, $first, $operator, $second, 'left');
     }
 
     public function rightJoin($table, $first, $operator = null, $second = null)
     {
-        return $this->join($table, $first, $operator, $second);
+        return $this->join($table, $first, $operator, $second, 'right');
     }
 
     public function where($column, $operator = null, $value = null, $boolean = 'and')

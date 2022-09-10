@@ -122,13 +122,15 @@ trait MockableModel
 
     protected function finishSave(array $options)
     {
-        if ($this->isFakeMode()) {
-            if ($this->wasRecentlyCreated) {
-                FakeDB::setChangedModel('created', $this);
-                FakeDB::addRow($this->getTable(), $this->getAttributes());
-            }
-            FakeDB::setChangedModel('saved', $this);
+        if (! $this->isFakeMode()) {
+            return parent::finishSave($options);
         }
+
+        if ($this->wasRecentlyCreated) {
+            FakeDB::setChangedModel('created', $this);
+            FakeDB::addRow($this->getTable(), $this->getAttributes());
+        }
+        FakeDB::setChangedModel('saved', $this);
 
         return parent::finishSave($options);
     }
