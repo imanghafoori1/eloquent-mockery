@@ -120,4 +120,43 @@ class LeftJoinTest extends TestCase
             ],
         ], $results);
     }
+
+    /**
+     * @test
+     */
+    public function left_join_select_star()
+    {
+        $results = (new FakeQueryBuilder())
+            ->select('comments.*')
+            ->from('users')
+            ->leftJoin('comments', 'users.id', '=', 'comments.user_id')
+            ->where('comments.user_id', 3)
+            ->get()
+            ->all();
+
+        $this->assertEquals([
+            [
+                'id' => 3,
+                'user_id' => 3,
+                'my_text' => 'orphan',
+                'common' => 'c3',
+            ],
+        ], $results);
+
+        $results = (new FakeQueryBuilder())
+            ->from('users')
+            ->leftJoin('comments', 'users.id', '=', 'comments.user_id')
+            ->where('comments.user_id', 3)
+            ->get(['comments.*', 'users.id as user_id'])
+            ->all();
+
+        $this->assertEquals([
+            [
+                'id' => 3,
+                'user_id' => 3,
+                'my_text' => 'orphan',
+                'common' => 'c3',
+            ],
+        ], $results);
+    }
 }
