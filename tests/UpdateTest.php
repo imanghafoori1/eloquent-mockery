@@ -25,7 +25,7 @@ class UpdateTest extends TestCase
     /**
      * @test
      */
-    public function update()
+    public function calling_update_method_on_model_object()
     {
         UpdateyModel::setEventDispatcher(new Dispatcher());
         UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
@@ -43,9 +43,8 @@ class UpdateTest extends TestCase
         UpdateyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
-        $result = UpdateyModel::query()
-            ->find(1)
-            ->update(['name' => 'hello']);
+        $time = Carbon::now()->timestamp;
+        $result = UpdateyModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertTrue($result);
 
@@ -58,10 +57,18 @@ class UpdateTest extends TestCase
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
-        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
 
         unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
+
+        $this->assertNull(UpdateyModel::getUpdatedModel(1));
+        $this->assertSame(UpdateyModel::getUpdatedModel(), UpdateyModel::getSavedModel());
+
+        unset($_SERVER['saved']);
+        unset($_SERVER['updating']);
+        unset($_SERVER['updated']);
+        unset($_SERVER['saving']);
     }
 
     /**
@@ -90,9 +97,8 @@ class UpdateTest extends TestCase
         UpdateyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
-        $result = UpdateyModel::query()
-            ->find(1)
-            ->update(['name' => 'hello']);
+        $time = Carbon::now()->timestamp;
+        $result = UpdateyModel::query()->find(1)->update(['name' => 'hello']);
 
         $this->assertTrue($result);
 
@@ -101,14 +107,21 @@ class UpdateTest extends TestCase
         $this->assertFalse($_SERVER['updated']);
         $this->assertFalse($_SERVER['updating']);
 
-        $foo = UpdateyModel::getUpdatedModel();
+        $foo = UpdateyModel::getUpdatedModel(0);
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
 
-        $this->assertEquals($foo->updated_at->timestamp, Carbon::now()->timestamp);
+        $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
 
         unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
+
+        $this->assertNull(UpdateyModel::getUpdatedModel(1));
+
+        unset($_SERVER['saved']);
+        unset($_SERVER['updating']);
+        unset($_SERVER['updated']);
+        unset($_SERVER['saving']);
     }
 
     /**
@@ -164,9 +177,7 @@ class UpdateTest extends TestCase
             $_SERVER['saving'] = true;
         });
 
-        $result = UpdateyModel::query()
-            ->whereIn('id', [1, 2])
-            ->update(['name' => 'hello']);
+        $result = UpdateyModel::query()->whereIn('id', [1, 2])->update(['name' => 'hello']);
 
         $this->assertEquals(2, $result);
 
@@ -179,7 +190,6 @@ class UpdateTest extends TestCase
         $this->assertNull($foo);
 
         unset($_SERVER['saved'], $_SERVER['updating'], $_SERVER['updated'], $_SERVER['saving']);
-
 
         $model = UpdateyModel::query()->find(1);
         $this->assertEquals('hello', $model->name);

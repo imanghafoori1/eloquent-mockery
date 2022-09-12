@@ -2,8 +2,8 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
@@ -12,74 +12,129 @@ class FakeQueryBuilder extends Builder
 
     public $recordedWhereIn = [];
 
+    public $recordedWhereNotIn = [];
+
     public $recordedWhereNull = [];
 
     public $recordedWhereNotNull = [];
 
-    public $modelClass = null;
+    public $orderBy = [];
 
-    public $recordedWhereLikes = [];
+    public $recordedWhereBetween = [];
 
-    public function __construct($modelClass)
+    public $recordedWhereNotBetween = [];
+
+    public $shuffle = false;
+
+    private $dates;
+
+    private $recordedJoin = [];
+
+    public function __construct(ConnectionInterface $connection = null, $dates = [])
     {
-        $this->modelClass = $modelClass;
+        $this->connection = ($connection ?: new FakeConnection());
+        $this->dates = $dates;
     }
 
     public function whereIn($column, $values, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereIn[] = [$column, $values];
+        $column = $this->prefixColumn($column);
+        if ($not) {
+            $this->recordedWhereNotIn[] = [$column, $values];
+        } else {
+            $this->recordedWhereIn[] = [$column, $values];
+        }
+
+        return $this;
+    }
+
+    public function whereNotIn($column, $values, $boolean = 'and', $not = false)
+    {
+        $this->recordedWhereNotIn[] = [$this->prefixColumn($column), $values];
 
         return $this;
     }
 
     public function orderBy($column, $direction = 'asc')
     {
+        $this->orderBy = [$this->prefixColumn($column), $direction];
+
+        return parent::orderBy($column, $direction);
+    }
+
+    public function crossJoin($table, $first = null, $operator = null, $second = null)
+    {
         return $this;
     }
 
     public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
     {
+        $this->recordedJoin[] = [$table, $first, $operator, $second, $type];
+
         return $this;
     }
 
     public function leftJoin($table, $first, $operator = null, $second = null)
     {
-        return $this;
+        return $this->join($table, $first, $operator, $second, 'left');
     }
 
     public function rightJoin($table, $first, $operator = null, $second = null)
     {
-        return $this;
+        return $this->join($table, $first, $operator, $second, 'right');
     }
 
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
-        if ($operator === 'like') {
-            $this->recordedWhereLikes[] = [$column, $value];
-        } else {
-            $this->recordedWheres[] = [$column, $operator, $value];
-        }
+        $column = $this->prefixColumn($column);
+
+        $this->recordedWheres[] = [$column, $operator, $value];
 
         return $this;
     }
 
     public function whereNull($columns, $boolean = 'and', $not = false)
     {
-        $this->recordedWhereNull[] = [$columns];
+        $this->recordedWhereNull[] = [$this->prefixColumn($columns)];
 
         return $this;
     }
 
     public function whereNotNull($columns, $boolean = 'and')
     {
-        $this->recordedWhereNotNull[] = [$columns];
+        $this->recordedWhereNotNull[] = [$this->prefixColumn($columns)];
+
+        return $this;
+    }
+
+    public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
+    {
+        $this->recordedWhereBetween[] = [$this->prefixColumn($column), $values];
+
+        return $this;
+    }
+
+    public function whereNotBetween($column, iterable $values, $boolean = 'and')
+    {
+        $this->recordedWhereNotBetween[] = [$this->prefixColumn($column), $values];
 
         return $this;
     }
 
     public function delete($id = null)
     {
-        return $this->filterRows()->count();
+        // If an ID is passed to the method, we will set the where clause to check the
+        // ID to let developers to simply and quickly remove a single row from this
+        // database without manually specifying the "where" clauses on the query.
+        if (! is_null($id)) {
+            $this->where($this->from.'.id', '=', $id);
+        }
+
+        $rowsForDelete = $this->filterRows();
+        $count = $rowsForDelete->count();
+        FakeDB::$fakeRows[$this->from] = array_diff_key(FakeDB::$fakeRows[$this->from] ?? [], $rowsForDelete->all());
+
+        return $count;
     }
 
     public function update(array $values)
@@ -88,86 +143,137 @@ class FakeQueryBuilder extends Builder
             return $values + $item;
         });
 
-        $collection->each(function ($val, $key) {
-            $this->modelClass::$fakeRows[$key] = $val;
+        return FakeDB::syncTable($collection, $this->from);
+    }
+
+    public function filterRows($sort = true, $columns = ['*'])
+    {
+        $base = FakeDB::$fakeRows[$this->from] ?? [];
+        $collection = FakeDB::performJoins($base, $this->recordedJoin);
+
+        $sort && ($collection = $this->sortRows($collection));
+
+        if (! FakeDB::$ignoreWheres) {
+            $collection = FakeDB::applyWheres($this, $collection);
+        }
+
+        $collection = FakeDB::performSelects($collection, $columns, $this->columns, $this->from);
+
+        $this->offset && $collection = $collection->skip($this->offset);
+
+        $this->limit && $collection = $collection->take($this->limit);
+
+        return $collection;
+    }
+
+    public function get($columns = ['*'])
+    {
+        return $this->filterRows(true, $columns)->values();
+    }
+
+    public function increment($column, $amount = 1, array $extra = [])
+    {
+        $collection = $this->filterRows()->map(function ($item) use ($amount, $column) {
+            $item[$column] =  $item[$column] + $amount;
+
+            return $item;
         });
 
-        return $collection->count();
+        return FakeDB::syncTable($collection, $this->from);
     }
 
-    public function updateRow($originalModel, array $attributes)
+    public function decrement($column, $amount = 1, array $extra = [])
     {
-        $row = $this->filterRows();
-
-        foreach ($row as $i) {
-            $originalModel::$fakeRows[$i] = $originalModel::$fakeRows[$i] + $attributes;
-        }
-    }
-
-    public function filterRows()
-    {
-        $collection = collect($this->modelClass::$fakeRows);
-
-        if ($this->modelClass::$ignoreWheres){
-            return $collection;
-        }
-
-        foreach ($this->recordedWheres as $_where) {
-            $_where = array_filter($_where, function ($val) {
-                return ! is_null($val);
-            });
-            $_where[0] = Str::after($_where[0], '.');
-            $collection = $collection->where(...$_where);
-        }
-
-        foreach ($this->recordedWhereLikes as $like) {
-            $collection = $collection->filter(function ($item) use ($like) {
-                $pattern = str_replace('%', '.*', preg_quote($like[1], '/'));
-
-                return (bool) preg_match("/^{$pattern}$/i", $item[$like[0]] ?? '');
-            });
-        }
-
-        foreach ($this->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn(Str::after($_where[0], '.'), $_where[1]);
-        }
-
-        foreach ($this->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull(Str::after($_where[0], '.'));
-        }
-
-        foreach ($this->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull(Str::after($_where[0], '.'));
-        }
-
-        return $collection->map(function ($item) {
-            return $this->_renameKeys(Arr::dot($item), $this->modelClass::$columnAliases);
-        });
-    }
-
-    private function _renameKeys(array $array, array $replace)
-    {
-        $newArray = [];
-        if (! $replace) {
-            return $array;
-        }
-
-        foreach ($array as $key => $value) {
-            $key = array_key_exists($key, $replace) ? $replace[$key] : $key;
-            $key = explode('.', $key);
-            $key = array_pop($key);
-            $newArray[$key] = $value;
-        }
-
-        return $newArray;
+        return $this->increment($column, $amount * -1);
     }
 
     public function insertGetId(array $values, $sequence = null)
     {
-        $key = array_key_last($this->modelClass::$fakeRows);
+        foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {
+        }
 
-        $id = $this->modelClass::$fakeRows[$key]['id'] ?? 0;
+        return ($row[$this->from]['id'] ?? 0) + 1;
+    }
 
-        return $id + 1;
+    public function pluck($column, $key = null)
+    {
+        return $this->filterRows()->pluck($column, $key);
+    }
+
+    public function aggregate($function, $columns = ['*'])
+    {
+        return $this->filterRows(false)->$function($columns);
+    }
+
+    public function exists()
+    {
+        return $this->count() > 0;
+    }
+
+    public function addSelect($columns = ['*'])
+    {
+        $columns = is_array($columns) ? $columns : func_get_args();
+        $this->columns = array_merge($this->columns ?? [], $columns);
+
+        return $this;
+    }
+
+    public function inRandomOrder($seed = '')
+    {
+        return $this->shuffle = [true, ($seed ?: null)];
+    }
+
+    public function reorder($column = null, $direction = 'asc')
+    {
+        $this->orderBy = [$this->prefixColumn($column), $direction];
+
+        return $this;
+    }
+
+    public function sortRows($collection)
+    {
+        if ($this->orderBy) {
+            $column = $this->orderBy[0];
+            $isDates = in_array($column, $this->dates);
+            $collection = FakeDB::sort($column, $collection, $this->orderBy[1], $isDates);
+        } elseif ($this->shuffle !== false) {
+            $collection->shuffle($this->shuffle[1]);
+        }
+
+        return $collection;
+    }
+
+    public function count($columns = '*')
+    {
+        if ($columns !== '*') {
+            foreach ((array) $columns as $column) {
+                $this->whereNotNull($column);
+            }
+        }
+
+        return $this->filterRows(false)->count();
+    }
+
+    private function prefixColumn($column)
+    {
+        if (! Str::contains($column, '.') && ! isset(FakeDB::$fakeRows[$this->from][0][$this->from][$column])) {
+            foreach ($this->recordedJoin as $joined) {
+                [$table] = $joined;
+                if (isset(FakeDB::$fakeRows[$table][0][$table][$column])) {
+                    $column = $table.'.'.$column;
+                }
+            }
+        }
+
+        if (! Str::contains($column, '.')) {
+            $column = $this->from.'.'.$column;
+        }
+
+        return $column;
+    }
+
+    public function addFakeRow(string $table, $val, $key)
+    {
+        FakeDB::changeFakeRow($table, $val, $key);
     }
 }

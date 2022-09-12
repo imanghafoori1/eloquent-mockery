@@ -25,6 +25,7 @@ class WhereNullTest extends TestCase
     {
         WhereNullUser::stopFaking();
     }
+
     /**
      * @test
      */
@@ -36,6 +37,9 @@ class WhereNullTest extends TestCase
         $this->assertEquals(1, $users->count());
     }
 
+    /**
+     * @test
+     */
     public function whereNotNull()
     {
         $users = WhereNullUser::whereNotNull('name')->get();

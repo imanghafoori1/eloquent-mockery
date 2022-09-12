@@ -4,31 +4,13 @@ namespace Imanghafoori\EloquentMockery;
 
 trait MockableModel
 {
-    public static $changedModels = [
-        'updated' => [],
-        'saved' => [],
-        'created' => [],
-        'deleted' => [],
-        'softDeleted' => [],
-    ];
-
     public static $fakeMode = false;
-
-    public static $firstModel;
-
-    public static $fakeRows = [];
-
-    public static $fakeRelations = [];
-
-    public static $ignoreWheres = false;
-
-    public static $columnAliases = [];
 
     public static $forceMocks = [];
 
     public static function shouldRecieve($method)
     {
-        return new class (self::class, $method) {
+        return new class (self::class, $method){
 
             private $theClass;
 
@@ -47,75 +29,66 @@ trait MockableModel
         };
     }
 
-    public static function addRelation(string $relation, $model, array $row)
-    {
-        self::$fakeRelations[] = [$relation, $model, $row];
-    }
-
     public static function fakeSoftDelete()
     {
         static::$fakeMode = true;
-        static::softDeleted(function ($model) {
-            self::$changedModels['softDeleted'][] = $model;
-        });
+        $callback = function ($model) {
+            FakeDB::setChangedModel('softDeleted', $model);
+        };
+        if (method_exists(static::class, 'softDeleted')) {
+            static::softDeleted($callback);
+        } else {
+            static::deleted($callback);
+        }
     }
 
     public static function getUpdatedModel($index = 0)
     {
-        return self::$changedModels['updated'][$index] ?? null;
+        return FakeDB::getChangedModel('updated', $index, static::class);
     }
 
     public static function getCreatedModel($index = 0)
     {
-        return self::$changedModels['created'][$index] ?? null;
+        return FakeDB::getChangedModel('created', $index, static::class);
+    }
+
+    public static function getSavedModel($index = 0)
+    {
+        return FakeDB::getChangedModel('saved', $index, static::class);
     }
 
     public static function getSoftDeletedModel($index = 0)
     {
-        return self::$changedModels['softDeleted'][$index] ?? null;
+        return FakeDB::getChangedModel('softDeleted', $index, static::class);
     }
 
     public static function getDeletedModel($index = 0)
     {
-        return self::$changedModels['deleted'][$index] ?? null;
+        return FakeDB::getChangedModel('deleted', $index, static::class);
     }
 
     public function newEloquentBuilder($query)
     {
         if ($this->isFakeMode()) {
-            return new FakeEloquentBuilder($this, static::class);
-        } else {
-            return parent::newEloquentBuilder($query);
+            return new FakeEloquentBuilder($query, $this);
         }
-    }
 
-    protected function newBaseQueryBuilder()
-    {
-        if ($this->isFakeMode()) {
-            return new FakeQueryBuilder(static::class);
-        } else {
-            return parent::newBaseQueryBuilder();
-        }
+        return parent::newEloquentBuilder($query);
     }
 
     public function getConnection()
     {
         if ($this->isFakeMode()) {
             return new FakeConnection();
-        } else {
-            return parent::getConnection();
         }
+
+        return parent::getConnection();
     }
 
     public static function addFakeRow(array $attributes)
     {
-        $row = [];
         self::$fakeMode = true;
-        foreach ($attributes as $key => $value) {
-            $col = self::parseColumn($key);
-            $row[$col] = $value;
-        }
-        self::$fakeRows[] = $row;
+        FakeDB::addRow((new static())->getTable(), $attributes);
     }
 
     public static function fake()
@@ -125,52 +98,16 @@ trait MockableModel
 
     public static function ignoreWheres()
     {
-        self::$ignoreWheres = true;
-    }
-
-    private static function parseColumn($where)
-    {
-        if (! strpos($where,' as ')) {
-            return $where;
-        }
-
-        [$tableCol, $alias] = explode(' as ', $where);
-        self::$columnAliases[trim($tableCol)] = trim($alias);
-
-        return $tableCol;
-    }
-
-    /**
-     * Get the table qualified key name.
-     *
-     * @return string
-     */
-    public function getQualifiedKeyName()
-    {
-        return $this->getKeyName();
-    }
-
-    public function fakeEloquentBuilder()
-    {
-        return new FakeEloquentBuilder($this, static::class);
+        FakeDB::$ignoreWheres = true;
     }
 
     public static function stopFaking()
     {
         self::$fakeMode = false;
-        self::$fakeRows = [];
-        self::$firstModel = null;
-        self::$fakeRelations = [];
-        self::$ignoreWheres = false;
-        self::$columnAliases = [];
+        FakeDB::$fakeRows = [];
+        FakeDB::$ignoreWheres = false;
         self::$forceMocks = [];
-        self::$changedModels = [
-            'updated' => [],
-            'saved' => [],
-            'created' => [],
-            'deleted' => [],
-            'softDeleted' => [],
-        ];
+        FakeDB::$changedModels = [];
     }
 
     public function getDateFormat()
@@ -180,6 +117,21 @@ trait MockableModel
 
     private function isFakeMode()
     {
-        return self::$fakeRows || self::$fakeMode;
+        return FakeDB::$fakeRows || self::$fakeMode || isset(FakeDB::$fakeRows[$this->getTable()]);
+    }
+
+    protected function finishSave(array $options)
+    {
+        if (! $this->isFakeMode()) {
+            return parent::finishSave($options);
+        }
+
+        if ($this->wasRecentlyCreated) {
+            FakeDB::setChangedModel('created', $this);
+            FakeDB::addRow($this->getTable(), $this->getAttributes());
+        }
+        FakeDB::setChangedModel('saved', $this);
+
+        return parent::finishSave($options);
     }
 }

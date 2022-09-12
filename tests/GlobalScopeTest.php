@@ -12,11 +12,6 @@ class GlobalScopeUser extends Model
 {
     use MockableModel;
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new AncientScope);
-    }
-
     public function scopeIman($query)
     {
         $query->where('name', 'Iman 3');
@@ -43,6 +38,7 @@ class GlobalScopeTest extends TestCase
      */
     public function global_scope_test()
     {
+        GlobalScopeUser::addGlobalScope(new AncientScope);
         GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
         GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
         GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
@@ -54,7 +50,7 @@ class GlobalScopeTest extends TestCase
         $user = $user[0];
         $this->assertEquals('Iman 3', $user->name);
 
-        GlobalScopeUser::stopFaking();
+        GlobalScopeUser::clearBootedModels();
     }
 
     /**
@@ -62,11 +58,15 @@ class GlobalScopeTest extends TestCase
      */
     public function global_scope_raw_update()
     {
+        GlobalScopeUser::addGlobalScope(new AncientScope);
         GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20]);
         GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30]);
         GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34]);
         GlobalScopeUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 37]);
         GlobalScopeUser::addFakeRow(['id' => 5, 'name' => 'Iman 5', 'age' => 40]);
+
+        $count = GlobalScopeUser::where('age', 40)->count();
+        $this->assertEquals(1, $count);
 
         $count = GlobalScopeUser::query()->update(['age' => 40]);
         $this->assertEquals(3, $count);
@@ -86,6 +86,6 @@ class GlobalScopeTest extends TestCase
         $count = GlobalScopeUser::withoutGlobalScopes()->count();
         $this->assertEquals(5, $count);
 
-        GlobalScopeUser::stopFaking();
+        GlobalScopeUser::clearBootedModels();
     }
 }

@@ -22,40 +22,25 @@ class GetFirstWhereTest extends TestCase
     /**
      * @test
      */
-    public function whereLike()
+    public function first()
     {
-        User::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        User::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
         User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
         User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
-        $users = User::where('name', 'like', '%man 3')->get();
-        $this->assertEquals('Iman 3', ($users[0])->name);
-        $this->assertEquals(1, ($users->count()));
-
-        $users = User::where('name', 'like', 'Iman%')->get();
-        $this->assertEquals('Iman 2', ($users[0])->name);
-        $this->assertEquals('Iman 3', ($users[1])->name);
-    }
-
-    /**
-     * @test
-     */
-    public function first()
-    {
-        User::addFakeRow([
-            'id' => 1,
-            'name' => 'Iman',
-        ]);
-
         $user = User::first();
         $this->assertEquals(1, $user->id);
-        $this->assertEquals('Iman', $user->name);
+        $this->assertEquals('Iman 1', $user->name);
         $this->assertInstanceOf(User::class, $user);
 
         $user = User::query()->first();
         $this->assertEquals(1, $user->id);
-        $this->assertEquals('Iman', $user->name);
+        $this->assertEquals('Iman 1', $user->name);
         $this->assertInstanceOf(User::class, $user);
+
+        $this->assertEquals(1, User::query()->value('id'));
+        $this->assertEquals('Iman 1', User::query()->value('name'));
+        $this->assertEquals(null, User::query()->value('sdfvsdb'));
 
         $user = User::query()->first(['id']);
         $attrs = $user->getAttributes();
@@ -64,7 +49,7 @@ class GetFirstWhereTest extends TestCase
 
         $user = User::query()->latest('id')->first(['id']);
         $attrs = $user->getAttributes();
-        $this->assertEquals(['id' => 1], $attrs);
+        $this->assertEquals(['id' => 3], $attrs);
         $this->assertInstanceOf(User::class, $user);
 
         User::stopFaking();
@@ -127,24 +112,6 @@ class GetFirstWhereTest extends TestCase
         // ################  where In / get  ################
         $users = User::where('id', '<', 2)->get();
         $this->assertInstanceOf(Collection::class, $users);
-        $this->assertEquals(1, $users->count());
-
-        User::stopFaking();
-    }
-
-    /**
-     * @test
-     */
-    public function test_get()
-    {
-        User::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-        User::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
-
-        $users = User::whereNull('name')->get(['age']);
-        $this->assertEquals(null, ($users[0])->id);
-        $this->assertEquals(20, ($users[0])->age);
         $this->assertEquals(1, $users->count());
 
         User::stopFaking();

@@ -38,13 +38,11 @@ class CreateTest extends TestCase
         CreatyModel::saving(static function () {
             $_SERVER['saving'] = true;
         });
-        $bar = CreatyModel::query()->create(
-            [
+        $bar = CreatyModel::query()->create([
                 'id' => 12,
                 'name' => 'hello',
-                'family' => 'gha'
-            ]
-        );
+                'family' => 'gha',
+            ]);
 
         $foo = CreatyModel::getCreatedModel();
         $this->assertSame($foo, $bar);
@@ -61,8 +59,14 @@ class CreateTest extends TestCase
         $this->assertTrue($foo->exists);
         $this->assertTrue($foo->wasRecentlyCreated);
 
+        $this->assertSame(CreatyModel::getSavedModel(), CreatyModel::getCreatedModel());
+        $this->assertNull(CreatyModel::getCreatedModel(1));
+        $this->assertNull(CreatyModel::getSavedModel(1));
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
+        $this->assertEquals(3, $model->id);
+        $this->assertNotNull($model->created_at);
+        $this->assertNotNull($model->updated_at);
 
         unset($_SERVER['saved'], $_SERVER['saving'], $_SERVER['created'], $_SERVER['creating']);
     }
