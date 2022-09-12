@@ -59,4 +59,43 @@ class LeftJoinTest extends TestCase
 
         $this->assertEquals([], $results);
     }
+
+    /**
+     * @test
+     */
+    public function where_left_join()
+    {
+        $results = (new FakeQueryBuilder())
+            ->from('users')
+            ->leftJoin('comments', 'users.id', '=', 'comments.user_id')
+            ->where('user_id', 1)
+            ->get()
+            ->all();
+
+        $expected = [
+            [
+                'id' => 1,
+                'name' => 'iman 1',
+                'common' => 'c1',
+                'user_id' => 1,
+                'my_text' => 'a 1',
+            ],
+            [
+                'id' => 2,
+                'name' => 'iman 1',
+                'common' => 'c2',
+                'user_id' => 1,
+                'my_text' => 'c 2',
+            ],
+            [
+                'id' => 4,
+                'name' => 'iman 1',
+                'common' => 'c4',
+                'user_id' => 1,
+                'my_text' => 'orphan 4',
+            ],
+        ];
+
+        $this->assertEquals($expected, $results);
+    }
 }
