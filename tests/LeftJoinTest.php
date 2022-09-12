@@ -159,4 +159,28 @@ class LeftJoinTest extends TestCase
             ],
         ], $results);
     }
+
+    /**
+     * @test
+     */
+    public function left_join_with_multi_wheres()
+    {
+        $results = (new FakeQueryBuilder())
+            ->from('users')
+            ->leftJoin('comments', 'users.id', '=', 'comments.user_id')
+            ->where('comments.user_id', 3)
+            ->where('comments.common', 'c3')
+            ->get()
+            ->all();
+
+        $this->assertEquals([
+            [
+                "id"        => 3,
+                "user_id"   => 3,
+                "my_text"   => "orphan",
+                "common"    => "c3",
+                "name"      => "iman 3",
+            ],
+        ], $results);
+    }
 }
