@@ -41,4 +41,11 @@ class FakeEloquentBuilder extends Builder
 
         return parent::update($values);
     }
+
+    public function where($column, $operator = null, $value = null, $boolean = 'and')
+    {
+        $this->query->where(...func_get_args());
+
+        return $this;
+    }
 }

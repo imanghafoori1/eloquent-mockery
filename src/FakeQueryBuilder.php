@@ -86,6 +86,16 @@ class FakeQueryBuilder extends Builder
 
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
+        if (is_array($column)) {
+            return $this->addArrayOfWheres($column, $boolean);
+        }
+
+        if ($column instanceof \Closure && is_null($operator)) {
+            $column($this);
+
+            return $this;
+        }
+
         $column = $this->prefixColumn($column);
 
         $this->recordedWheres[] = [$column, $operator, $value];
@@ -275,5 +285,10 @@ class FakeQueryBuilder extends Builder
     public function addFakeRow(string $table, $val, $key)
     {
         FakeDB::changeFakeRow($table, $val, $key);
+    }
+
+    public function forNestedWhere()
+    {
+        return $this;
     }
 }
