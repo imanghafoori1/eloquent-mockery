@@ -32,6 +32,7 @@ class AggregateTest extends TestCase
     public function sum()
     {
         $this->assertEquals(90, AggregateUser::query()->sum('age'));
+        $this->assertTrue(0 === AggregateUser::query()->where('id', 0)->sum('age'));
     }
 
     /**
@@ -41,6 +42,7 @@ class AggregateTest extends TestCase
     {
         $this->assertEquals(30, AggregateUser::query()->avg('age'));
         $this->assertEquals(30, AggregateUser::query()->average('age'));
+        $this->assertNull(AggregateUser::query()->where('id', 0)->avg('age'));
     }
 
     /**
@@ -49,6 +51,8 @@ class AggregateTest extends TestCase
     public function min()
     {
         $this->assertEquals(20, AggregateUser::query()->min('age'));
+        $this->assertEquals(40, AggregateUser::query()->where('id', '>', 2)->min('age'));
+        $this->assertNull(AggregateUser::query()->where('id', 0)->min('age'));
     }
 
     /**
@@ -57,5 +61,7 @@ class AggregateTest extends TestCase
     public function max()
     {
         $this->assertEquals(40, AggregateUser::query()->max('age'));
+        $this->assertEquals(30, AggregateUser::query()->where('id', '<', 3)->max('age'));
+        $this->assertNull(AggregateUser::query()->where('id', 0)->max('age'));
     }
 }
