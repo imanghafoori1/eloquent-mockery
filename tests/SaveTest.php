@@ -123,7 +123,7 @@ class SaveTest extends TestCase
         $this->assertTrue($_SERVER['forTest']['creating']);
 
         $foo = SaveModel::getUpdatedModel();
-        $this->assertEquals(null, $foo);
+        $this->assertNull($foo);
 
         $foo = SaveModel::getCreatedModel();
         $this->assertSame($foo, $newModel);

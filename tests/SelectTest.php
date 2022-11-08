@@ -24,32 +24,32 @@ class SelectTest extends TestCase
         SelectyUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
 
         $users = SelectyUser::whereNull('name')->get(['age']);
-        $this->assertEquals(null, ($users[0])->id);
+        $this->assertNull(($users[0])->id);
         $this->assertEquals(20, ($users[0])->age);
         $this->assertEquals(1, $users->count());
 
         $users = SelectyUser::whereNull('name')->select('age')->first();
-        $this->assertEquals(null, $users->id);
+        $this->assertNull($users->id);
         $this->assertEquals(20, $users->age);
 
         $users = SelectyUser::whereNull('name')->select('age as mag')->first();
-        $this->assertEquals(null, $users->id);
+        $this->assertNull($users->id);
         $this->assertEquals(20, $users->mag);
-        $this->assertEquals(null, $users->age);
+        $this->assertNull($users->age);
 
         $users = SelectyUser::whereNull('name')->select(['age as mag', 'id as uid'])->first();
-        $this->assertEquals(null, $users->id);
+        $this->assertNull($users->id);
         $this->assertEquals(1, $users->uid);
         $this->assertEquals(20, $users->mag);
-        $this->assertEquals(null, $users->age);
+        $this->assertNull($users->age);
 
         $users = SelectyUser::whereNull('name')->first('age');
-        $this->assertEquals(null, $users->id);
+        $this->assertNull($users->id);
         $this->assertEquals(20, $users->age);
 
         $users = SelectyUser::whereNull('name')->first('age as mage');
-        $this->assertEquals(null, $users->id);
-        $this->assertEquals(null, $users->age);
+        $this->assertNull($users->id);
+        $this->assertNull($users->age);
         $this->assertEquals(20, $users->mage);
 
         $users = SelectyUser::whereNull('name')->select('age')->addSelect('id')->first();

@@ -66,9 +66,9 @@ class HasManyTest extends TestCase
         $this->assertEquals(2, $user->comments->count());
         $this->assertInstanceOf(HasManyComment::class, $user->comments[0]);
         $this->assertInstanceOf(HasManyComment::class, $user->comments[1]);
-        $this->assertEquals(null, $user->comments[1]->id);
+        $this->assertNull($user->comments[1]->id);
         $this->assertEquals(1, $user->comments[1]->user_id);
-        $this->assertEquals(null, $user->comments[1]->comment);
+        $this->assertNull($user->comments[1]->comment);
 
         $user = HasManyUser::with('comments')->where('id', 1)->get()->first();
 

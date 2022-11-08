@@ -37,7 +37,7 @@ class WhereClosureTest extends TestCase
             })->get();
 
         $this->assertEquals('Iman 2', ($users[0])->name);
-        $this->assertEquals(true, ($users[0])->exists);
+        $this->assertTrue(($users[0])->exists);
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals(1, $users->count());
 

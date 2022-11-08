@@ -36,7 +36,7 @@ class FindTest extends TestCase
         $user = FindUser::find(1);
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman', $user->name);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
 
         $user = FindUser::query()->find(2);
         $this->assertEquals(2, $user->id);
@@ -81,7 +81,7 @@ class FindTest extends TestCase
         $users = FindUser::query()->findOrFail([1, 2]);
         $this->assertEquals(1, $users[0]->id);
         $this->assertEquals('Iman', $users[0]->name);
-        $this->assertEquals(true, $users[0]->exists);
+        $this->assertTrue($users[0]->exists);
 
         $this->assertEquals(2, $users[1]->id);
         $this->assertEquals('Iman 2', $users[1]->name);
@@ -128,11 +128,11 @@ class FindTest extends TestCase
         $users = FindUser::query()->find([1, 2]);
         $this->assertEquals(1, $users[0]->id);
         $this->assertEquals('Iman', $users[0]->name);
-        $this->assertEquals(true, $users[0]->exists);
+        $this->assertTrue($users[0]->exists);
 
         $this->assertEquals(2, $users[1]->id);
         $this->assertEquals('Iman 2', $users[1]->name);
-        $this->assertEquals(true, $users[1]->exists);
+        $this->assertTrue($users[1]->exists);
 
         $this->assertEquals(2, $users->count());
 

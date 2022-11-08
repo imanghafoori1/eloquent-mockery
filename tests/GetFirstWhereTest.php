@@ -40,7 +40,7 @@ class GetFirstWhereTest extends TestCase
 
         $this->assertEquals(1, User::query()->value('id'));
         $this->assertEquals('Iman 1', User::query()->value('name'));
-        $this->assertEquals(null, User::query()->value('sdfvsdb'));
+        $this->assertNull(User::query()->value('sdfvsdb'));
 
         $user = User::query()->first(['id']);
         $attrs = $user->getAttributes();
@@ -66,21 +66,21 @@ class GetFirstWhereTest extends TestCase
 
         $users = User::where('id', '<', 2)->get();
         $this->assertEquals('Iman 1', ($users[0])->name);
-        $this->assertEquals(true, ($users[0])->exists);
+        $this->assertTrue(($users[0])->exists);
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals(1, $users->count());
 
         $user = User::where('id', 2)->first();
         $this->assertEquals(2, $user->id);
         $this->assertEquals('Iman 2', $user->name);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
         $this->assertInstanceOf(User::class, $user);
 
         // Previous wheres are not applied here in this query.
         $user = User::first();
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman 1', $user->name);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
         $this->assertInstanceOf(User::class, $user);
 
         // ################  where / get  ################

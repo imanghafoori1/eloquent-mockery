@@ -46,6 +46,6 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals(0, $count);
 
         $count = (new FakeConnection())->table('sdfvsd')->get();
-        $this->assertEquals(true, $count->isEmpty());
+        $this->assertTrue($count->isEmpty());
     }
 }

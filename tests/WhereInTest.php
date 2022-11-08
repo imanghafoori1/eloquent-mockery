@@ -42,14 +42,14 @@ class WhereInTest extends TestCase
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman 1', $user->name);
         $this->assertEquals(20, $user->age);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
         $this->assertInstanceOf(WhereInUser::class, $user);
 
         $user = $users[1];
         $this->assertEquals(2, $user->id);
         $this->assertEquals('Iman 2', $user->name);
         $this->assertEquals(30, $user->age);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
         $this->assertInstanceOf(WhereInUser::class, $user);
         $this->assertEquals(2, $users->count());
     }
@@ -77,14 +77,14 @@ class WhereInTest extends TestCase
         $this->assertEquals(1, $user->id);
         $this->assertEquals('Iman 1', $user->name);
         $this->assertEquals(20, $user->age);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
         $this->assertInstanceOf(WhereInUser::class, $user);
 
         $user = $users[1];
         $this->assertEquals(2, $user->id);
         $this->assertEquals('Iman 2', $user->name);
         $this->assertEquals(30, $user->age);
-        $this->assertEquals(true, $user->exists);
+        $this->assertTrue($user->exists);
         $this->assertInstanceOf(WhereInUser::class, $user);
         $this->assertEquals(2, $users->count());
     }
