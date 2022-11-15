@@ -67,7 +67,7 @@ class FakeDB
     public static function dontMockQueryBuilder()
     {
         self::truncate();
-        Model::setConnectionResolver(self::$originalConnection);
+        self::$originalConnection && Model::setConnectionResolver(self::$originalConnection);
     }
 
     public static function addRow(string $table, array $row)

@@ -1,6 +1,6 @@
 <?php
 
-namespace Imanghafoori\EloquentMockery\Tests;
+namespace Imanghafoori\EloquentMockery\Tests\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;

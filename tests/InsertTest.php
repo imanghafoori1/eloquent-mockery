@@ -28,11 +28,12 @@ class InsertTest extends TestCase
      */
     public function insertBasicTest()
     {
-        FakeDB::mockQueryBuilder();
-        InsertyUser::query()->insert(['name' => 'Hello', 'age' => 20,]);
-        InsertyUser::query()->insert(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        $res3 = InsertyUser::query()->insert(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
-        $res4 = InsertyUser::query()->insert(['name' => 'Hello', 'age' => 20,]);
+        $res1 = InsertyUser::query()->insert(['name' => 'Hello', 'age' => 20,]);
+        $res2 = InsertyUser::query()->insert(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        // can set the "id" manually.
+        $res3 = InsertyUser::query()->insert(['id' => 6, 'name' => 'Iman 3', 'age' => 66,]);
+        // next row will continue on the latest and greatest id.
+        $res4 = InsertyUser::query()->insert(['name' => 'Bye', 'age' => 77,]);
 
         $users = InsertyUser::query()->whereKey(1)->get();
         $this->assertEquals(1, ($users[0])->getKey());
@@ -43,8 +44,17 @@ class InsertTest extends TestCase
 
         $users = InsertyUser::query()->find(2);
         $this->assertNotNull($users);
-        $users = InsertyUser::query()->find(4);
-        $this->assertNotNull($users);
+
+        // check the gap in Ids are empty.
+        $this->assertNull(InsertyUser::find(3));
+        // check id 6
+        $user = InsertyUser::query()->find(6);
+        $this->assertNotNull($user);
+        $this->assertEquals(66, $user->age);
+        // check id 7
+        $user = InsertyUser::query()->find(7);
+        $this->assertNotNull($user);
+        $this->assertEquals(77, $user->age);
 
         $this->assertTrue($res3);
         $this->assertTrue($res4);

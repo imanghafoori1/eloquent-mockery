@@ -1,6 +1,6 @@
 <?php
 
-namespace Imanghafoori\EloquentMockery\Tests;
+namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\MockableModel;
