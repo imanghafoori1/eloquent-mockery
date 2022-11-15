@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
@@ -199,10 +200,23 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {
+        if (Arr::isAssoc($values) && ! isset($values['id'])) {
+            foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {
+            }
+            $id = ($row[$this->from]['id'] ?? 0) + 1;
+            $values['id'] = $id;
         }
 
-        return ($row[$this->from]['id'] ?? 0) + 1;
+        FakeDB::addRow($this->from, $values);
+
+        return $values['id'];
+    }
+
+    public function insert(array $values)
+    {
+        $this->insertGetId($values);
+
+        return true;
     }
 
     public function pluck($column, $key = null)

@@ -62,6 +62,7 @@ class SaveTest extends TestCase
 
         $this->assertTrue($result);
 
+        $this->assertEquals(2, SaveModel::count());
         $this->assertTrue($_SERVER['forTest']['saved']);
         $this->assertTrue($_SERVER['forTest']['saving']);
         $this->assertTrue($_SERVER['forTest']['updated']);
@@ -72,6 +73,9 @@ class SaveTest extends TestCase
         $foo = SaveModel::getUpdatedModel();
         $this->assertEquals(1, $foo->id);
         $this->assertEquals('hello', $foo->name);
+
+        $model = SaveModel::query()->find(1);
+        $model->name = 'hello';
 
         $this->assertEquals($foo->updated_at->timestamp, $time);
         $this->assertTrue($foo->exists);
@@ -111,6 +115,8 @@ class SaveTest extends TestCase
         $newModel->name = 'hello';
         $result = $newModel->save();
 
+        $this->assertEquals(3, SaveModel::count());
+        $this->assertEquals('hello', SaveModel::find(3)->name);
         $this->assertTrue($result);
         $this->assertTrue($newModel->wasRecentlyCreated);
         $this->assertTrue($newModel->exists);

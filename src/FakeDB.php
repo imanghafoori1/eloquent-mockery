@@ -2,9 +2,11 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Illuminate\Database\Connection;
+use Illuminate\Database\ConnectionResolver;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class FakeDB
@@ -52,18 +54,20 @@ class FakeDB
 
     public static function mockQueryBuilder()
     {
-        self::$originalConnection = config()->get('database.default');
-        config()->set('database.default', 'fakeDB');
-        config()->set('database.connections.fakeDB', []);
-
-        DB::extend('fakeDB', function () {
+        Connection::resolverFor('fakeDb', function () {
             return new FakeConnection();
         });
+
+        $resolver = new ConnectionResolver(['fakeDb' => new FakeConnection]);
+        $resolver->setDefaultConnection('fakeDb');
+        self::$originalConnection = Model::getConnectionResolver();
+        Model::setConnectionResolver($resolver);
     }
 
-    public static function stopMockQueryBuider()
+    public static function dontMockQueryBuilder()
     {
-        config()->set('database.default', self::$originalConnection);
+        self::truncate();
+        Model::setConnectionResolver(self::$originalConnection);
     }
 
     public static function addRow(string $table, array $row)

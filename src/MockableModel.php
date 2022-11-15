@@ -128,7 +128,6 @@ trait MockableModel
 
         if ($this->wasRecentlyCreated) {
             FakeDB::setChangedModel('created', $this);
-            FakeDB::addRow($this->getTable(), $this->getAttributes());
         }
         FakeDB::setChangedModel('saved', $this);
 
