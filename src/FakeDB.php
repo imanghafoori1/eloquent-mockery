@@ -17,7 +17,19 @@ class FakeDB
 
     public static $changedModels = [];
 
+    public static $tables = [];
+
     private static $originalConnection;
+
+    public static function getLatestRow($table)
+    {
+        $row = [];
+
+        foreach (FakeDB::$fakeRows[$table] ?? [] as $row) {
+        }
+
+        return $row;
+    }
 
     public static function table($table)
     {
@@ -50,6 +62,7 @@ class FakeDB
     {
         self::$fakeRows = [];
         self::$changedModels = [];
+        self::$tables = [];
     }
 
     public static function mockQueryBuilder()
@@ -72,7 +85,10 @@ class FakeDB
 
     public static function addRow(string $table, array $row)
     {
-        FakeDB::$fakeRows[$table][] = [$table => $row];
+        $c = self::$tables[$table]['latestRowIndex'] ?? 0;
+        FakeDB::$fakeRows[$table][$c] = [$table => $row];
+        $c++;
+        self::$tables[$table]['latestRowIndex'] = $c;
     }
 
     public static function performJoins($base, $joins)

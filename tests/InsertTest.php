@@ -59,4 +59,27 @@ class InsertTest extends TestCase
         $this->assertTrue($res3);
         $this->assertTrue($res4);
     }
+
+    /**
+     * @test
+     */
+    public function insertMass()
+    {
+        InsertyUser::query()->insert([
+            ['value' => 1, 'deleted_at' => null],
+            ['value' => 2, 'deleted_at' => '2021-12-01 00:00:00'],
+            ['value' => 3, 'deleted_at' => null],
+            ['value' => 4, 'deleted_at' => '2021-12-02 00:00:00'],
+        ]);
+
+        $users1 = InsertyUser::query()->find(1);
+        $users2 = InsertyUser::query()->find(2);
+        $users3 = InsertyUser::query()->find(3);
+        $users4 = InsertyUser::query()->find(4);
+
+        $this->assertEquals(1, $users1->value);
+        $this->assertEquals(2, $users2->value);
+        $this->assertEquals(3, $users3->value);
+        $this->assertEquals(4, $users4->value);
+    }
 }

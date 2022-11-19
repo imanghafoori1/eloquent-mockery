@@ -200,11 +200,16 @@ class FakeQueryBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        if (Arr::isAssoc($values) && ! isset($values['id'])) {
-            foreach (FakeDB::$fakeRows[$this->from] ?? [] as $row) {
+        if (! Arr::isAssoc($values)) {
+            foreach ($values as $value) {
+                $this->insertGetId($value);
             }
-            $id = ($row[$this->from]['id'] ?? 0) + 1;
-            $values['id'] = $id;
+            return true;
+        }
+
+        if (! isset($values['id'])) {
+            $row = FakeDB::getLatestRow($this->from);
+            $values['id'] = ($row[$this->from]['id'] ?? 0) + 1;
         }
 
         FakeDB::addRow($this->from, $values);

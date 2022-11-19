@@ -105,6 +105,7 @@ trait MockableModel
     {
         self::$fakeMode = false;
         FakeDB::$fakeRows = [];
+        FakeDB::$tables = [];
         FakeDB::$ignoreWheres = false;
         self::$forceMocks = [];
         FakeDB::$changedModels = [];

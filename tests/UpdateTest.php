@@ -185,11 +185,13 @@ class UpdateTest extends TestCase
         $foo = UpdateyModel::getUpdatedModel();
         $this->assertNull($foo);
 
+        // No event has been fired.
         unset($_SERVER['saved']);
         unset($_SERVER['updating']);
         unset($_SERVER['updated']);
         unset($_SERVER['saving']);
 
+        // The rows are changed.
         $model = UpdateyModel::query()->find(1);
         $this->assertEquals('hello', $model->name);
         $this->assertEquals(Carbon::now()->getTimestamp(), $model->updated_at->getTimestamp());
