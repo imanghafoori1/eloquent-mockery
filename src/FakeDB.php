@@ -234,16 +234,8 @@ class FakeDB
         FakeDB::$fakeRows[$table][$key] = [$table => $val];
     }
 
-    public static function applyWheres($query, $collection)
+    public static function applyWheres($query, Collection $collection)
     {
-        foreach ($query->recordedWhereBetween as $_where) {
-            $collection = $collection->whereBetween(...$_where);
-        }
-
-        foreach ($query->recordedWhereNotBetween as $_where) {
-            $collection = $collection->whereNotBetween(...$_where);
-        }
-
         foreach ($query->recordedWheres as $_where) {
             $_where = array_filter($_where, function ($val) {
                 return ! is_null($val);
@@ -258,20 +250,15 @@ class FakeDB
             }
         }
 
-        foreach ($query->recordedWhereIn as $_where) {
-            $collection = $collection->whereIn($_where[0], $_where[1]);
-        }
+        foreach ($query->wheres as $_where) {
+            $column = Str::start($_where['column'], $query->from.'.');
+            $value = $_where['values'] ?? null;
+            $type = $_where['type'];
 
-        foreach ($query->recordedWhereNotIn as $_where) {
-            $collection = $collection->whereNotIn($_where[0], $_where[1]);
-        }
-
-        foreach ($query->recordedWhereNull as $_where) {
-            $collection = $collection->whereNull($_where[0]);
-        }
-
-        foreach ($query->recordedWhereNotNull as $_where) {
-            $collection = $collection->whereNotNull($_where[0]);
+            if (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'Between', 'NotBetween'])) {
+                $method = 'where'.$type;
+                $collection = $collection->$method($column, $value);
+            }
         }
 
         return $collection;

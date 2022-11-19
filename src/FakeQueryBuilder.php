@@ -11,19 +11,7 @@ class FakeQueryBuilder extends Builder
 {
     public $recordedWheres = [];
 
-    public $recordedWhereIn = [];
-
-    public $recordedWhereNotIn = [];
-
-    public $recordedWhereNull = [];
-
-    public $recordedWhereNotNull = [];
-
     public $orderBy = [];
-
-    public $recordedWhereBetween = [];
-
-    public $recordedWhereNotBetween = [];
 
     public $shuffle = false;
 
@@ -35,25 +23,6 @@ class FakeQueryBuilder extends Builder
     {
         $this->connection = ($connection ?: new FakeConnection());
         $this->dates = $dates;
-    }
-
-    public function whereIn($column, $values, $boolean = 'and', $not = false)
-    {
-        $column = $this->prefixColumn($column);
-        if ($not) {
-            $this->recordedWhereNotIn[] = [$column, $values];
-        } else {
-            $this->recordedWhereIn[] = [$column, $values];
-        }
-
-        return $this;
-    }
-
-    public function whereNotIn($column, $values, $boolean = 'and', $not = false)
-    {
-        $this->recordedWhereNotIn[] = [$this->prefixColumn($column), $values];
-
-        return $this;
     }
 
     public function orderBy($column, $direction = 'asc')
@@ -100,34 +69,6 @@ class FakeQueryBuilder extends Builder
         $column = $this->prefixColumn($column);
 
         $this->recordedWheres[] = [$column, $operator, $value];
-
-        return $this;
-    }
-
-    public function whereNull($columns, $boolean = 'and', $not = false)
-    {
-        $this->recordedWhereNull[] = [$this->prefixColumn($columns)];
-
-        return $this;
-    }
-
-    public function whereNotNull($columns, $boolean = 'and')
-    {
-        $this->recordedWhereNotNull[] = [$this->prefixColumn($columns)];
-
-        return $this;
-    }
-
-    public function whereBetween($column, iterable $values, $boolean = 'and', $not = false)
-    {
-        $this->recordedWhereBetween[] = [$this->prefixColumn($column), $values];
-
-        return $this;
-    }
-
-    public function whereNotBetween($column, iterable $values, $boolean = 'and')
-    {
-        $this->recordedWhereNotBetween[] = [$this->prefixColumn($column), $values];
 
         return $this;
     }

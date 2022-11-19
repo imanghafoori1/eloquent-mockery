@@ -88,4 +88,28 @@ class WhereInTest extends TestCase
         $this->assertInstanceOf(WhereInUser::class, $user);
         $this->assertEquals(2, $users->count());
     }
+
+    /**
+     * @test
+     */
+    public function where_in_can_accept_arrayable()
+    {
+        WhereInUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        WhereInUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        WhereInUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+
+        // ################ where In / first ################
+        $count = WhereInUser::whereIn('id', collect([1, 2]))->count();
+        $this->assertEquals(2, $count);
+
+        $users = WhereInUser::whereIn('id', collect([1, 2]))->get();
+
+        $user = $users[0];
+        $this->assertEquals(1, $user->id);
+
+        $user = $users[1];
+        $this->assertEquals(2, $user->id);
+
+        $this->assertCount(2, $users);
+    }
 }
