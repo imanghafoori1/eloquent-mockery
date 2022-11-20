@@ -4,8 +4,6 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\Grammars\Grammar;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
@@ -22,9 +20,10 @@ class FakeQueryBuilder extends Builder
 
     public function __construct(ConnectionInterface $connection = null, $dates = [])
     {
-        $this->connection = ($connection ?: new FakeConnection());
-        $this->grammar = new Grammar;
+        $this->connection = ($connection ?: FakeConnection::resolve());
+        $this->grammar = new FakeGrammar();
         $this->dates = $dates;
+        $this->processor = $this->connection->getPostProcessor();
     }
 
     public function orderBy($column, $direction = 'asc')
@@ -75,31 +74,6 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
-    public function delete($id = null)
-    {
-        // If an ID is passed to the method, we will set the where clause to check the
-        // ID to let developers to simply and quickly remove a single row from this
-        // database without manually specifying the "where" clauses on the query.
-        if (! is_null($id)) {
-            $this->where($this->from.'.id', '=', $id);
-        }
-
-        $rowsForDelete = $this->filterRows();
-        $count = $rowsForDelete->count();
-        FakeDB::$fakeRows[$this->from] = array_diff_key(FakeDB::$fakeRows[$this->from] ?? [], $rowsForDelete->all());
-
-        return $count;
-    }
-
-    public function update(array $values)
-    {
-        $collection = $this->filterRows()->map(function ($item) use ($values) {
-            return $values + $item;
-        });
-
-        return FakeDB::syncTable($collection, $this->from);
-    }
-
     public function filterRows($sort = true, $columns = ['*'])
     {
         $base = FakeDB::$fakeRows[$this->from] ?? [];
@@ -139,32 +113,6 @@ class FakeQueryBuilder extends Builder
     public function decrement($column, $amount = 1, array $extra = [])
     {
         return $this->increment($column, $amount * -1);
-    }
-
-    public function insertGetId(array $values, $sequence = null)
-    {
-        if (! Arr::isAssoc($values)) {
-            foreach ($values as $value) {
-                $this->insertGetId($value);
-            }
-            return true;
-        }
-
-        if (! isset($values['id'])) {
-            $row = FakeDB::getLatestRow($this->from);
-            $values['id'] = ($row[$this->from]['id'] ?? 0) + 1;
-        }
-
-        FakeDB::addRow($this->from, $values);
-
-        return $values['id'];
-    }
-
-    public function insert(array $values)
-    {
-        $this->insertGetId($values);
-
-        return true;
     }
 
     public function pluck($column, $key = null)

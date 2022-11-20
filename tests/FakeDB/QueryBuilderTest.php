@@ -19,7 +19,7 @@ class QueryBuilderTest extends TestCase
         FakeDB::table('users')->addRow(['id' => 1, 'username' => 'Iman']);
         FakeDB::table('users')->addRow(['id' => 2, 'username' => 'Ghafoori']);
 
-        $users = (new FakeConnection())
+        $users = (new FakeConnection(new FakeDB))
             ->table('users')
             ->select('id')
             ->where('id', 2)
@@ -28,7 +28,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals([['id' => 2]], $users->all());
 
-        $users = (new FakeConnection())
+        $users = (new FakeConnection(new FakeDB))
             ->table('users')
             ->where('id', 2)
             ->get('id');
@@ -36,16 +36,16 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals([['id' => 2]], $users->all());
 
-        $count = (new FakeConnection())->table('users')->count();
+        $count = (new FakeConnection(new FakeDB))->table('users')->count();
         $this->assertEquals(2, $count);
-        $this->assertEquals(2, (new FakeConnection())->table('users')->max('id'));
-        $this->assertEquals(1, (new FakeConnection())->table('users')->min('id'));
-        $this->assertEquals(1.5, (new FakeConnection())->table('users')->avg('id'));
+        $this->assertEquals(2, (new FakeConnection(new FakeDB))->table('users')->max('id'));
+        $this->assertEquals(1, (new FakeConnection(new FakeDB))->table('users')->min('id'));
+        $this->assertEquals(1.5, (new FakeConnection(new FakeDB))->table('users')->avg('id'));
 
-        $count = (new FakeConnection())->table('sdfvsd')->count();
+        $count = (new FakeConnection(new FakeDB))->table('sdfvsd')->count();
         $this->assertEquals(0, $count);
 
-        $count = (new FakeConnection())->table('sdfvsd')->get();
+        $count = (new FakeConnection(new FakeDB))->table('sdfvsd')->get();
         $this->assertEquals(true, $count->isEmpty());
     }
 }

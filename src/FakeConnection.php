@@ -5,13 +5,13 @@ namespace Imanghafoori\EloquentMockery;
 use Closure;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
-use Illuminate\Database\Query\Grammars\Grammar;
+use Illuminate\Support\Arr;
 
 class FakeConnection extends Connection implements ConnectionInterface
 {
-    public function __construct()
+    public static function resolve()
     {
-        //
+        return new FakeConnection(new FakePDO);
     }
 
     public function transaction(Closure $callback, $attempts = 1)
@@ -24,13 +24,56 @@ class FakeConnection extends Connection implements ConnectionInterface
         return new FakeQueryBuilder($this);
     }
 
-    public function getQueryGrammar()
+    protected function getDefaultQueryGrammar()
     {
-        return new class extends Grammar {
-            public function getDateFormat()
-            {
-                return 'Y-m-d H:i:s';
+        return new FakeGrammar;
+    }
+
+    public function delete($query, $bindings = [])
+    {
+        $rowsForDelete = $query->filterRows();
+        $from = $query->from;
+        $count = $rowsForDelete->count();
+        FakeDB::$fakeRows[$from] = array_diff_key(FakeDB::$fakeRows[$from] ?? [], $rowsForDelete->all());
+
+        return $count;
+    }
+
+    public function update($query, $bindings = [])
+    {
+        $values = $query[1];
+        $query = $query[0];
+        $collection = $query->filterRows()->map(function ($item) use ($values) {
+            return $values + $item;
+        });
+
+        return FakeDB::syncTable($collection, $query->from);
+    }
+
+    public function insert($query, $bindings = [])
+    {
+        $values = $query[1];
+        $query = $query[0];
+
+        return (bool) self::insertGetId($values, $query->from);
+    }
+
+    public static function insertGetId(array $values, $table)
+    {
+        if (! Arr::isAssoc($values)) {
+            foreach ($values as $value) {
+                self::insertGetId($value, $table);
             }
-        };
+            return true;
+        }
+
+        if (! isset($values['id'])) {
+            $row = FakeDB::getLatestRow($table);
+            $values['id'] = ($row[$table]['id'] ?? 0) + 1;
+        }
+
+        FakeDB::addRow($table, $values);
+
+        return $values['id'];
     }
 }

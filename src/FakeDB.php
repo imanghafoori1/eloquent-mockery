@@ -21,6 +21,8 @@ class FakeDB
 
     private static $originalConnection;
 
+    public static $lastInsertedId;
+
     public static function getLatestRow($table)
     {
         $row = [];
@@ -68,10 +70,10 @@ class FakeDB
     public static function mockQueryBuilder()
     {
         Connection::resolverFor('fakeDb', function () {
-            return new FakeConnection();
+            return FakeConnection::resolve();
         });
 
-        $resolver = new ConnectionResolver(['fakeDb' => new FakeConnection]);
+        $resolver = new ConnectionResolver(['fakeDb' => FakeConnection::resolve()]);
         $resolver->setDefaultConnection('fakeDb');
         self::$originalConnection = Model::getConnectionResolver();
         Model::setConnectionResolver($resolver);
@@ -86,7 +88,8 @@ class FakeDB
     public static function addRow(string $table, array $row)
     {
         $c = self::$tables[$table]['latestRowIndex'] ?? 0;
-        FakeDB::$fakeRows[$table][$c] = [$table => $row];
+        self::$fakeRows[$table][$c] = [$table => $row];
+        self::$lastInsertedId = $row['id'] ?? null;
         $c++;
         self::$tables[$table]['latestRowIndex'] = $c;
     }
@@ -296,5 +299,10 @@ class FakeDB
         } elseif ($operator === '<=') {
             return $value1 <= $value2;
         }
+    }
+
+    public static function lastInsertId()
+    {
+        return self::$lastInsertedId;
     }
 }

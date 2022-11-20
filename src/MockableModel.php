@@ -79,7 +79,7 @@ trait MockableModel
     public function getConnection()
     {
         if ($this->isFakeMode()) {
-            return new FakeConnection();
+            return FakeConnection::resolve();
         }
 
         return parent::getConnection();
