@@ -9,16 +9,27 @@ class FakeGrammar extends Grammar
 {
     public function compileDelete(Builder $query)
     {
-        return $query;
+        return [
+            'builder' => $query,
+            'sql' => parent::compileDelete($query)
+        ];
     }
 
     public function compileUpdate(Builder $query, array $values)
     {
-        return [$query, $values];
+        return [
+            'builder' => $query,
+            'value' => $values,
+            'sql' => parent::compileUpdate($query, $values)
+        ];
     }
 
     public function compileInsert(Builder $query, array $values)
     {
-        return [$query, $values];
+        return [
+            'builder' => $query,
+            'value' => $values,
+            'sql' => parent::compileInsert($query, $values)
+        ];
     }
 }

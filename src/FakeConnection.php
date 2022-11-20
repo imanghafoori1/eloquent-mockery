@@ -9,6 +9,8 @@ use Illuminate\Support\Arr;
 
 class FakeConnection extends Connection implements ConnectionInterface
 {
+    protected $pretending = true;
+
     public static function resolve()
     {
         return new FakeConnection(new FakePDO);
@@ -31,6 +33,8 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function delete($query, $bindings = [])
     {
+        parent::delete($query['sql'], $bindings);
+        $query = $query['builder'];
         $rowsForDelete = $query->filterRows();
         $from = $query->from;
         $count = $rowsForDelete->count();
@@ -41,21 +45,23 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function update($query, $bindings = [])
     {
-        $values = $query[1];
-        $query = $query[0];
-        $collection = $query->filterRows()->map(function ($item) use ($values) {
+        parent::update($query['sql'], $bindings);
+        $values = $query['value'];
+        $builder = $query['builder'];
+
+        $collection = $builder->filterRows()->map(function ($item) use ($values) {
             return $values + $item;
         });
 
-        return FakeDB::syncTable($collection, $query->from);
+        return FakeDB::syncTable($collection, $builder->from);
     }
 
     public function insert($query, $bindings = [])
     {
-        $values = $query[1];
-        $query = $query[0];
+        parent::insert($query['sql'], $bindings);
+        $builder = $query['builder'];
 
-        return (bool) self::insertGetId($values, $query->from);
+        return (bool) self::insertGetId($query['value'], $builder->from);
     }
 
     public static function insertGetId(array $values, $table)
