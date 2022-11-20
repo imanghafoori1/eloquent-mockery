@@ -251,9 +251,17 @@ class FakeDB
         }
 
         foreach ($query->wheres as $_where) {
-            $column = Str::start($_where['column'], $query->from.'.');
-            $value = $_where['values'] ?? null;
             $type = $_where['type'];
+            $table = $query->from;
+
+            if ($type === 'Column') {
+                return $collection->filter(function ($row) use ($_where, $table) {
+                    return self::whereColumn($_where, $row[$table]);
+                });
+            }
+
+            $column = Str::start($_where['column'], $table.'.');
+            $value = $_where['values'] ?? null;
 
             if (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'Between', 'NotBetween'])) {
                 $method = 'where'.$type;
@@ -269,5 +277,24 @@ class FakeDB
         $pattern = str_replace('%', '.*', preg_quote($pattern, '/'));
 
         return (bool) preg_match("/^{$pattern}$/i", data_get($item, $value) ?? '');
+    }
+
+    public static function whereColumn($_where, $row)
+    {
+        $operator = $_where['operator'];
+        $value1 = $row[$_where['first']];
+        $value2 = $row[$_where['second']];
+
+        if ($operator === '=' || $operator === '==') {
+            return $value1 === $value2;
+        } elseif ($operator === '>') {
+            return $value1 > $value2;
+        } elseif ($operator === '>=') {
+            return $value1 >= $value2;
+        } elseif ($operator === '<') {
+            return $value1 < $value2;
+        } elseif ($operator === '<=') {
+            return $value1 <= $value2;
+        }
     }
 }

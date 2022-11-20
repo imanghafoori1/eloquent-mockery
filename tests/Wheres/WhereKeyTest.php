@@ -2,6 +2,7 @@
 
 namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
@@ -55,6 +56,7 @@ class WhereKeyTest extends TestCase
 
         $users = KeyUser::query()->whereKeyNot([1, 2])->get();
 
+        $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals(1, $users->count());
         $this->assertEquals(3, $users[0]->id);
     }

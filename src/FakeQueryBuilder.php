@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -22,6 +23,7 @@ class FakeQueryBuilder extends Builder
     public function __construct(ConnectionInterface $connection = null, $dates = [])
     {
         $this->connection = ($connection ?: new FakeConnection());
+        $this->grammar = new Grammar;
         $this->dates = $dates;
     }
 
