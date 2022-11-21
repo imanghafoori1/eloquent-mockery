@@ -2,33 +2,21 @@
 
 namespace Imanghafoori\EloquentMockery;
 
-use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Str;
 
 class FakeQueryBuilder extends Builder
 {
-    public $recordedWheres = [];
-
     public $orderBy = [];
 
     public $shuffle = false;
 
-    private $dates;
+    private $dates = [];
 
-    private $recordedJoin = [];
-
-    public function __construct(ConnectionInterface $connection = null, $dates = [])
-    {
-        $this->connection = ($connection ?: FakeConnection::resolve());
-        $this->grammar = new FakeGrammar();
-        $this->dates = $dates;
-        $this->processor = $this->connection->getPostProcessor();
-    }
+    public $recordedJoin = [];
 
     public function orderBy($column, $direction = 'asc')
     {
-        $this->orderBy = [$this->prefixColumn($column), $direction];
+        $this->orderBy = [FakeDB::prefixColumn($column, $this->from, $this->joins), $direction];
 
         return parent::orderBy($column, $direction);
     }
@@ -53,25 +41,6 @@ class FakeQueryBuilder extends Builder
     public function rightJoin($table, $first, $operator = null, $second = null)
     {
         return $this->join($table, $first, $operator, $second, 'right');
-    }
-
-    public function where($column, $operator = null, $value = null, $boolean = 'and')
-    {
-        if (is_array($column)) {
-            return $this->addArrayOfWheres($column, $boolean);
-        }
-
-        if ($column instanceof \Closure && is_null($operator)) {
-            $column($this);
-
-            return $this;
-        }
-
-        $column = $this->prefixColumn($column);
-
-        $this->recordedWheres[] = [$column, $operator, $value];
-
-        return $this;
     }
 
     public function filterRows($sort = true, $columns = ['*'])
@@ -145,7 +114,7 @@ class FakeQueryBuilder extends Builder
 
     public function reorder($column = null, $direction = 'asc')
     {
-        $this->orderBy = [$this->prefixColumn($column), $direction];
+        $this->orderBy = [FakeDB::prefixColumn($column, $this->from, $this->joins), $direction];
 
         return $this;
     }
@@ -172,24 +141,6 @@ class FakeQueryBuilder extends Builder
         }
 
         return $this->filterRows(false)->count();
-    }
-
-    private function prefixColumn($column)
-    {
-        if (! Str::contains($column, '.') && ! isset(FakeDB::$fakeRows[$this->from][0][$this->from][$column])) {
-            foreach ($this->recordedJoin as $joined) {
-                [$table] = $joined;
-                if (isset(FakeDB::$fakeRows[$table][0][$table][$column])) {
-                    $column = $table.'.'.$column;
-                }
-            }
-        }
-
-        if (! Str::contains($column, '.')) {
-            $column = $this->from.'.'.$column;
-        }
-
-        return $column;
     }
 
     public function addFakeRow(string $table, $val, $key)

@@ -23,7 +23,9 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function query()
     {
-        return new FakeQueryBuilder($this);
+        return new FakeQueryBuilder(
+            $this, $this->getQueryGrammar(), $this->getPostProcessor()
+        );
     }
 
     protected function getDefaultQueryGrammar()

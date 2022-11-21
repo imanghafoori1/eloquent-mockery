@@ -239,35 +239,26 @@ class FakeDB
 
     public static function applyWheres($query, Collection $collection)
     {
-        foreach ($query->recordedWheres as $_where) {
-            $_where = array_filter($_where, function ($val) {
-                return ! is_null($val);
-            });
-
-            if ($_where[1] === 'like') {
-                $collection = $collection->filter(function ($item) use ($_where) {
-                    return FakeDB::isLike($_where[0], $_where[2], $item);
-                });
-            } else {
-                $collection = $collection->where(...$_where);
-            }
-        }
-
         foreach ($query->wheres as $_where) {
             $type = $_where['type'];
             $table = $query->from;
 
-            if ($type === 'Column') {
-                return $collection->filter(function ($row) use ($_where, $table) {
+            if ($type === 'Basic') {
+                $collection = self::applyBasicWhere($_where, $table, $query, $collection);
+            } elseif ($type === 'Column') {
+                $collection = $collection->filter(function ($row) use ($_where, $table) {
                     return self::whereColumn($_where, $row[$table]);
                 });
-            }
-
-            $column = Str::start($_where['column'], $table.'.');
-            $value = $_where['values'] ?? null;
-
-            if (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'Between', 'NotBetween'])) {
+            } elseif ($type === 'Nested' && $query !== $_where['query']) {
+                $collection = self::applyWheres($_where['query'], $collection);
+            } elseif (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'between'])) {
+                $value = $_where['values'] ?? null;
+                $column = FakeDB::prefixColumn($_where['column'], $table, $query->recordedJoin);
                 $method = 'where'.$type;
+
+                if ($type === 'between') {
+                    $method = $_where['not'] ? 'whereNotBetween' : 'whereBetween';
+                }
                 $collection = $collection->$method($column, $value);
             }
         }
@@ -279,14 +270,14 @@ class FakeDB
     {
         $pattern = str_replace('%', '.*', preg_quote($pattern, '/'));
 
-        return (bool) preg_match("/^{$pattern}$/i", data_get($item, $value) ?? '');
+        return (bool) (preg_match("/^{$pattern}$/i", data_get($item, $value) ?? ''));
     }
 
-    public static function whereColumn($_where, $row)
+    public static function whereColumn($where, $row)
     {
-        $operator = $_where['operator'];
-        $value1 = $row[$_where['first']];
-        $value2 = $row[$_where['second']];
+        $operator = $where['operator'];
+        $value1 = $row[$where['first']];
+        $value2 = $row[$where['second']];
 
         if ($operator === '=' || $operator === '==') {
             return $value1 === $value2;
@@ -304,5 +295,35 @@ class FakeDB
     public static function lastInsertId()
     {
         return self::$lastInsertedId;
+    }
+
+    public static function prefixColumn($column, $mainTable, $joins)
+    {
+        if (! Str::contains($column, '.') && ! isset(FakeDB::$fakeRows[$mainTable][0][$mainTable][$column]) && $joins) {
+            foreach ($joins as $joined) {
+                [$table] = $joined;
+                if (isset(FakeDB::$fakeRows[$table][0][$table][$column])) {
+                    $column = $table.'.'.$column;
+                }
+            }
+        }
+
+        if (! Str::contains($column, '.')) {
+            $column = $mainTable.'.'.$column;
+        }
+
+        return $column;
+    }
+
+    private static function applyBasicWhere($_where, $table, $query, $collection)
+    {
+        $column = FakeDB::prefixColumn($_where['column'], $table, $query->recordedJoin);
+
+        if ($_where['operator'] !== 'like') {
+            return $collection->where($column, $_where['operator'], $_where['value']);
+        }
+        return $collection->filter(function ($item) use ($_where, $column) {
+            return FakeDB::isLike($column, $_where['value'], $item);
+        });
     }
 }

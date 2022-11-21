@@ -11,7 +11,7 @@ class BetweenUser extends Model
     use MockableModel;
 }
 
-class WhereBetweenTests extends TestCase
+class WhereBetweenTest extends TestCase
 {
     public function tearDown(): void
     {

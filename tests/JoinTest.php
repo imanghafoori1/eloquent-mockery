@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Support\Collection;
+use Imanghafoori\EloquentMockery\FakeConnection;
 use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\FakeQueryBuilder;
 use PHPUnit\Framework\TestCase;
@@ -51,7 +52,7 @@ class JoinTest extends TestCase
      */
     public function join_empty_table()
     {
-        $results = (new FakeQueryBuilder())->from('users')
+        $results = $this->getBuilder()->from('users')
             ->join('comments', 'users.id', '=', 'comments.user_id')
             ->join('non_comments', 'non_comments.user_id', '=', 'users.id')
             ->where('user_id', 1)->get()->all();
@@ -64,7 +65,7 @@ class JoinTest extends TestCase
      */
     public function where_join()
     {
-        $results = (new FakeQueryBuilder())->from('users')
+        $results = $this->getBuilder()->from('users')
             ->join('comments', 'users.id', '=', 'comments.user_id')
             ->where('user_id', 1)
             ->get()
@@ -96,7 +97,7 @@ class JoinTest extends TestCase
 
         $this->assertEquals($expected, $results);
 
-        $results = (new FakeQueryBuilder())->from('users')->join('comments', 'comments.user_id', '=', 'users.id')->where('user_id', 1)->get()->all();
+        $results = $this->getBuilder()->from('users')->join('comments', 'comments.user_id', '=', 'users.id')->where('user_id', 1)->get()->all();
 
         $this->assertEquals($expected, $results);
     }
@@ -106,7 +107,7 @@ class JoinTest extends TestCase
      */
     public function join_select_where()
     {
-        $results = (new FakeQueryBuilder())->select('users.id', 'users.common as common', 'comments.common as cc')->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get()->all();
+        $results = $this->getBuilder()->select('users.id', 'users.common as common', 'comments.common as cc')->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get()->all();
 
         $this->assertEquals([
             [
@@ -122,7 +123,7 @@ class JoinTest extends TestCase
      */
     public function join_select_star()
     {
-        $results = (new FakeQueryBuilder())->select('comments.*')->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get()->all();
+        $results = $this->getBuilder()->select('comments.*')->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get()->all();
 
         $this->assertEquals([
             [
@@ -133,7 +134,7 @@ class JoinTest extends TestCase
             ],
         ], $results);
 
-        $results = (new FakeQueryBuilder())->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get([
+        $results = $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->get([
             'comments.*',
             'users.id as uid',
         ])->all();
@@ -154,7 +155,7 @@ class JoinTest extends TestCase
      */
     public function join_with_multi_wheres()
     {
-        $results = (new FakeQueryBuilder())->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->where('comments.common', 'c3')->get()->all();
+        $results = $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->where('comments.common', 'c3')->get()->all();
 
         $this->assertEquals([
             [
@@ -172,7 +173,7 @@ class JoinTest extends TestCase
      */
     public function join()
     {
-        $results = (new FakeQueryBuilder())->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->get();
+        $results = $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->get();
 
         $this->assertInstanceOf(Collection::class, $results);
         $this->assertEquals(4, $results->count());
@@ -209,9 +210,66 @@ class JoinTest extends TestCase
         ];
         $this->assertEquals($e, $results->all());
 
-        $this->assertEquals([], (new FakeQueryBuilder())->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 2)->get()->all());
+        $this->assertEquals([], $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 2)->get()->all());
 
-        $this->assertEquals([], (new FakeQueryBuilder())->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->where('comments.common', 'c33')->get()->all());
+        $this->assertEquals([], $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->where('comments.common', 'c33')->get()->all());
+    }
+
+    /**
+     * @test_
+     */
+    public function left_join()
+    {
+        FakeDB::table('comments')->addRow([
+            'id' => 5,
+            'user_id' => 10,
+            'my_text' => 'left joined',
+            'common' => 'left joined',
+        ]);
+
+        $results = $this->getBuilder()
+            ->from('users')
+            ->leftJoin('comments', 'users.id', '=', 'comments.user_id')
+            ->get();
+
+        $this->assertInstanceOf(Collection::class, $results);
+        $this->assertEquals(4, $results->count());
+
+        $e = [
+            [
+                'id' => 1,
+                'name' => 'iman 1',
+                'common' => 'c1',
+                'user_id' => 1,
+                'my_text' => 'a 1',
+            ],
+            [
+                'id' => 2,
+                'name' => 'iman 1',
+                'common' => 'c2',
+                'user_id' => 1,
+                'my_text' => 'c 2',
+            ],
+            [
+                'id' => 4,
+                'name' => 'iman 1',
+                'common' => 'c4',
+                'user_id' => 1,
+                'my_text' => 'orphan 4',
+            ],
+            [
+                'id' => 3,
+                'name' => 'iman 3',
+                'common' => 'c3',
+                'user_id' => 3,
+                'my_text' => 'orphan',
+            ],
+        ];
+        $this->assertEquals($e, $results->all());
+
+        $this->assertEquals([], $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 2)->get()->all());
+
+        $this->assertEquals([], $this->getBuilder()->from('users')->join('comments', 'users.id', '=', 'comments.user_id')->where('comments.user_id', 3)->where('comments.common', 'c33')->get()->all());
     }
 
     /**
@@ -242,7 +300,7 @@ class JoinTest extends TestCase
             'body' => 'body 4',
             'user_id' => 10,
         ]);
-        $results = (new FakeQueryBuilder())->from('users')
+        $results = $this->getBuilder()->from('users')
             ->join('comments', 'users.id', '=', 'comments.user_id')
             ->join('posts', 'users.id', '=', 'posts.user_id')
             ->get();
@@ -261,4 +319,9 @@ class JoinTest extends TestCase
         ]);
 
    }
+
+    private function getBuilder(): FakeQueryBuilder
+    {
+        return FakeConnection::resolve()->query();
+    }
 }
