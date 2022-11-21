@@ -239,25 +239,37 @@ class FakeDB
 
     public static function applyWheres($query, Collection $collection)
     {
-        foreach ($query->wheres as $_where) {
-            $type = $_where['type'];
+        $ORs = [];
+        foreach (array_reverse($query->wheres) as $where) {
+            $type = $where['type'];
             $table = $query->from;
 
+            if ($where['boolean'] === 'or') {
+                $ORs[] = $where;
+                continue;
+            } elseif ($where['boolean'] === 'and' && $ORs) {
+                $ORs[] = $where;
+                $collection = self::applyOrWheres($collection, $table, $ORs);
+                $ORs = [];
+
+                continue;
+            }
+
             if ($type === 'Basic') {
-                $collection = self::applyBasicWhere($_where, $table, $query, $collection);
+                $collection = self::applyBasicWhere($where, $table, $query, $collection);
             } elseif ($type === 'Column') {
-                $collection = $collection->filter(function ($row) use ($_where, $table) {
-                    return self::whereColumn($_where, $row[$table]);
+                $collection = $collection->filter(function ($row) use ($where, $table) {
+                    return self::whereColumn($where, $row[$table]);
                 });
-            } elseif ($type === 'Nested' && $query !== $_where['query']) {
-                $collection = self::applyWheres($_where['query'], $collection);
+            } elseif ($type === 'Nested' && $query !== $where['query']) {
+                $collection = self::applyWheres($where['query'], $collection);
             } elseif (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'between'])) {
-                $value = $_where['values'] ?? null;
-                $column = FakeDB::prefixColumn($_where['column'], $table, $query->recordedJoin);
+                $value = $where['values'] ?? null;
+                $column = FakeDB::prefixColumn($where['column'], $table, $query->recordedJoin);
                 $method = 'where'.$type;
 
                 if ($type === 'between') {
-                    $method = $_where['not'] ? 'whereNotBetween' : 'whereBetween';
+                    $method = $where['not'] ? 'whereNotBetween' : 'whereBetween';
                 }
                 $collection = $collection->$method($column, $value);
             }
@@ -292,6 +304,47 @@ class FakeDB
         }
     }
 
+    public static function operatorForWhere($key, $operator = null, $value = null)
+    {
+        if (func_num_args() === 1) {
+            $value = true;
+
+            $operator = '=';
+        }
+
+        if (func_num_args() === 2) {
+            $value = $operator;
+
+            $operator = '=';
+        }
+
+        return function ($item) use ($key, $operator, $value) {
+            $retrieved = data_get($item, $key);
+
+            $strings = array_filter([$retrieved, $value], function ($value) {
+                return is_string($value) || (is_object($value) && method_exists($value, '__toString'));
+            });
+
+            if (count($strings) < 2 && count(array_filter([$retrieved, $value], 'is_object')) == 1) {
+                return in_array($operator, ['!=', '<>', '!==']);
+            }
+
+            switch ($operator) {
+                default:
+                case '=':
+                case '==':  return $retrieved == $value;
+                case '!=':
+                case '<>':  return $retrieved != $value;
+                case '<':   return $retrieved < $value;
+                case '>':   return $retrieved > $value;
+                case '<=':  return $retrieved <= $value;
+                case '>=':  return $retrieved >= $value;
+                case '===': return $retrieved === $value;
+                case '!==': return $retrieved !== $value;
+            }
+        };
+    }
+
     public static function lastInsertId()
     {
         return self::$lastInsertedId;
@@ -324,6 +377,19 @@ class FakeDB
         }
         return $collection->filter(function ($item) use ($_where, $column) {
             return FakeDB::isLike($column, $_where['value'], $item);
+        });
+    }
+
+    private static function applyOrWheres($collection, $table, array $ORs)
+    {
+        return $collection->filter(function ($item) use ($table, $ORs) {
+            foreach ($ORs as $or) {
+                if (self::operatorForWhere($table.'.'.$or['column'], $or['operator'], $or['value'])($item)) {
+                    return true;
+                }
+            }
+
+            return false;
         });
     }
 }
