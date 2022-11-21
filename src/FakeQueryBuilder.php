@@ -12,8 +12,6 @@ class FakeQueryBuilder extends Builder
 
     private $dates = [];
 
-    public $recordedJoin = [];
-
     public function orderBy($column, $direction = 'asc')
     {
         $this->orderBy = [FakeDB::prefixColumn($column, $this->from, $this->joins), $direction];
@@ -26,27 +24,10 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
-    public function join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
-    {
-        $this->recordedJoin[] = [$table, $first, $operator, $second, $type];
-
-        return $this;
-    }
-
-    public function leftJoin($table, $first, $operator = null, $second = null)
-    {
-        return $this->join($table, $first, $operator, $second, 'left');
-    }
-
-    public function rightJoin($table, $first, $operator = null, $second = null)
-    {
-        return $this->join($table, $first, $operator, $second, 'right');
-    }
-
     public function filterRows($sort = true, $columns = ['*'])
     {
         $base = FakeDB::$fakeRows[$this->from] ?? [];
-        $collection = FakeDB::performJoins($base, $this->recordedJoin);
+        $collection = FakeDB::performJoins($base, $this->joins ?? []);
 
         $sort && ($collection = $this->sortRows($collection));
 

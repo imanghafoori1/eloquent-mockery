@@ -98,7 +98,13 @@ class FakeDB
     {
         foreach ($joins as $join) {
             $joined = [];
-            [$table, $first, $operator, $second, $type] = $join;
+            $type = '';
+            $w = $join->wheres[0];
+            $first = $w['first'];
+            $second = $w['second'];
+            $operator = $w['operator'];
+            $table = $join->table;
+
             [$table1, $columns1] = explode('.', $first);
             [$table2, $columns2] = explode('.', $second);
 
@@ -265,7 +271,7 @@ class FakeDB
                 $collection = self::applyWheres($where['query'], $collection);
             } elseif (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'between'])) {
                 $value = $where['values'] ?? null;
-                $column = FakeDB::prefixColumn($where['column'], $table, $query->recordedJoin);
+                $column = FakeDB::prefixColumn($where['column'], $table, $query->joins);
                 $method = 'where'.$type;
 
                 if ($type === 'between') {
@@ -354,7 +360,7 @@ class FakeDB
     {
         if (! Str::contains($column, '.') && ! isset(FakeDB::$fakeRows[$mainTable][0][$mainTable][$column]) && $joins) {
             foreach ($joins as $joined) {
-                [$table] = $joined;
+                $table = $joined->table;
                 if (isset(FakeDB::$fakeRows[$table][0][$table][$column])) {
                     $column = $table.'.'.$column;
                 }
@@ -370,7 +376,7 @@ class FakeDB
 
     private static function applyBasicWhere($_where, $table, $query, $collection)
     {
-        $column = FakeDB::prefixColumn($_where['column'], $table, $query->recordedJoin);
+        $column = FakeDB::prefixColumn($_where['column'], $table, $query->joins);
 
         if ($_where['operator'] !== 'like') {
             return $collection->where($column, $_where['operator'], $_where['value']);

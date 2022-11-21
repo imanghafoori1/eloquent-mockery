@@ -216,6 +216,51 @@ class JoinTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function join_closure()
+    {
+        $results = $this->getBuilder()->from('users')->join('comments', function ($join) {
+            $join->on('users.id', '=', 'comments.user_id');
+        })->get();
+
+        $this->assertInstanceOf(Collection::class, $results);
+        $this->assertEquals(4, $results->count());
+
+        $e = [
+            [
+                'id' => 1,
+                'name' => 'iman 1',
+                'common' => 'c1',
+                'user_id' => 1,
+                'my_text' => 'a 1',
+            ],
+            [
+                'id' => 2,
+                'name' => 'iman 1',
+                'common' => 'c2',
+                'user_id' => 1,
+                'my_text' => 'c 2',
+            ],
+            [
+                'id' => 4,
+                'name' => 'iman 1',
+                'common' => 'c4',
+                'user_id' => 1,
+                'my_text' => 'orphan 4',
+            ],
+            [
+                'id' => 3,
+                'name' => 'iman 3',
+                'common' => 'c3',
+                'user_id' => 3,
+                'my_text' => 'orphan',
+            ],
+        ];
+        $this->assertEquals($e, $results->all());
+    }
+
+    /**
      * @test_
      */
     public function left_join()
