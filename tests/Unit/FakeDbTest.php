@@ -74,19 +74,26 @@ class FakeDbTest extends TestCase
      */
     public function fakeDbGetLatestRowWorksProperly()
     {
-        // Arrange
-        $rows = [
-            ['id' => 1],
-            ['id' => 2],
-        ];
-
-        FakeDB::$fakeRows = ['::table::' => $rows];
+        FakeDB::addRow('::table1::', ['id' => 2]);
+        FakeDB::addRow('::table1::', ['id' => 1]);
+        FakeDB::addRow('::table2::', ['id' => 3]);
+        FakeDB::addRow('::table2::', ['id' => 5]);
 
         // Act
-        $result = FakeDB::getLatestRow('::table::');
+        $result1 = FakeDB::getLatestRow('::table1::');
+        $result2 = FakeDB::getLatestRow('::table2::');
+        $result3 = FakeDB::getLatestRow('::table3::'); // absent table
 
         // Assert
-        $this->assertEquals(['id' => 2], $result);
+        $this->assertEquals([
+            '::table1::' => ['id' => 1]
+        ], $result1);
+
+        $this->assertEquals([
+            '::table2::' => ['id' => 5]
+        ], $result2);
+
+        $this->assertEquals([], $result3);
     }
 
     /**
@@ -156,8 +163,11 @@ class FakeDbTest extends TestCase
 
         // Assert
         $this->assertEmpty(FakeDB::$tables);
+        $this->assertIsArray(FakeDB::$tables);
         $this->assertEmpty(FakeDB::$fakeRows);
+        $this->assertIsArray(FakeDB::$fakeRows);
         $this->assertEmpty(FakeDB::$changedModels);
+        $this->assertIsArray(FakeDB::$changedModels);
     }
 
     /**
@@ -167,13 +177,16 @@ class FakeDbTest extends TestCase
     {
         // Arrange
         $data = [
+            'hello.id' => 0,
             'users.id' => 1,
             'users.name' => '::name::',
+            'users.name.some' => '::some::',
         ];
 
         $expectedResult = [
             'id' => 1,
-            'name' => '::name::'
+            'name' => '::name::',
+            'some' => '::some::'
         ];
 
         // Act
