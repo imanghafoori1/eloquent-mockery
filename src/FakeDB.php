@@ -92,6 +92,7 @@ class FakeDB
         self::$lastInsertedId = $row['id'] ?? null;
         $c++;
         self::$tables[$table]['latestRowIndex'] = $c;
+        self::$tables[$table]['latestRowId'] = self::$lastInsertedId;
     }
 
     public static function performJoins($base, $joins)
@@ -245,25 +246,24 @@ class FakeDB
 
     public static function applyWheres($query, Collection $collection)
     {
-        $ORs = [];
+        $basicOr = [];
         foreach (array_reverse($query->wheres) as $where) {
             $type = $where['type'];
             $table = $query->from;
 
-            if ($where['boolean'] === 'or') {
-                $ORs[] = $where;
-                continue;
-            } elseif ($where['boolean'] === 'and' && $ORs) {
-                $ORs[] = $where;
-                $collection = self::applyOrWheres($collection, $table, $ORs);
-                $ORs = [];
-
-                continue;
-            }
-
             if ($type === 'Basic') {
+                if ($where['boolean'] === 'or') {
+                    $basicOr[] = $where;
+                    continue;
+                } elseif ($where['boolean'] === 'and' && $basicOr) {
+                    $basicOr[] = $where;
+                    $collection = self::applyBasicWheres($collection, $table, $basicOr);
+                    $basicOr = [];
+
+                    continue;
+                }
                 $collection = self::applyBasicWhere($where, $table, $query, $collection);
-            } elseif ($type === 'Column') {
+            } elseif ($type === 'Column' && $where['boolean'] === 'and') {
                 $collection = $collection->filter(function ($row) use ($where, $table) {
                     return self::whereColumn($where, $row[$table]);
                 });
@@ -374,22 +374,22 @@ class FakeDB
         return $column;
     }
 
-    private static function applyBasicWhere($_where, $table, $query, $collection)
+    private static function applyBasicWhere($where, $table, $query, $collection)
     {
-        $column = FakeDB::prefixColumn($_where['column'], $table, $query->joins);
+        $column = FakeDB::prefixColumn($where['column'], $table, $query->joins);
 
-        if ($_where['operator'] !== 'like') {
-            return $collection->where($column, $_where['operator'], $_where['value']);
+        if ($where['operator'] !== 'like') {
+            return $collection->where($column, $where['operator'], $where['value']);
         }
-        return $collection->filter(function ($item) use ($_where, $column) {
-            return FakeDB::isLike($column, $_where['value'], $item);
+        return $collection->filter(function ($item) use ($where, $column) {
+            return FakeDB::isLike($column, $where['value'], $item);
         });
     }
 
-    private static function applyOrWheres($collection, $table, array $ORs)
+    private static function applyBasicWheres($collection, $table, array $orWheres)
     {
-        return $collection->filter(function ($item) use ($table, $ORs) {
-            foreach ($ORs as $or) {
+        return $collection->filter(function ($item) use ($table, $orWheres) {
+            foreach ($orWheres as $or) {
                 if (self::operatorForWhere($table.'.'.$or['column'], $or['operator'], $or['value'])($item)) {
                     return true;
                 }

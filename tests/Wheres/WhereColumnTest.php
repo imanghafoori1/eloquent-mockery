@@ -58,5 +58,30 @@ class WhereColumnTest extends TestCase
         $this->assertCount(2, $users);
         $this->assertEquals(1, $users[0]->id);
         $this->assertEquals(3, $users[1]->id);
+
+        $users = WhereColumnUser::query()
+            ->where('age', '>', 30)
+            ->whereColumn('name', '>=', 'age')
+            ->get();
+        $this->assertCount(1, $users);
+        $this->assertEquals(3, $users[0]->id);
+    }
+
+    /**
+     * @test
+     */
+    public function orWhereColumnIsIgnored()
+    {
+        // @todo
+        WhereColumnUser::insert(['id' => 1, 'name' => 20, 'age' => 20,]);
+        WhereColumnUser::insert(['id' => 2, 'name' => 31, 'age' => 30,]);
+        WhereColumnUser::insert(['id' => 3, 'name' => 31, 'age' => 34,]);
+
+        $users = WhereColumnUser::query()
+            ->whereColumn('name', '>', 'age')
+            ->orWhereColumn('name', '=', 'age')
+            ->get();
+
+        $this->assertCount(1, $users);
     }
 }

@@ -76,8 +76,7 @@ class FakeConnection extends Connection implements ConnectionInterface
         }
 
         if (! isset($values['id'])) {
-            $row = FakeDB::getLatestRow($table);
-            $values['id'] = ($row[$table]['id'] ?? 0) + 1;
+            $values['id'] = (FakeDB::$tables[$table]['latestRowId'] ?? 0) + 1;
         }
 
         FakeDB::addRow($table, $values);
