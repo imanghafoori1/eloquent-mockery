@@ -56,8 +56,8 @@ class SelectTest extends TestCase
         $this->assertEquals(1, $users->id);
         $this->assertEquals(20, $users->age);
 
-        $users = SelectyUser::whereNull('name')->select('age')->first('id');
-        $this->assertEquals(1, $users->id);
+        $users = SelectyUser::query()->whereNull('name')->select('age')->first('id');
+        $this->assertEquals(null, $users->id);
         $this->assertEquals(20, $users->age);
 
         SelectyUser::stopFaking();

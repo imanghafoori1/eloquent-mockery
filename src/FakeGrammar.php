@@ -32,4 +32,22 @@ class FakeGrammar extends Grammar
             'sql' => parent::compileInsert($query, $values)
         ];
     }
+
+    public function compileSelect(Builder $query)
+    {
+        return [
+            'builder' => $query,
+            'sql' => parent::compileSelect($query)
+        ];
+    }
+
+    public function compileUpsert(Builder $query, array $values, array $uniqueBy, array $update)
+    {
+        return [
+            'builder' => $query,
+            'values' => $values,
+            'uniqueBy' => $uniqueBy,
+            'sql' => parent::compileUpsert($query, $values, $uniqueBy, $update)
+        ];
+    }
 }

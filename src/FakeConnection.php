@@ -13,7 +13,9 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public static function resolve()
     {
-        return new FakeConnection(new FakePDO);
+        return new FakeConnection(function () {
+            return new FakePDO;
+        });
     }
 
     public function transaction(Closure $callback, $attempts = 1)
@@ -82,5 +84,27 @@ class FakeConnection extends Connection implements ConnectionInterface
         FakeDB::addRow($table, $values);
 
         return $values['id'];
+    }
+
+    public function select($query, $bindings = [], $useReadPdo = true)
+    {
+        $sql = $query['sql'];
+        $query = $query['builder'];
+
+        parent::select($sql, $bindings, $useReadPdo);
+
+        return $query->filterRows(true, $query->columns)->values()->all();
+    }
+
+    public function affectingStatement($query, $bindings = [])
+    {
+        if (is_array($query) && isset($query['uniqueBy'])) {
+            $sql = $query['sql'];
+            $query = $query['builder'];
+            $values = $query['values'];
+            $uniqueBy = $query['uniqueBy'];
+        }
+
+        parent::affectingStatement($query, $bindings);
     }
 }

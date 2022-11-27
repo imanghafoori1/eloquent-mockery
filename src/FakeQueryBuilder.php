@@ -26,35 +26,27 @@ class FakeQueryBuilder extends Builder
 
     public function filterRows($sort = true, $columns = ['*'])
     {
-        $base = FakeDB::$fakeRows[$this->from] ?? [];
-        $collection = FakeDB::performJoins($base, $this->joins ?? []);
-
-        $sort && ($collection = $this->sortRows($collection));
-
-        if (! FakeDB::$ignoreWheres) {
-            $collection = FakeDB::applyWheres($this, $collection);
-        }
-
-        $collection = FakeDB::performSelects($collection, $columns, $this->columns, $this->from);
-
-        $this->offset && $collection = $collection->skip($this->offset);
-
-        $this->limit && $collection = $collection->take($this->limit);
-
-        return $collection;
-    }
-
-    public function get($columns = ['*'])
-    {
-        return $this->filterRows(true, $columns)->values();
+        return FakeDB::filter(
+            $this,
+            $this->from,
+            $this->joins ?? [],
+            $sort,
+            $columns,
+            $this->columns,
+            $this->offset,
+            $this->limit,
+            $this->orderBy,
+            $this->shuffle,
+            $this->dates
+        );
     }
 
     public function increment($column, $amount = 1, array $extra = [])
     {
-        $collection = $this->filterRows()->map(function ($item) use ($amount, $column) {
-            $item[$column] =  $item[$column] + $amount;
+        $collection = $this->filterRows()->map(function ($item) use ($amount, $column, $extra) {
+            $item[$column] = $item[$column] + $amount;
 
-            return $item;
+            return $extra + $item;
         });
 
         return FakeDB::syncTable($collection, $this->from);
@@ -62,12 +54,7 @@ class FakeQueryBuilder extends Builder
 
     public function decrement($column, $amount = 1, array $extra = [])
     {
-        return $this->increment($column, $amount * -1);
-    }
-
-    public function pluck($column, $key = null)
-    {
-        return $this->filterRows()->pluck($column, $key);
+        return $this->increment($column, $amount * -1, $extra);
     }
 
     public function aggregate($function, $columns = ['*'])
@@ -80,14 +67,6 @@ class FakeQueryBuilder extends Builder
         return $this->count() > 0;
     }
 
-    public function addSelect($columns = ['*'])
-    {
-        $columns = is_array($columns) ? $columns : func_get_args();
-        $this->columns = array_merge($this->columns ?? [], $columns);
-
-        return $this;
-    }
-
     public function inRandomOrder($seed = '')
     {
         return $this->shuffle = [true, ($seed ?: null)];
@@ -98,19 +77,6 @@ class FakeQueryBuilder extends Builder
         $this->orderBy = [FakeDB::prefixColumn($column, $this->from, $this->joins), $direction];
 
         return $this;
-    }
-
-    public function sortRows($collection)
-    {
-        if ($this->orderBy) {
-            $column = $this->orderBy[0];
-            $isDates = in_array($column, $this->dates);
-            $collection = FakeDB::sort($column, $collection, $this->orderBy[1], $isDates);
-        } elseif ($this->shuffle !== false) {
-            $collection->shuffle($this->shuffle[1]);
-        }
-
-        return $collection;
     }
 
     public function count($columns = '*')
@@ -127,10 +93,5 @@ class FakeQueryBuilder extends Builder
     public function addFakeRow(string $table, $val, $key)
     {
         FakeDB::changeFakeRow($table, $val, $key);
-    }
-
-    public function forNestedWhere()
-    {
-        return $this;
     }
 }

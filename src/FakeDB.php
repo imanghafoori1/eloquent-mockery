@@ -398,4 +398,37 @@ class FakeDB
             return false;
         });
     }
+
+    public static function filter($query, string $from, $joins, $sort, $columns, $selects, $offset, $limit, $orderBy, $shuffle, $dates)
+    {
+        $base = FakeDB::$fakeRows[$from] ?? [];
+        $collection = FakeDB::performJoins($base, $joins);
+
+        $sort && ($collection = self::sortRows($collection, $orderBy, $dates, $shuffle));
+
+        if (! FakeDB::$ignoreWheres) {
+            $collection = FakeDB::applyWheres($query, $collection);
+        }
+
+        $collection = FakeDB::performSelects($collection, $columns, $selects, $from);
+
+        $offset && $collection = $collection->skip($offset);
+
+        $limit && $collection = $collection->take($limit);
+
+        return $collection;
+    }
+
+    public static function sortRows($collection, $orderBy, $dates, $shuffle)
+    {
+        if ($orderBy) {
+            $column = $orderBy[0];
+            $isDates = in_array($column, $dates);
+            $collection = FakeDB::sort($column, $collection, $orderBy[1], $isDates);
+        } elseif ($shuffle !== false) {
+            $collection->shuffle($shuffle[1]);
+        }
+
+        return $collection;
+    }
 }
