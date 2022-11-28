@@ -4,6 +4,9 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Events\Dispatcher;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -137,5 +140,32 @@ class FindTest extends TestCase
         $this->assertEquals(2, $users->count());
 
         FindUser::stopFaking();
+    }
+
+    /**
+     * @tespt
+     */
+    public function QueryExecutedForInsert()
+    {
+        FakeDB::mockQueryBuilder();
+        $dispatcher = new Dispatcher;
+        $_SERVER['counter'] = 0;
+        $dispatcher->listen(QueryExecuted::class, function (QueryExecuted $event) {
+            $_SERVER['counter']++;
+            $this->assertIsFloat($event->time);
+            $this->assertStringStartsWith('select', $event->sql);
+        });
+
+        FindUser::query()->getConnection()->setEventDispatcher($dispatcher);
+
+        FindUser::addFakeRow([
+            'id' => 1,
+            'name' => 'Iman',
+        ]);
+
+        $users = FindUser::query()->find([1, 2]);
+
+        $this->assertEquals(1, $_SERVER['counter']);
+        FakeDB::dontMockQueryBuilder();
     }
 }

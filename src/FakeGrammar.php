@@ -33,6 +33,14 @@ class FakeGrammar extends Grammar
         ];
     }
 
+    public function compileInsertOrIgnore(Builder $query, array $values)
+    {
+        $data = $this->compileInsert($query, $values);
+        $data['type'] = 'insertOrIgnore';
+
+        return $data;
+    }
+
     public function compileSelect(Builder $query)
     {
         return [

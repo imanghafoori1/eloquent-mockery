@@ -3,6 +3,8 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Events\Dispatcher;
 use Imanghafoori\EloquentMockery\FakeDB;
 use PHPUnit\Framework\TestCase;
 
@@ -121,6 +123,45 @@ class InsertTest extends TestCase
         $users6 = InsertyUser::query()->find(1);
         $this->assertEquals(1, $users6->id);
         $this->assertEquals(3, $users6->value);
+    }
 
+    /**
+     * @test
+     */
+    public function QueryExecutedForInsert()
+    {
+        $dispatcher = new Dispatcher;
+        $_SERVER['counter'] = 0;
+        $dispatcher->listen(QueryExecuted::class, function (QueryExecuted $event) {
+            $this->assertIsFloat($event->time);
+            $this->assertStringStartsWith('insert', $event->sql);
+            $_SERVER['counter']++;
+        });
+
+        InsertyUser::query()->getConnection()->setEventDispatcher($dispatcher);
+
+        InsertyUser::query()->insert([
+            ['value' => 1, 'deleted_at' => null],
+            ['value' => 2, 'deleted_at' => '2021-12-01 00:00:00'],
+        ]);
+
+        $this->assertEquals(1, $_SERVER['counter']);
+    }
+
+    /**
+     * @test
+     */
+    public function insertOrIgnore()
+    {
+        $result = InsertyUser::query()->insertOrIgnore([
+            ['value' => 1, 'deleted_at' => null],
+            ['value' => 2, 'deleted_at' => '2021-12-01 00:00:00'],
+        ]);
+
+        $users1 = InsertyUser::query()->find(1);
+        $users2 = InsertyUser::query()->find(2);
+        $this->assertEquals(2, $result);
+        $this->assertEquals(1, $users1->value);
+        $this->assertEquals(2, $users2->value);
     }
 }

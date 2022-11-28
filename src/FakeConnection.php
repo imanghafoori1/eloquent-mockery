@@ -98,6 +98,13 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function affectingStatement($query, $bindings = [])
     {
+        if ('insertOrIgnore' === ($query['type'] ?? '')) {
+            $this->insert($query, $bindings);
+            $values = $query['value'];
+
+            return Arr::isAssoc($values) ? 1 : count($values);
+        }
+
         if (is_array($query) && isset($query['uniqueBy'])) {
             $sql = $query['sql'];
             $query = $query['builder'];
