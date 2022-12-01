@@ -6,18 +6,9 @@ use Illuminate\Database\Query\Builder;
 
 class FakeQueryBuilder extends Builder
 {
-    public $orderBy = [];
-
     public $shuffle = false;
 
     private $dates = [];
-
-    public function orderBy($column, $direction = 'asc')
-    {
-        $this->orderBy = [FakeDB::prefixColumn($column, $this->from, $this->joins), $direction];
-
-        return parent::orderBy($column, $direction);
-    }
 
     public function crossJoin($table, $first = null, $operator = null, $second = null)
     {
@@ -30,12 +21,11 @@ class FakeQueryBuilder extends Builder
             $this,
             $this->from,
             $this->joins ?? [],
-            $sort,
             $columns,
             $this->columns,
             $this->offset,
             $this->limit,
-            $this->orderBy,
+            $sort ? $this->orders : null,
             $this->shuffle,
             $this->dates
         );
@@ -70,13 +60,6 @@ class FakeQueryBuilder extends Builder
     public function inRandomOrder($seed = '')
     {
         return $this->shuffle = [true, ($seed ?: null)];
-    }
-
-    public function reorder($column = null, $direction = 'asc')
-    {
-        $this->orderBy = [FakeDB::prefixColumn($column, $this->from, $this->joins), $direction];
-
-        return $this;
     }
 
     public function count($columns = '*')

@@ -399,12 +399,16 @@ class FakeDB
         });
     }
 
-    public static function filter($query, string $from, $joins, $sort, $columns, $selects, $offset, $limit, $orderBy, $shuffle, $dates)
+    public static function filter($query, string $from, $joins, $columns, $selects, $offset, $limit, $orderBy, $shuffle, $dates)
     {
         $base = FakeDB::$fakeRows[$from] ?? [];
         $collection = FakeDB::performJoins($base, $joins);
 
-        $sort && ($collection = self::sortRows($collection, $orderBy, $dates, $shuffle));
+        foreach ($orderBy ?: [] as $i => $_order) {
+            $orderBy[$i]['column'] = FakeDB::prefixColumn($_order['column'], $from, $joins);
+        }
+
+        $orderBy && ($collection = self::sortRows($collection, $orderBy, $dates, $shuffle));
 
         if (! FakeDB::$ignoreWheres) {
             $collection = FakeDB::applyWheres($query, $collection);
@@ -422,9 +426,9 @@ class FakeDB
     public static function sortRows($collection, $orderBy, $dates, $shuffle)
     {
         if ($orderBy) {
-            $column = $orderBy[0];
+            $column = $orderBy[0]['column'];
             $isDates = in_array($column, $dates);
-            $collection = FakeDB::sort($column, $collection, $orderBy[1], $isDates);
+            $collection = FakeDB::sort($column, $collection, $orderBy[0]['direction'], $isDates);
         } elseif ($shuffle !== false) {
             $collection->shuffle($shuffle[1]);
         }
