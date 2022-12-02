@@ -26,8 +26,7 @@ class FakeQueryBuilder extends Builder
             $this->offset,
             $this->limit,
             $sort ? $this->orders : null,
-            $this->shuffle,
-            $this->dates
+            $this->shuffle
         );
     }
 

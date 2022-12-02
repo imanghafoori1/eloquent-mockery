@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -13,9 +14,15 @@ class OrderUser extends Model
 
 class OrderByTest extends TestCase
 {
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     public function tearDown(): void
     {
         OrderUser::stopFaking();
+        FakeDB::dontMockQueryBuilder();
     }
 
     /**
@@ -41,8 +48,39 @@ class OrderByTest extends TestCase
     /**
      * @test
      */
-    public function reorderBy()
+    public function multiOrderBy()
     {
+        OrderUser::addFakeRow(['id' => 1, 'name' => 'a', 'age' => 30,]);
+        OrderUser::addFakeRow(['id' => 2, 'name' => 'a', 'age' => 20,]);
+        OrderUser::addFakeRow(['id' => 3, 'name' => 'b', 'age' => 31,]);
+        OrderUser::addFakeRow(['id' => 4, 'name' => 'b', 'age' => 21,]);
+
+        $users = OrderUser::query()
+            ->orderBy('name', 'desc')
+            ->orderBy('age', 'asc')
+            ->get();
+        $user = $users[0];
+        $this->assertEquals(4, $user->id);
+        $this->assertEquals('b', $user->name);
+        $user = $users[1];
+        $this->assertEquals(3, $user->id);
+        $this->assertEquals('b', $user->name);
+        $user = $users[2];
+        $this->assertEquals(2, $user->id);
+        $this->assertEquals('a', $user->name);
+        $user = $users[3];
+        $this->assertEquals(1, $user->id);
+        $this->assertEquals('a', $user->name);
+    }
+
+    /**
+     * @test
+     */
+    public function reorder()
+    {
+        if (! method_exists(OrderUser::query()->getQuery(), 'reorder')) {
+            $this->markTestSkipped('reorder does not exist in this laravel version.');
+        }
         OrderUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 40,]);
         OrderUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
         OrderUser::addFakeRow(['id' => 3, 'name' => 'a Iman 3', 'age' => 34,]);

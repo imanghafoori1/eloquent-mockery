@@ -130,19 +130,9 @@ class FakeDB
         return collect($base);
     }
 
-    public static function sort($column, $collection, $sortBy, $isDate)
+    public static function sort($column, $collection)
     {
-        if (! $isDate) {
-            $sortBy = ($sortBy === 'desc' ? 'sortByDesc' : 'sortBy');
-
-            return $collection->$sortBy($column);
-        }
-
-        return $collection->sort(function ($item1, $item2) use ($column, $sortBy) {
-            $direction = ($sortBy === 'desc' ? 1 : -1);
-
-            return (strtotime($item2[$column]) <=> strtotime($item1[$column])) * $direction;
-        });
+        return $collection->sortBy($column);
     }
 
     private static function parseSelects($columns, $selects)
@@ -399,7 +389,7 @@ class FakeDB
         });
     }
 
-    public static function filter($query, string $from, $joins, $columns, $selects, $offset, $limit, $orderBy, $shuffle, $dates)
+    public static function filter($query, string $from, $joins, $columns, $selects, $offset, $limit, $orderBy, $shuffle)
     {
         $base = FakeDB::$fakeRows[$from] ?? [];
         $collection = FakeDB::performJoins($base, $joins);
@@ -408,7 +398,7 @@ class FakeDB
             $orderBy[$i]['column'] = FakeDB::prefixColumn($_order['column'], $from, $joins);
         }
 
-        $orderBy && ($collection = self::sortRows($collection, $orderBy, $dates, $shuffle));
+        $orderBy && ($collection = self::sortRows($collection, $orderBy, $shuffle));
 
         if (! FakeDB::$ignoreWheres) {
             $collection = FakeDB::applyWheres($query, $collection);
@@ -423,12 +413,16 @@ class FakeDB
         return $collection;
     }
 
-    public static function sortRows($collection, $orderBy, $dates, $shuffle)
+    public static function sortRows($collection, $orderBy, $shuffle)
     {
         if ($orderBy) {
-            $column = $orderBy[0]['column'];
-            $isDates = in_array($column, $dates);
-            $collection = FakeDB::sort($column, $collection, $orderBy[0]['direction'], $isDates);
+            foreach ($orderBy as $ord) {
+                $column = $ord['column'];
+                $orderBy = $ord['direction'];
+                $order[] = [$column, $orderBy];
+            }
+
+            $collection = FakeDB::sort($order, $collection);
         } elseif ($shuffle !== false) {
             $collection->shuffle($shuffle[1]);
         }
