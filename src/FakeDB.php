@@ -35,7 +35,7 @@ class FakeDB
 
     public static function table($table)
     {
-        return new class ($table) {
+        return new class ($table){
             private $table;
 
             public function __construct($table)
@@ -130,9 +130,41 @@ class FakeDB
         return collect($base);
     }
 
-    public static function sort($column, $collection)
+    public static function sort($comparisons, Collection $collection)
     {
-        return $collection->sortBy($column);
+        $items = $collection->all();
+
+        usort($items, function ($a, $b) use ($comparisons) {
+            foreach ($comparisons as $comparison) {
+                $comparison = Arr::wrap($comparison);
+
+                $prop = $comparison[0];
+
+                $ascending = Arr::get($comparison, 1, true) === true || Arr::get($comparison, 1, true) === 'asc';
+
+                $result = 0;
+
+                if (! is_string($prop) && is_callable($prop)) {
+                    $result = $prop($a, $b);
+                } else {
+                    $values = [data_get($a, $prop), data_get($b, $prop)];
+
+                    if (! $ascending) {
+                        $values = array_reverse($values);
+                    }
+
+                    $result = $values[0] <=> $values[1];
+                }
+
+                if ($result === 0) {
+                    continue;
+                }
+
+                return $result;
+            }
+        });
+
+        return new Collection($items);
     }
 
     private static function parseSelects($columns, $selects)
@@ -328,15 +360,23 @@ class FakeDB
             switch ($operator) {
                 default:
                 case '=':
-                case '==':  return $retrieved == $value;
+                case '==':
+                    return $retrieved == $value;
                 case '!=':
-                case '<>':  return $retrieved != $value;
-                case '<':   return $retrieved < $value;
-                case '>':   return $retrieved > $value;
-                case '<=':  return $retrieved <= $value;
-                case '>=':  return $retrieved >= $value;
-                case '===': return $retrieved === $value;
-                case '!==': return $retrieved !== $value;
+                case '<>':
+                    return $retrieved != $value;
+                case '<':
+                    return $retrieved < $value;
+                case '>':
+                    return $retrieved > $value;
+                case '<=':
+                    return $retrieved <= $value;
+                case '>=':
+                    return $retrieved >= $value;
+                case '===':
+                    return $retrieved === $value;
+                case '!==':
+                    return $retrieved !== $value;
             }
         };
     }
@@ -371,6 +411,7 @@ class FakeDB
         if ($where['operator'] !== 'like') {
             return $collection->where($column, $where['operator'], $where['value']);
         }
+
         return $collection->filter(function ($item) use ($where, $column) {
             return FakeDB::isLike($column, $where['value'], $item);
         });
