@@ -8,8 +8,6 @@ class FakeQueryBuilder extends Builder
 {
     public $shuffle = false;
 
-    private $dates = [];
-
     public function crossJoin($table, $first = null, $operator = null, $second = null)
     {
         return $this;
@@ -19,31 +17,9 @@ class FakeQueryBuilder extends Builder
     {
         return FakeDB::filter(
             $this,
-            $this->from,
-            $this->joins ?? [],
             $columns,
-            $this->columns,
-            $this->offset,
-            $this->limit,
-            $sort ? $this->orders : null,
-            $this->shuffle
+            $sort ? $this->orders : null
         );
-    }
-
-    public function increment($column, $amount = 1, array $extra = [])
-    {
-        $collection = $this->filterRows()->map(function ($item) use ($amount, $column, $extra) {
-            $item[$column] = $item[$column] + $amount;
-
-            return $extra + $item;
-        });
-
-        return FakeDB::syncTable($collection, $this->from);
-    }
-
-    public function decrement($column, $amount = 1, array $extra = [])
-    {
-        return $this->increment($column, $amount * -1, $extra);
     }
 
     public function aggregate($function, $columns = ['*'])

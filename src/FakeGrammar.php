@@ -10,6 +10,7 @@ class FakeGrammar extends Grammar
     public function compileDelete(Builder $query)
     {
         return [
+            'type' => 'delete',
             'builder' => $query,
             'sql' => parent::compileDelete($query)
         ];
@@ -18,8 +19,10 @@ class FakeGrammar extends Grammar
     public function compileUpdate(Builder $query, array $values)
     {
         return [
+            'type' => 'update',
             'builder' => $query,
             'value' => $values,
+            'table' => $query->from,
             'sql' => parent::compileUpdate($query, $values)
         ];
     }
@@ -27,6 +30,7 @@ class FakeGrammar extends Grammar
     public function compileInsert(Builder $query, array $values)
     {
         return [
+            'type' => 'insert',
             'builder' => $query,
             'value' => $values,
             'sql' => parent::compileInsert($query, $values)
@@ -44,6 +48,7 @@ class FakeGrammar extends Grammar
     public function compileSelect(Builder $query)
     {
         return [
+            'type' => 'select',
             'builder' => $query,
             'sql' => parent::compileSelect($query)
         ];
@@ -52,6 +57,7 @@ class FakeGrammar extends Grammar
     public function compileUpsert(Builder $query, array $values, array $uniqueBy, array $update)
     {
         return [
+            'type' => 'upsert',
             'builder' => $query,
             'values' => $values,
             'uniqueBy' => $uniqueBy,

@@ -35,65 +35,18 @@ class FakeConnection extends Connection implements ConnectionInterface
         return new FakeGrammar;
     }
 
-    public function delete($query, $bindings = [])
+    public function statement($query, $bindings = [])
     {
-        parent::delete($query['sql'], $bindings);
-        $query = $query['builder'];
-        $rowsForDelete = $query->filterRows();
-        $from = $query->from;
-        $count = $rowsForDelete->count();
-        FakeDB::$fakeRows[$from] = array_diff_key(FakeDB::$fakeRows[$from] ?? [], $rowsForDelete->all());
-
-        return $count;
-    }
-
-    public function update($query, $bindings = [])
-    {
-        parent::update($query['sql'], $bindings);
-        $values = $query['value'];
-        $builder = $query['builder'];
-
-        $collection = $builder->filterRows()->map(function ($item) use ($values) {
-            return $values + $item;
+        return $this->run($query['sql'], $bindings, function () use ($query) {
+            return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
         });
-
-        return FakeDB::syncTable($collection, $builder->from);
-    }
-
-    public function insert($query, $bindings = [])
-    {
-        parent::insert($query['sql'], $bindings);
-        $builder = $query['builder'];
-
-        return (bool) self::insertGetId($query['value'], $builder->from);
-    }
-
-    public static function insertGetId(array $values, $table)
-    {
-        if (! Arr::isAssoc($values)) {
-            foreach ($values as $value) {
-                self::insertGetId($value, $table);
-            }
-            return true;
-        }
-
-        if (! isset($values['id'])) {
-            $values['id'] = (FakeDB::$tables[$table]['latestRowId'] ?? 0) + 1;
-        }
-
-        FakeDB::addRow($table, $values);
-
-        return $values['id'];
     }
 
     public function select($query, $bindings = [], $useReadPdo = true)
     {
-        $sql = $query['sql'];
-        $query = $query['builder'];
-
-        parent::select($sql, $bindings, $useReadPdo);
-
-        return $query->filterRows(true, $query->columns)->values()->all();
+        return $this->run($query['sql'], $bindings, function () use ($query) {
+            return FakeDb::exec($query);
+        });
     }
 
     public function affectingStatement($query, $bindings = [])
@@ -103,6 +56,12 @@ class FakeConnection extends Connection implements ConnectionInterface
             $values = $query['value'];
 
             return Arr::isAssoc($values) ? 1 : count($values);
+        }
+
+        if (in_array($query['type'] ?? '', ['update', 'delete'])) {
+            return $this->run($query['sql'], $bindings, function () use ($query) {
+                return FakeDb::exec($query);
+            });
         }
 
         if (is_array($query) && isset($query['uniqueBy'])) {

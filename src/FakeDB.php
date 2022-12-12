@@ -2,9 +2,11 @@
 
 namespace Imanghafoori\EloquentMockery;
 
+use Closure;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -430,8 +432,14 @@ class FakeDB
         });
     }
 
-    public static function filter($query, string $from, $joins, $columns, $selects, $offset, $limit, $orderBy, $shuffle)
+    public static function filter($query, $columns, $orderBy)
     {
+        $selects = $query->columns;
+        $offset = $query->offset;
+        $limit = $query->limit;
+        $from = $query->from;
+        $shuffle = $query->shuffle;
+        $joins = $query->joins ?? [];
         $base = FakeDB::$fakeRows[$from] ?? [];
         $collection = FakeDB::performJoins($base, $joins);
 
@@ -469,5 +477,94 @@ class FakeDB
         }
 
         return $collection;
+    }
+
+    private static function handleExpressions($values): array
+    {
+        foreach ($values as $_key => $_val) {
+            if (is_object($_val) && get_class($_val) === Expression::class) {
+                $tokens = token_get_all('<?php '.$_val->getValue());
+                array_shift($tokens);
+                foreach ($tokens as $i => $token) {
+                    $type = $token[0];
+                    if ($type == T_CONSTANT_ENCAPSED_STRING) {
+                        $tokens[$i][1] = '$values['.$token[1].']';
+                    }
+                }
+                $code = '';
+                foreach ($tokens as $token) {
+                    $code = $code.($token[1] ?? $token[0]);
+                }
+                $code = 'return function ($values) { return '.$code.'; };';
+                $values[$_key] = eval($code);
+            }
+        }
+
+        return $values;
+    }
+
+    public static function update($query): int
+    {
+        $builder = $query['builder'];
+        $values = self::handleExpressions($query['value']);
+        $collection = $builder->filterRows()->map(self::getRowUpdater($values));
+
+        return FakeDB::syncTable($collection, $builder->from);
+    }
+
+    public static function exec($query)
+    {
+        $type = $query['type'];
+
+        return self::$type($query);
+    }
+
+    public static function select($query)
+    {
+        $builder = $query['builder'];
+
+        return $builder->filterRows(true, $builder->columns)->values()->all();
+    }
+
+    private static function getRowUpdater(array $values): Closure
+    {
+        return function ($item) use ($values) {
+            foreach ($values as $key => $value) {
+                if ($value instanceof Closure) {
+                    $values[$key] = $value($item);
+                }
+            }
+
+            return $values + $item;
+        };
+    }
+
+    public static function delete($query)
+    {
+        $query = $query['builder'];
+        $rowsForDelete = $query->filterRows();
+        $from = $query->from;
+        $count = $rowsForDelete->count();
+        FakeDB::$fakeRows[$from] = array_diff_key(FakeDB::$fakeRows[$from] ?? [], $rowsForDelete->all());
+
+        return $count;
+    }
+
+    public static function insertGetId(array $values, $table)
+    {
+        if (! Arr::isAssoc($values)) {
+            foreach ($values as $value) {
+                self::insertGetId($value, $table);
+            }
+            return true;
+        }
+
+        if (! isset($values['id'])) {
+            $values['id'] = (FakeDB::$tables[$table]['latestRowId'] ?? 0) + 1;
+        }
+
+        FakeDB::addRow($table, $values);
+
+        return $values['id'];
     }
 }
