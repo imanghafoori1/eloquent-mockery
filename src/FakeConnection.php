@@ -37,6 +37,10 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function statement($query, $bindings = [])
     {
+        if (is_string($query)) {
+            return parent::statement($query);
+        }
+
         return $this->run($query['sql'], $bindings, function () use ($query) {
             return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
         });
@@ -51,14 +55,14 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function affectingStatement($query, $bindings = [])
     {
-        if ('insertOrIgnore' === ($query['type'] ?? '')) {
+        $type = $query['type'];
+        if ('insertOrIgnore' === $type) {
             $this->insert($query, $bindings);
-            $values = $query['value'];
 
-            return Arr::isAssoc($values) ? 1 : count($values);
+            return Arr::isAssoc($query['value']) ? 1 : count($query['value']);
         }
 
-        if (in_array($query['type'] ?? '', ['update', 'delete'])) {
+        if (in_array($type, ['update', 'delete'])) {
             return $this->run($query['sql'], $bindings, function () use ($query) {
                 return FakeDb::exec($query);
             });
@@ -70,7 +74,5 @@ class FakeConnection extends Connection implements ConnectionInterface
             $values = $query['values'];
             $uniqueBy = $query['uniqueBy'];
         }
-
-        parent::affectingStatement($query, $bindings);
     }
 }
