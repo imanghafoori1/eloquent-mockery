@@ -322,15 +322,11 @@ class FakeDB
         $value2 = $row[$where['second']];
 
         if ($operator === '=' || $operator === '==') {
-            return $value1 === $value2;
-        } elseif ($operator === '>') {
-            return $value1 > $value2;
-        } elseif ($operator === '>=') {
-            return $value1 >= $value2;
-        } elseif ($operator === '<') {
-            return $value1 < $value2;
-        } elseif ($operator === '<=') {
-            return $value1 <= $value2;
+            $operator = '===';
+        }
+
+        if (in_array($operator, ['>', '>=', '<', '<=', '==='])) {
+            return eval('return $value1 '.$operator.' $value2;');
         }
     }
 
@@ -432,8 +428,9 @@ class FakeDB
         });
     }
 
-    public static function filter($query, $columns, $orderBy)
+    public static function filter($query, $columns = ['*'])
     {
+        $orderBy = $query->orders;
         $selects = $query->columns;
         $offset = $query->offset;
         $limit = $query->limit;
@@ -507,7 +504,7 @@ class FakeDB
     {
         $builder = $query['builder'];
         $values = self::handleExpressions($query['value']);
-        $collection = $builder->filterRows()->map(self::getRowUpdater($values));
+        $collection = FakeDB::filter($builder)->map(self::getRowUpdater($values));
 
         return FakeDB::syncTable($collection, $builder->from);
     }
@@ -523,7 +520,14 @@ class FakeDB
     {
         $builder = $query['builder'];
 
-        return $builder->filterRows(true, $builder->columns)->values()->all();
+        if ($aggregate = $builder->aggregate) {
+            $function = $aggregate["function"];
+            $columns = $aggregate["columns"];
+
+            return self::aggregate($columns, $builder, $function);
+        }
+
+        return self::filter($builder, $builder->columns)->values()->all();
     }
 
     private static function getRowUpdater(array $values): Closure
@@ -542,7 +546,7 @@ class FakeDB
     public static function delete($query)
     {
         $query = $query['builder'];
-        $rowsForDelete = $query->filterRows();
+        $rowsForDelete = FakeDB::filter($query);
         $from = $query->from;
         $count = $rowsForDelete->count();
         FakeDB::$fakeRows[$from] = array_diff_key(FakeDB::$fakeRows[$from] ?? [], $rowsForDelete->all());
@@ -566,5 +570,18 @@ class FakeDB
         FakeDB::addRow($table, $values);
 
         return $values['id'];
+    }
+
+    private static function aggregate($columns, $builder, $function)
+    {
+        if ($columns !== '*') {
+            foreach ((array) $columns as $column) {
+                $builder->whereNotNull($column);
+            }
+        }
+
+        $result = ['aggregate' => self::filter($builder, ['*'])->$function($columns)];
+
+        return [0 => $result];
     }
 }
