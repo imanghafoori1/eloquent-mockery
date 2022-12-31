@@ -13,11 +13,6 @@ class FakeQueryBuilder extends Builder
         return $this;
     }
 
-    public function exists()
-    {
-        return $this->count() > 0;
-    }
-
     public function inRandomOrder($seed = '')
     {
         return $this->shuffle = [true, ($seed ?: null)];

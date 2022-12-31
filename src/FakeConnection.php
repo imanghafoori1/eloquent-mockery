@@ -37,6 +37,7 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function statement($query, $bindings = [])
     {
+        $query = $query->data;
         if (is_string($query)) {
             return parent::statement($query);
         }
@@ -48,6 +49,7 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function select($query, $bindings = [], $useReadPdo = true)
     {
+        $query = $query->data;
         return $this->run($query['sql'], $bindings, function () use ($query) {
             return FakeDb::exec($query);
         });
@@ -55,9 +57,11 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function affectingStatement($query, $bindings = [])
     {
+        $queryObj = $query;
+        $query = $query->data;
         $type = $query['type'];
         if ('insertOrIgnore' === $type) {
-            $this->insert($query, $bindings);
+            $this->insert($queryObj, $bindings);
 
             return Arr::isAssoc($query['value']) ? 1 : count($query['value']);
         }

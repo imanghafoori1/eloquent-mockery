@@ -71,12 +71,12 @@ class FakeDB
 
     public static function mockQueryBuilder()
     {
-        Connection::resolverFor('fakeDb', function () {
+        Connection::resolverFor('arrayDB', function () {
             return FakeConnection::resolve();
         });
 
-        $resolver = new ConnectionResolver(['fakeDb' => FakeConnection::resolve()]);
-        $resolver->setDefaultConnection('fakeDb');
+        $resolver = new ConnectionResolver(['arrayDB' => FakeConnection::resolve()]);
+        $resolver->setDefaultConnection('arrayDB');
         self::$originalConnection = Model::getConnectionResolver();
         Model::setConnectionResolver($resolver);
     }
@@ -514,6 +514,15 @@ class FakeDB
         $type = $query['type'];
 
         return self::$type($query);
+    }
+
+    public static function exists($query)
+    {
+        $builder = $query['builder'];
+
+        $value = (bool) self::aggregate($builder->columns, $builder, 'count')[0]['aggregate'];
+
+        return [['exists' => $value]];
     }
 
     public static function select($query)
