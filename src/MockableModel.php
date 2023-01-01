@@ -4,11 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 trait MockableModel
 {
-    public static $fakeMode = false;
-
-    public static $forceMocks = [];
-
-    public static function shouldRecieve($method)
+    public static function shouldReceive($method)
     {
         return new class (self::class, $method){
 
@@ -31,7 +27,6 @@ trait MockableModel
 
     public static function fakeSoftDelete()
     {
-        static::$fakeMode = true;
         $callback = function ($model) {
             FakeDB::setChangedModel('softDeleted', $model);
         };
@@ -67,58 +62,14 @@ trait MockableModel
         return FakeDB::getChangedModel('deleted', $index, static::class);
     }
 
-    public function newEloquentBuilder($query)
-    {
-        if ($this->isFakeMode()) {
-            return new FakeEloquentBuilder($query, $this);
-        }
-
-        return parent::newEloquentBuilder($query);
-    }
-
-    public function getConnection()
-    {
-        if ($this->isFakeMode()) {
-            return FakeConnection::resolve();
-        }
-
-        return parent::getConnection();
-    }
-
     public static function addFakeRow(array $attributes)
     {
-        self::$fakeMode = true;
         FakeDB::addRow((new static())->getTable(), $attributes);
-    }
-
-    public static function fake()
-    {
-        self::$fakeMode = true;
-    }
-
-    public static function ignoreWheres()
-    {
-        FakeDB::$ignoreWheres = true;
-    }
-
-    public static function stopFaking()
-    {
-        self::$fakeMode = false;
-        FakeDB::$fakeRows = [];
-        FakeDB::$tables = [];
-        FakeDB::$ignoreWheres = false;
-        self::$forceMocks = [];
-        FakeDB::$changedModels = [];
-    }
-
-    public function getDateFormat()
-    {
-        return 'Y-m-d H:i:s';
     }
 
     private function isFakeMode()
     {
-        return FakeDB::$fakeRows || self::$fakeMode || isset(FakeDB::$fakeRows[$this->getTable()]);
+        return isset(FakeDB::$fakeRows[$this->getTable()]);
     }
 
     protected function finishSave(array $options)
