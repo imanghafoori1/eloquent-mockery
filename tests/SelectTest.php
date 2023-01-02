@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -13,6 +14,16 @@ class SelectyUser extends Model
 
 class SelectTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     /**
      * @test
      */
@@ -59,7 +70,5 @@ class SelectTest extends TestCase
         $users = SelectyUser::query()->whereNull('name')->select('age')->first('id');
         $this->assertEquals(null, $users->id);
         $this->assertEquals(20, $users->age);
-
-        SelectyUser::stopFaking();
     }
 }

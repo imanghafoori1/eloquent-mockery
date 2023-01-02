@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -13,6 +14,16 @@ class CountUser extends Model
 
 class CountTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     /**
      * @test
      */

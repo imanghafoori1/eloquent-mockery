@@ -21,7 +21,6 @@ class OrderByTest extends TestCase
 
     public function tearDown(): void
     {
-        OrderUser::stopFaking();
         FakeDB::dontMockQueryBuilder();
     }
 
@@ -125,5 +124,11 @@ class OrderByTest extends TestCase
 
         $user = OrderUser::query()->oldest()->first();
         $this->assertEquals(3, $user->id);
+
+        $users1 = OrderUser::query()->inRandomOrder()->get();
+        $users2 = OrderUser::query()->inRandomOrder()->get();
+        $users3 = OrderUser::query()->inRandomOrder()->get();
+
+        $this->assertTrue($users1[0]->id !== 1 || $users2[0]->id !== 1 || $users3[0]->id !== 1 || $users1[1]->id !== 2 || $users2[1]->id !== 2 || $users3[1]->id !== 2);
     }
 }

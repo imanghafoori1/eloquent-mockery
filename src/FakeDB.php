@@ -435,16 +435,17 @@ class FakeDB
         $offset = $query->offset;
         $limit = $query->limit;
         $from = $query->from;
-        $shuffle = $query->shuffle;
         $joins = $query->joins ?? [];
         $base = FakeDB::$fakeRows[$from] ?? [];
         $collection = FakeDB::performJoins($base, $joins);
 
         foreach ($orderBy ?: [] as $i => $_order) {
-            $orderBy[$i]['column'] = FakeDB::prefixColumn($_order['column'], $from, $joins);
+            if (isset($_order['column'])) {
+                $orderBy[$i]['column'] = FakeDB::prefixColumn($_order['column'], $from, $joins);
+            }
         }
 
-        $orderBy && ($collection = self::sortRows($collection, $orderBy, $shuffle));
+        $orderBy && ($collection = self::sortRows($collection, $orderBy));
 
         if (! FakeDB::$ignoreWheres) {
             $collection = FakeDB::applyWheres($query, $collection);
@@ -459,21 +460,25 @@ class FakeDB
         return $collection;
     }
 
-    public static function sortRows($collection, $orderBy, $shuffle)
+    public static function sortRows(Collection $collection, $orderBy)
     {
-        if ($orderBy) {
-            foreach ($orderBy as $ord) {
-                $column = $ord['column'];
-                $orderBy = $ord['direction'];
-                $order[] = [$column, $orderBy];
+        if (! $orderBy) {
+            return $collection;
+        }
+        if (count($orderBy) === 1 && is_object($orderBy[0]['sql'] ?? '')) {
+            $data = ($orderBy[0]['sql'])->data;
+            if ($data['type'] === 'random') {
+                return $collection->shuffle((int) $data['seed']);
             }
-
-            $collection = FakeDB::sort($order, $collection);
-        } elseif ($shuffle !== false) {
-            $collection->shuffle($shuffle[1]);
         }
 
-        return $collection;
+        foreach ($orderBy as $ord) {
+            $column = $ord['column'];
+            $orderBy = $ord['direction'];
+            $order[] = [$column, $orderBy];
+        }
+
+        return FakeDB::sort($order, $collection);
     }
 
     private static function handleExpressions($values): array
@@ -569,6 +574,7 @@ class FakeDB
             foreach ($values as $value) {
                 self::insertGetId($value, $table);
             }
+
             return true;
         }
 

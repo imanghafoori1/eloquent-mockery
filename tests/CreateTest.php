@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -16,6 +17,16 @@ class CreatyModel extends Model
 
 class CreateTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     /**
      * @test
      */
@@ -39,10 +50,10 @@ class CreateTest extends TestCase
             $_SERVER['saving'] = true;
         });
         $bar = CreatyModel::query()->create([
-                'id' => 12,
-                'name' => 'hello',
-                'family' => 'gha',
-            ]);
+            'id' => 12,
+            'name' => 'hello',
+            'family' => 'gha',
+        ]);
 
         $foo = CreatyModel::getCreatedModel();
         $this->assertSame($foo, $bar);

@@ -14,9 +14,18 @@ class IncrementUser extends Model
 
 class IncrementTest extends TestCase
 {
-    public function test_increment()
+    public function tearDown(): void
+    {
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
     {
         FakeDB::mockQueryBuilder();
+    }
+
+    public function test_increment()
+    {
         Carbon::setTestNow('2022-10-23 01:01:01');
         $table = (new IncrementUser())->getTable();
         FakeDB::addRow($table, [
@@ -50,13 +59,11 @@ class IncrementTest extends TestCase
         $this->assertEquals(19, $user->age);
 
         FakeDB::truncate();
-        FakeDB::dontMockQueryBuilder();
     }
 
     public function test_decrement()
     {
         Carbon::setTestNow('2022-10-23 01:01:01');
-        FakeDB::mockQueryBuilder();
         $table = (new IncrementUser())->getTable();
 
         FakeDB::addRow($table, [
@@ -90,7 +97,6 @@ class IncrementTest extends TestCase
         $this->assertEquals(19, $user->age);
 
         FakeDB::truncate();
-        FakeDB::dontMockQueryBuilder();
     }
 
 }

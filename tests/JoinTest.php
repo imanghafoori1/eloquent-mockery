@@ -113,7 +113,7 @@ class JoinTest extends TestCase
             [
                 'common' => 'u3',
                 'cc' => 'c3',
-                'id' => 3
+                'id' => 3,
             ],
         ], $results);
     }
@@ -355,15 +355,14 @@ class JoinTest extends TestCase
 
         $first = $results[0];
         $this->assertTrue($first == [
-            "id" => 1,
-            "common" => "c1",
-            "name" => "iman 1",
-            "user_id" => 1,
-            "my_text" => "a 1",
-            "body" => "post 1",
-        ]);
-
-   }
+                "id" => 1,
+                "common" => "c1",
+                "name" => "iman 1",
+                "user_id" => 1,
+                "my_text" => "a 1",
+                "body" => "post 1",
+            ]);
+    }
 
     private function getBuilder(): FakeQueryBuilder
     {

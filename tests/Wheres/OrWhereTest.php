@@ -19,6 +19,11 @@ class OrWhereTest extends TestCase
         FakeDB::dontMockQueryBuilder();
     }
 
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     /**
      * @test
      */

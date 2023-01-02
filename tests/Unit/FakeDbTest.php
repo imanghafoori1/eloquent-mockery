@@ -15,7 +15,7 @@ class FakeDbTest extends TestCase
         // In this case, the users row does not change
         // but the comment key renames from "common" to "cc"
         $table = "users";
-        $aliases =  [
+        $aliases = [
             "common" => "users.common",
             "cc" => "comments.common",
         ];
@@ -45,7 +45,7 @@ class FakeDbTest extends TestCase
         // In this case, the users renames from "common" to "uu"
         // and the comment key, renames from "common" to "cc"
         $table = "users";
-        $aliases =  [
+        $aliases = [
             "uu" => "users.common",
             "cc" => "comments.common",
         ];
@@ -86,11 +86,11 @@ class FakeDbTest extends TestCase
 
         // Assert
         $this->assertEquals([
-            '::table1::' => ['id' => 1]
+            '::table1::' => ['id' => 1],
         ], $result1);
 
         $this->assertEquals([
-            '::table2::' => ['id' => 5]
+            '::table2::' => ['id' => 5],
         ], $result2);
 
         $this->assertEquals([], $result3);
@@ -120,9 +120,9 @@ class FakeDbTest extends TestCase
         FakeDB::$changedModels = [
             '::model::' => [
                 'create' => [
-                    '::test'
-                ]
-            ]
+                    '::test',
+                ],
+            ],
         ];
 
         // Act
@@ -141,21 +141,21 @@ class FakeDbTest extends TestCase
         FakeDB::$changedModels = [
             '::model::' => [
                 'create' => [
-                    '::test'
-                ]
-            ]
+                    '::test',
+                ],
+            ],
         ];
 
         FakeDB::$fakeRows = [
             '::table::' => [
                 ['id' => 1],
-            ]
+            ],
         ];
 
         FakeDB::$tables = [
             '::table::' => [
                 ['latestRowIndex' => 1],
-            ]
+            ],
         ];
 
         // Act
@@ -186,7 +186,7 @@ class FakeDbTest extends TestCase
         $expectedResult = [
             'id' => 1,
             'name' => '::name::',
-            'some' => '::some::'
+            'some' => '::some::',
         ];
 
         // Act

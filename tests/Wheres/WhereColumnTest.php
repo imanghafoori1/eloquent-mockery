@@ -33,7 +33,7 @@ class WhereColumnTest extends TestCase
         WhereColumnUser::insert(['id' => 2, 'name' => 12, 'age' => 30,]);
         WhereColumnUser::insert(['id' => 3, 'name' => 34, 'age' => 34,]);
 
-        $users = WhereColumnUser::query()->whereColumn('name', '=','age')->get();
+        $users = WhereColumnUser::query()->whereColumn('name', '=', 'age')->get();
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertCount(1, $users);
         $this->assertEquals(3, $users[0]->id);

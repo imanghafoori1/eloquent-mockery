@@ -19,7 +19,12 @@ class FindTest extends TestCase
 {
     public function tearDown(): void
     {
-        FindUser::stopFaking();
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
     }
 
     /**
@@ -55,8 +60,6 @@ class FindTest extends TestCase
 
         $user = FindUser::query()->find(10);
         $this->assertNull($user);
-
-        FindUser::stopFaking();
     }
 
     /**
@@ -94,8 +97,6 @@ class FindTest extends TestCase
         $user = FindUser::query()->findOrFail(10);
 
         $this->assertNull($user);
-
-        FindUser::stopFaking();
     }
 
     /**
@@ -138,8 +139,6 @@ class FindTest extends TestCase
         $this->assertEquals(true, $users[1]->exists);
 
         $this->assertEquals(2, $users->count());
-
-        FindUser::stopFaking();
     }
 
     /**

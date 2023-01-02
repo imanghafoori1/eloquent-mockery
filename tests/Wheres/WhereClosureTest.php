@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +17,12 @@ class WhereClosureTest extends TestCase
 {
     public function tearDown(): void
     {
-        UserClosure::stopFaking();
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
     }
 
     /**
@@ -40,7 +46,5 @@ class WhereClosureTest extends TestCase
         $this->assertEquals(true, ($users[0])->exists);
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals(1, $users->count());
-
-        UserClosure::stopFaking();
     }
 }

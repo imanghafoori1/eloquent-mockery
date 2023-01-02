@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +16,12 @@ class WhenTest extends TestCase
 {
     public function tearDown(): void
     {
-        WhenUser::stopFaking();
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
     }
 
     /**
@@ -43,7 +49,5 @@ class WhenTest extends TestCase
             return $q->where('id', 2);
         })->count();
         $this->assertEquals(3, $count);
-
-        WhenUser::stopFaking();
     }
 }

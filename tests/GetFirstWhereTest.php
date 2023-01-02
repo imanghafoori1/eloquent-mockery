@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +17,12 @@ class GetFirstWhereTest extends TestCase
 {
     public function tearDown(): void
     {
-        User::stopFaking();
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
     }
 
     /**
@@ -51,8 +57,6 @@ class GetFirstWhereTest extends TestCase
         $attrs = $user->getAttributes();
         $this->assertEquals(['id' => 3], $attrs);
         $this->assertInstanceOf(User::class, $user);
-
-        User::stopFaking();
     }
 
     /**
@@ -87,7 +91,5 @@ class GetFirstWhereTest extends TestCase
         $users = User::where('id', '<', 2)->get();
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals(1, $users->count());
-
-        User::stopFaking();
     }
 }

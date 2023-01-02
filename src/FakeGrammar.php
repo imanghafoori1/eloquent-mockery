@@ -76,6 +76,15 @@ class FakeGrammar extends Grammar
         ]);
     }
 
+    public function compileRandom($seed)
+    {
+        return $this->stringy([
+            'type' => 'random',
+            'seed' => $seed ?: random_int(1, 1000),
+            'sql' => parent::compileRandom($seed)
+        ]);
+    }
+
     private function stringy($query)
     {
         return new class ($query) {

@@ -81,6 +81,7 @@ trait MockableModel
         if ($this->wasRecentlyCreated) {
             FakeDB::setChangedModel('created', $this);
         }
+
         FakeDB::setChangedModel('saved', $this);
 
         return parent::finishSave($options);

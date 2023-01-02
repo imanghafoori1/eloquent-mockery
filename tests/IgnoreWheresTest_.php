@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Imanghafoori\EloquentMockery\FakeDB;
 use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
@@ -12,8 +13,18 @@ class IgnoreWheresUser extends Model
     use MockableModel;
 }
 
-class IgnoreWheresTest extends TestCase
+class IgnoreWheresTest_ extends TestCase
 {
+    public function tearDown(): void
+    {
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     /**
      * @test
      */
@@ -69,8 +80,6 @@ class IgnoreWheresTest extends TestCase
         $users = IgnoreWheresUser::where('id', '<', 2)->get();
         $this->assertInstanceOf(Collection::class, $users);
         $this->assertEquals(3, $users->count());
-
-        IgnoreWheresUser::stopFaking();
     }
 
     /**
@@ -94,6 +103,5 @@ class IgnoreWheresTest extends TestCase
         $this->assertEquals(null, ($users[0])->id);
         $this->assertEquals(20, ($users[0])->age);
         $this->assertEquals(4, $users->count());
-        IgnoreWheresUser::stopFaking();
     }
 }
