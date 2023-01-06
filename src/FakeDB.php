@@ -104,7 +104,6 @@ class FakeDB
             $w = $join->wheres[0];
             $first = $w['first'];
             $second = $w['second'];
-            $operator = $w['operator'];
             $table = $join->table;
 
             [$table1, $columns1] = explode('.', $first);
