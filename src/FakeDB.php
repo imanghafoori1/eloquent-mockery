@@ -101,7 +101,6 @@ class FakeDB
     {
         foreach ($joins as $join) {
             $joined = [];
-            $type = '';
             $w = $join->wheres[0];
             $first = $w['first'];
             $second = $w['second'];
@@ -121,9 +120,6 @@ class FakeDB
                     if ($row1[$table1][$columns1] == $row2[$table2][$columns2]) {
                         $joined[] = $row1 + $row2;
                     }
-                }
-                if ($type === 'left') {
-                    $joined[] = $row1 + [$table2 => array_fill_keys(array_keys($row2[$table2]), null)];
                 }
             }
             $base = $joined;
