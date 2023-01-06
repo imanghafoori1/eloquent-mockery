@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Events\Dispatcher;
+use Imanghafoori\EloquentMockery\FakeConnection;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class FindUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class FindTest extends TestCase
@@ -32,11 +32,11 @@ class FindTest extends TestCase
      */
     public function find()
     {
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'Iman',
         ]);
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 2,
             'name' => 'Iman 2',
         ]);
@@ -67,11 +67,11 @@ class FindTest extends TestCase
      */
     public function findOrFail()
     {
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'Iman',
         ]);
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 2,
             'name' => 'Iman 2',
         ]);
@@ -104,17 +104,17 @@ class FindTest extends TestCase
      */
     public function findMany()
     {
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'Iman',
         ]);
 
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 2,
             'name' => 'Iman 2',
         ]);
 
-        FindUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 3,
             'name' => 'Iman 3',
         ]);
@@ -142,9 +142,9 @@ class FindTest extends TestCase
     }
 
     /**
-     * @tespt
+     * @test
      */
-    public function QueryExecutedForInsert()
+    public function QueryExecutedEventForFind()
     {
         FakeDB::mockQueryBuilder();
         $dispatcher = new Dispatcher;
@@ -157,14 +157,29 @@ class FindTest extends TestCase
 
         FindUser::query()->getConnection()->setEventDispatcher($dispatcher);
 
-        FindUser::addFakeRow([
-            'id' => 1,
-            'name' => 'Iman',
-        ]);
-
         $users = FindUser::query()->find([1, 2]);
 
         $this->assertEquals(1, $_SERVER['counter']);
         FakeDB::dontMockQueryBuilder();
+    }
+
+    /**
+     * @test
+     */
+    public function queryLog()
+    {
+        FindUser::query()->getConnection()->enableQueryLog();
+        $users = FindUser::query()->find([1, 2]);
+
+        $actual = FindUser::query()->getConnection()->getQueryLog();
+        $expected = [
+            "query" => 'select * from "users" where "users"."id" in (?, ?)',
+            "bindings" => [1, 2],
+        ];
+        $this->assertCount(1, $actual);
+        $this->assertInstanceOf(FakeConnection::class, FindUser::query()->getConnection());
+        $this->assertEquals($expected['query'], $actual[0]['query']);
+        $this->assertEquals($expected['bindings'], $actual[0]['bindings']);
+
     }
 }
