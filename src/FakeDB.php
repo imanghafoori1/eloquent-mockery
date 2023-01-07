@@ -293,8 +293,9 @@ class FakeDB
                 });
             } elseif ($type === 'Nested' && $query !== $where['query']) {
                 $collection = self::applyWheres($where['query'], $collection);
-            } elseif (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'between'])) {
+            } elseif (in_array($type, ['In', 'NotIn', 'Null', 'NotNull', 'between', 'InRaw', 'NotInRaw'])) {
                 $value = $where['values'] ?? null;
+                $type = str_replace('Raw', '', $type);
                 $column = FakeDB::prefixColumn($where['column'], $table, $query->joins);
                 $method = 'where'.$type;
 
