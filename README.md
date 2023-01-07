@@ -86,6 +86,9 @@ The `User` can be any other model using the `Mockable` trait.
 
 - For more examples take a look at the `tests` directory.
 
+## Note
+- Now package isn't support assertDatabase
+
 <a name="license"></a>
 ## License
 
