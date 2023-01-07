@@ -13,28 +13,22 @@ Mock your eloquent queries without the repository pattern.
 - It simplifies the process of writing and running tests since you will be "DB Independent".
 
 ## Usage:
-You have to use the `MockableModel` in your model.
-
+First you have to define a new connection in your `config/database.php` and set the driver to 'arrayDB'
 ```php
-
-use Imanghafoori\EloquentMockery\MockableModel;
-
-class User extends Model
-{
-    use MockableModel;
-    
-    ...
-}
-
+[
+    'driver' => 'arrayDB',
+    'database' => '',
+]
 ```
 
 Then you can:
+
 ```php
 public function test_basic()
 {
     // Arrange:
-    User::addFakeRow(['id' => 1, 'username' => 'faky', 'password' => '...']);
-    User::addFakeRow(['id' => 1, 'username' => 'maky', 'password' => '...']]);
+    FakeDB::addRow('users', ['id' => 1, 'username' => 'faky', 'password' => '...']);
+    FakeDB::addRow('users', ['id' => 1, 'username' => 'maky', 'password' => '...']]);
 
     // Act (This query resides in your controller):
     $user = User::where('username', 'faky')->first();   # <=== This does NOT connect to DB.
