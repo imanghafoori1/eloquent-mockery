@@ -86,6 +86,28 @@ The `User` can be any other model using the `Mockable` trait.
 
 - For more examples take a look at the `tests` directory.
 
+### Mocking a `store` test from route:
+```php
+public function test_store_route()
+{
+    Category::fake();
+
+    $user = $this->createUser();
+    $title = 'Category 1';
+
+    $response = $this->actingAs($user)->post(route('categories.store'), [
+        'title' => $title,
+        'body' => $this->faker->text,
+        'status' => CategoryStatusEnum::STATUS_ACTIVE->value,
+    ]);
+    $response->assertRedirect(route('categories.index'));
+
+    $this->assertEquals(1, Category::query()->count());
+    $this->assertEquals($title, Category::query()->value('title'));
+    Category::stopFaking();
+}
+```
+
 ## Note
 - Now package isn't support assertDatabase
 
