@@ -21,9 +21,19 @@ composer require imanghafoori/eloquent-mockery --dev
 ## Usage:
 First you have to define a new connection in your `config/database.php` and set the driver to 'arrayDB'
 ```php
-[
-    'driver' => 'arrayDB',
-    'database' => '',
+return [
+  
+   ...
+  
+  'connections' => [
+     'my_test_connection' => [
+         'driver' => 'arrayDB',
+         'database' => '',
+     ],
+     
+     ...
+  ],
+  ....
 ]
 ```
 
@@ -32,14 +42,15 @@ Then you can:
 ```php
 public function test_basic()
 {
-    // Arrange:
+    config()->set('database.default', 'my_test_connection');
+    // ::Arrange::
     FakeDB::addRow('users', ['id' => 1, 'username' => 'faky', 'password' => '...']);
     FakeDB::addRow('users', ['id' => 1, 'username' => 'maky', 'password' => '...']]);
 
-    // Act (This query resides in your controller):
+    // ::Act:: (This query resides in your controller)
     $user = User::where('username', 'faky')->first();   # <=== This does NOT connect to DB.
 
-    // assert:
+    // ::Assert::
     $this->assert($user->id === 1);
     $this->assert($user->username === 'faky');
 }
@@ -50,11 +61,11 @@ public function test_basic()
 ```php
 public function test_basic()
 {
-    // ::Arrange::
+    # ::Arrange::
     FakeDB::mockEloquentBuilder();
 
-    // ::Act::
-    // in your controller:
+    # ::Act::
+    // In your controller:
     // $user = User::create(['username' => 'iman', 'email' => 'iman@gmail.com']);   # <=== This does NOT connect to DB.
     $this->post('/create-url', ['some' => 'data' ])
 
