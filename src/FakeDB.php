@@ -25,6 +25,8 @@ class FakeDB
 
     public static $lastInsertedId;
 
+    public static $deletedRows = [];
+
     public static function getLatestRow($table)
     {
         $row = [];
@@ -67,6 +69,7 @@ class FakeDB
         self::$fakeRows = [];
         self::$changedModels = [];
         self::$tables = [];
+        self::$deletedRows = [];
     }
 
     public static function mockQueryBuilder()
@@ -429,7 +432,7 @@ class FakeDB
         });
     }
 
-    public static function filter($query, $columns = ['*'])
+    public static function filter($query, $columns = ['*']): Collection
     {
         $orderBy = $query->orders;
         $selects = $query->columns;
@@ -563,10 +566,10 @@ class FakeDB
         $query = $query['builder'];
         $rowsForDelete = FakeDB::filter($query);
         $from = $query->from;
-        $count = $rowsForDelete->count();
-        FakeDB::$fakeRows[$from] = array_diff_key(FakeDB::$fakeRows[$from] ?? [], $rowsForDelete->all());
+        self::$deletedRows[$from][] = $rowsForDelete->values()->all();
+        self::$fakeRows[$from] = array_diff_key(FakeDB::$fakeRows[$from] ?? [], $rowsForDelete->all());
 
-        return $count;
+        return $rowsForDelete->count();
     }
 
     public static function insertGetId(array $values, $table)
