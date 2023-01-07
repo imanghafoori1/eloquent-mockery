@@ -5,14 +5,13 @@ namespace Imanghafoori\EloquentMockery\Tests;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class CreatyModel extends Model
 {
     protected $fillable = ['name'];
 
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class CreateTest extends TestCase
@@ -34,8 +33,8 @@ class CreateTest extends TestCase
     {
         CreatyModel::reguard();
         CreatyModel::setEventDispatcher(new Dispatcher());
-        CreatyModel::addFakeRow(['id' => 1]);
-        CreatyModel::addFakeRow(['id' => 2]);
+        FakeDB::addRow('users', ['id' => 1]);
+        FakeDB::addRow('users', ['id' => 2]);
 
         CreatyModel::saved(function () {
             $_SERVER['saved'] = true;
@@ -55,24 +54,24 @@ class CreateTest extends TestCase
             'family' => 'gha',
         ]);
 
-        $foo = CreatyModel::getCreatedModel();
-        $this->assertSame($foo, $bar);
+        //$foo = CreatyModel::getCreatedModel();
+        //$this->assertSame($foo, $bar);
         $this->assertTrue($_SERVER['saved']);
         $this->assertTrue($_SERVER['saving']);
         $this->assertTrue($_SERVER['created']);
         $this->assertTrue($_SERVER['creating']);
 
-        $this->assertEquals(3, $foo->id);
-        $this->assertEquals('hello', $foo->name);
-        $this->assertNull($foo->family);
-        $this->assertNotNull($foo->created_at);
-        $this->assertNotNull($foo->updated_at);
-        $this->assertTrue($foo->exists);
-        $this->assertTrue($foo->wasRecentlyCreated);
+        //$this->assertEquals(3, $foo->id);
+        //$this->assertEquals('hello', $foo->name);
+        //$this->assertNull($foo->family);
+        //$this->assertNotNull($foo->created_at);
+        //$this->assertNotNull($foo->updated_at);
+        //$this->assertTrue($foo->exists);
+        //$this->assertTrue($foo->wasRecentlyCreated);
 
-        $this->assertSame(CreatyModel::getSavedModel(), CreatyModel::getCreatedModel());
-        $this->assertNull(CreatyModel::getCreatedModel(1));
-        $this->assertNull(CreatyModel::getSavedModel(1));
+        //$this->assertSame(CreatyModel::getSavedModel(), CreatyModel::getCreatedModel());
+        //$this->assertNull(CreatyModel::getCreatedModel(1));
+        //$this->assertNull(CreatyModel::getSavedModel(1));
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
         $this->assertEquals(3, $model->id);

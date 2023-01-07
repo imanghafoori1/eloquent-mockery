@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class OffsetUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 
     public function comments()
     {
@@ -34,10 +33,10 @@ class OffsetLimitTest extends TestCase
      */
     public function offset_limit()
     {
-        OffsetUser::addFakeRow(['id' => 1, 'name' => 'Iman 1']);
-        OffsetUser::addFakeRow(['id' => 2, 'name' => 'Iman 2']);
-        OffsetUser::addFakeRow(['id' => 3, 'name' => 'Iman 3']);
-        OffsetUser::addFakeRow(['id' => 4, 'name' => 'Iman 4']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2']);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3']);
+        FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4']);
 
         $users = OffsetUser::skip(1)->limit(2)->get();
         $this->assertEquals(2, $users->count());

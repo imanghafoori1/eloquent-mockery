@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class CountUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class CountTest extends TestCase
@@ -29,10 +28,10 @@ class CountTest extends TestCase
      */
     public function basic_count()
     {
-        CountUser::addFakeRow(['id' => 1, 'name' => null, 'age' => -20,]);
-        CountUser::addFakeRow(['id' => 2, 'name' => '', 'age' => 30,]);
-        CountUser::addFakeRow(['id' => 3, 'name' => [], 'age' => null,]);
-        CountUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 0,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => null, 'age' => -20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => '', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => [], 'age' => null,]);
+        FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4', 'age' => 0,]);
 
         $this->assertEquals(4, CountUser::count());
         $this->assertEquals(4, CountUser::query()->count());

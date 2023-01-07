@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class User extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class GetFirstWhereTest extends TestCase
@@ -30,9 +29,9 @@ class GetFirstWhereTest extends TestCase
      */
     public function first()
     {
-        User::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $user = User::first();
         $this->assertEquals(1, $user->id);
@@ -64,9 +63,9 @@ class GetFirstWhereTest extends TestCase
      */
     public function where()
     {
-        User::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        User::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        User::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $users = User::where('id', '<', 2)->get();
         $this->assertEquals('Iman 1', ($users[0])->name);

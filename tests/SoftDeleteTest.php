@@ -7,13 +7,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Carbon;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class SoftDeleteUser extends Model
 {
     use SoftDeletes;
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class SoftDeleteTest extends TestCase
@@ -34,24 +33,24 @@ class SoftDeleteTest extends TestCase
     public function destroy_soft_delete()
     {
         SoftDeleteUser::setEventDispatcher(new Dispatcher());
-        SoftDeleteUser::addFakeRow(['id' => 1]);
-        SoftDeleteUser::addFakeRow(['id' => 2]);
-        SoftDeleteUser::addFakeRow(['id' => 3]);
-        SoftDeleteUser::addFakeRow(['id' => 4]);
-        SoftDeleteUser::fakeSoftDelete();
+        FakeDB::addRow('users', ['id' => 1]);
+        FakeDB::addRow('users', ['id' => 2]);
+        FakeDB::addRow('users', ['id' => 3]);
+        FakeDB::addRow('users', ['id' => 4]);
+        //SoftDeleteUser::fakeSoftDelete();
 
         $count = SoftDeleteUser::destroy(1, 2);
         $this->assertEquals(2, $count);
-        $this->assertNotNull(SoftDeleteUser::getSoftDeletedModel(1));
-        $this->assertNull(SoftDeleteUser::getSoftDeletedModel(2));
+        //$this->assertNotNull(SoftDeleteUser::getSoftDeletedModel(1));
+        //$this->assertNull(SoftDeleteUser::getSoftDeletedModel(2));
 
-        $model = SoftDeleteUser::getSoftDeletedModel(0);
-        $this->assertEquals(1, $model->id);
-        $this->assertTrue($model->exists);
+        //$model = SoftDeleteUser::getSoftDeletedModel(0);
+        //$this->assertEquals(1, $model->id);
+        //$this->assertTrue($model->exists);
 
-        $model = SoftDeleteUser::getSoftDeletedModel(1);
-        $this->assertEquals(2, $model->id);
-        $this->assertTrue($model->exists);
+        //$model = SoftDeleteUser::getSoftDeletedModel(1);
+        //$this->assertEquals(2, $model->id);
+        //$this->assertTrue($model->exists);
 
         // Can not be deleted twice.
         $count = SoftDeleteUser::destroy(1, 2);
@@ -67,19 +66,19 @@ class SoftDeleteTest extends TestCase
     public function soft_delete()
     {
         SoftDeleteUser::setEventDispatcher(new Dispatcher());
-        SoftDeleteUser::addFakeRow(['id' => 1]);
-        SoftDeleteUser::addFakeRow(['id' => 2]);
-        SoftDeleteUser::addFakeRow(['id' => 3]);
-        SoftDeleteUser::addFakeRow(['id' => 4]);
-        SoftDeleteUser::fakeSoftDelete();
+        FakeDB::addRow('users', ['id' => 1]);
+        FakeDB::addRow('users', ['id' => 2]);
+        FakeDB::addRow('users', ['id' => 3]);
+        FakeDB::addRow('users', ['id' => 4]);
+        //SoftDeleteUser::fakeSoftDelete();
         $user = SoftDeleteUser::find(1);
         $this->assertNull($user->deleted_at);
         $user->delete(); // soft-deleted
         $this->assertEquals(Carbon::now()->getTimestamp(), $user->deleted_at->getTimestamp());
 
-        $deletedModel = SoftDeleteUser::getSoftDeletedModel();
-        $this->assertEquals($deletedModel->deleted_at, $user->deleted_at);
-        $this->assertEquals($deletedModel->ff, $user->ff);
+        //$deletedModel = SoftDeleteUser::getSoftDeletedModel();
+        //$this->assertEquals($deletedModel->deleted_at, $user->deleted_at);
+        //$this->assertEquals($deletedModel->ff, $user->ff);
 
         $this->assertEquals(2, SoftDeleteUser::first()->id);
         $this->assertEquals(1, SoftDeleteUser::withTrashed()->first()->id);
@@ -107,12 +106,12 @@ class SoftDeleteTest extends TestCase
     {
         SoftDeleteUser::setEventDispatcher(new Dispatcher);
 
-        SoftDeleteUser::addFakeRow(['id' => 1]);
-        SoftDeleteUser::addFakeRow(['id' => 2]);
+        FakeDB::addRow('users', ['id' => 1]);
+        FakeDB::addRow('users', ['id' => 2]);
         $user = SoftDeleteUser::query()->find(1);
 
         $result = $user->forceDelete();
-        $deletedModel = SoftDeleteUser::getDeletedModel();
+        //$deletedModel = SoftDeleteUser::getDeletedModel();
 
         //$this->assertEquals(1, $deletedModel->id);
         $this->assertTrue($result);

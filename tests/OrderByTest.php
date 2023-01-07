@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class OrderUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class OrderByTest extends TestCase
@@ -29,9 +28,9 @@ class OrderByTest extends TestCase
      */
     public function orderBy()
     {
-        OrderUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        OrderUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
-        OrderUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $users = OrderUser::query()->orderBy('id')->get();
         $user = $users[0];
@@ -49,10 +48,10 @@ class OrderByTest extends TestCase
      */
     public function multiOrderBy()
     {
-        OrderUser::addFakeRow(['id' => 1, 'name' => 'a', 'age' => 30,]);
-        OrderUser::addFakeRow(['id' => 2, 'name' => 'a', 'age' => 20,]);
-        OrderUser::addFakeRow(['id' => 3, 'name' => 'b', 'age' => 31,]);
-        OrderUser::addFakeRow(['id' => 4, 'name' => 'b', 'age' => 21,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'a', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'a', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'b', 'age' => 31,]);
+        FakeDB::addRow('users', ['id' => 4, 'name' => 'b', 'age' => 21,]);
 
         $users = OrderUser::query()
             ->orderBy('name', 'desc')
@@ -80,9 +79,9 @@ class OrderByTest extends TestCase
         if (! method_exists(OrderUser::query()->getQuery(), 'reorder')) {
             $this->markTestSkipped('reorder does not exist in this laravel version.');
         }
-        OrderUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 40,]);
-        OrderUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        OrderUser::addFakeRow(['id' => 3, 'name' => 'a Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Hello', 'age' => 40,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'a Iman 3', 'age' => 34,]);
 
         $users = OrderUser::query()->orderBy('id')->reorder('age')->get();
         $user = $users[0];
@@ -94,25 +93,25 @@ class OrderByTest extends TestCase
      */
     public function latest_oldest()
     {
-        OrderUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'Hello',
             'age' => 20,
             'created_at' => '2022-08-14 16:59:29',
         ]);
-        OrderUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 2,
             'name' => 'Iman 2',
             'age' => 30,
             'created_at' => '2022-08-22 16:59:29',
         ]);
-        OrderUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 3,
             'name' => 'Iman 3',
             'age' => 34,
             'created_at' => '2020-01-10 16:59:29',
         ]);
-        OrderUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 4,
             'name' => 'Iman 3',
             'age' => 34,

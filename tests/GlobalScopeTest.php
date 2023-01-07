@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class GlobalScopeUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 
     public function scopeIman($query)
     {
@@ -45,9 +44,9 @@ class GlobalScopeTest extends TestCase
     public function global_scope_test()
     {
         GlobalScopeUser::addGlobalScope(new AncientScope);
-        GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $user = GlobalScopeUser::get();
         $user = $user[0];
@@ -65,11 +64,11 @@ class GlobalScopeTest extends TestCase
     public function global_scope_raw_update()
     {
         GlobalScopeUser::addGlobalScope(new AncientScope);
-        GlobalScopeUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20]);
-        GlobalScopeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30]);
-        GlobalScopeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34]);
-        GlobalScopeUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 37]);
-        GlobalScopeUser::addFakeRow(['id' => 5, 'name' => 'Iman 5', 'age' => 40]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34]);
+        FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4', 'age' => 37]);
+        FakeDB::addRow('users', ['id' => 5, 'name' => 'Iman 5', 'age' => 40]);
 
         $count = GlobalScopeUser::where('age', 40)->count();
         $this->assertEquals(1, $count);

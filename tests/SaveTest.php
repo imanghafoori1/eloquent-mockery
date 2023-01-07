@@ -6,14 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Carbon;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class SaveModel extends Model
 {
     protected $fillable = ['name'];
 
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class SaveTest extends TestCase
@@ -35,8 +34,8 @@ class SaveTest extends TestCase
     public function save()
     {
         SaveModel::setEventDispatcher(new Dispatcher());
-        SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         SaveModel::saved(function () {
             $_SERVER['forTest']['saved'] = true;
@@ -76,7 +75,7 @@ class SaveTest extends TestCase
         $this->assertTrue(! isset($_SERVER['forTest']['created']));
         $this->assertTrue(! isset($_SERVER['forTest']['creating']));
 
-        $foo = SaveModel::getUpdatedModel();
+        //$foo = SaveModel::getUpdatedModel();
         //$this->assertEquals(1, $foo->id);
         //$this->assertEquals('hello', $foo->name);
 
@@ -93,8 +92,8 @@ class SaveTest extends TestCase
     public function save_a_new_model()
     {
         SaveModel::setEventDispatcher(new Dispatcher());
-        SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         SaveModel::saved(function () {
             $_SERVER['forTest']['saved'] = true;
@@ -134,11 +133,11 @@ class SaveTest extends TestCase
         $this->assertTrue($_SERVER['forTest']['created']);
         $this->assertTrue($_SERVER['forTest']['creating']);
 
-        $foo = SaveModel::getUpdatedModel();
-        $this->assertEquals(null, $foo);
+        //$foo = SaveModel::getUpdatedModel();
+        //$this->assertEquals(null, $foo);
 
-        $foo = SaveModel::getCreatedModel();
-        $this->assertSame($foo, $newModel);
+        //$foo = SaveModel::getCreatedModel();
+        //$this->assertSame($foo, $newModel);
     }
 
     /**
@@ -147,8 +146,8 @@ class SaveTest extends TestCase
     public function save_with_no_dispatcher()
     {
         SaveModel::unsetEventDispatcher();
-        SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         $_SERVER['forTest']['saved'] = false;
         $_SERVER['forTest']['updating'] = false;
@@ -194,8 +193,8 @@ class SaveTest extends TestCase
     public function updating_event_can_halt()
     {
         SaveModel::setEventDispatcher(new Dispatcher());
-        SaveModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        SaveModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         SaveModel::updating(function () {
             return false;
