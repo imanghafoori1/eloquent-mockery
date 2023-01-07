@@ -10,7 +10,7 @@ Mock your eloquent queries without the repository pattern.
 
 ### Why this package was invented?
 - It solves the problem of "slow tests" by removing the interactions with a real database.
-- It simplifies the process of writing and running tests since you will be "DB Independent".
+- It simplifies the process of writing and running tests, since your tests will be "DB Independent".
 
 ## Installation
 You can **install** the package via composer:
@@ -19,8 +19,11 @@ composer require imanghafoori/eloquent-mockery --dev
 ```
 
 ## Usage:
-First you have to define a new connection in your `config/database.php` and set the driver to 'arrayDB'
+First you have to define a new connection in your `config/database.php` and set the driver to 'arrayDB'.
+
 ```php
+<?php
+
 return [
   
    ...
@@ -33,7 +36,7 @@ return [
      
      ...
   ],
-  ....
+  ...
 ]
 ```
 
@@ -43,12 +46,13 @@ Then you can:
 public function test_basic()
 {
     config()->set('database.default', 'my_test_connection');
-    // ::Arrange::
+
+    // ::Arrange:: (Setup Sample Data)
     FakeDB::addRow('users', ['id' => 1, 'username' => 'faky', 'password' => '...']);
-    FakeDB::addRow('users', ['id' => 1, 'username' => 'maky', 'password' => '...']]);
+    FakeDB::addRow('users', ['id' => 1, 'username' => 'maky', 'password' => '...']);
 
     // ::Act:: (This query resides in your controller)
-    $user = User::where('username', 'faky')->first();   # <=== This does NOT connect to DB.
+    $user = User::where('username', 'faky')->first();   # <=== This does NOT connect to a real DB.
 
     // ::Assert::
     $this->assert($user->id === 1);
