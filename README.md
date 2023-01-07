@@ -12,6 +12,12 @@ Mock your eloquent queries without the repository pattern.
 - It solves the problem of "slow tests" by removing the interactions with a real database.
 - It simplifies the process of writing and running tests since you will be "DB Independent".
 
+## Installation
+You can **install** the package via composer:
+```bash
+composer require imanghafoori/eloquent-mockery --dev
+```
+
 ## Usage:
 You have to use the `MockableModel` in your model.
 
