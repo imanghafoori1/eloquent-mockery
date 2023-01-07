@@ -10,9 +10,4 @@ class FakeQueryBuilder extends Builder
     {
         return $this;
     }
-
-    public function addFakeRow(string $table, $val, $key)
-    {
-        FakeDB::changeFakeRow($table, $val, $key);
-    }
 }

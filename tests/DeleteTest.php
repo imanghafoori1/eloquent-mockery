@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class DeleteUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class DeleteTest extends TestCase
@@ -30,11 +29,11 @@ class DeleteTest extends TestCase
      */
     public function destroy()
     {
-        DeleteUser::addFakeRow(['id' => 1]);
-        DeleteUser::addFakeRow(['id' => 2]);
-        DeleteUser::addFakeRow(['id' => 3]);
-        DeleteUser::addFakeRow(['id' => 4]);
-        DeleteUser::fakeSoftDelete();
+        FakeDB::addRow('users', ['id' => 1]);
+        FakeDB::addRow('users', ['id' => 2]);
+        FakeDB::addRow('users', ['id' => 3]);
+        FakeDB::addRow('users', ['id' => 4]);
+        //DeleteUser::fakeSoftDelete();
         $count = DeleteUser::destroy(1, 2);
         $this->assertEquals(2, $count);
         //$this->assertNotNull(DeleteUser::getDeletedModel(1));
@@ -58,11 +57,11 @@ class DeleteTest extends TestCase
      */
     public function delete()
     {
-        DeleteUser::addFakeRow(['id' => 1]);
+        FakeDB::addRow('users', ['id' => 1]);
         $user = DeleteUser::find(1);
         $result = $user->delete();
 
-        $user2 = DeleteUser::getDeletedModel();
+        //$user2 = DeleteUser::getDeletedModel();
 
         //$this->assertEquals(spl_object_hash($user), spl_object_hash($user2));
         $this->assertTrue($result);
@@ -77,7 +76,7 @@ class DeleteTest extends TestCase
      */
     public function delete_non_existent()
     {
-        DeleteUser::addFakeRow(['id' => 1]);
+        FakeDB::addRow('users', ['id' => 1]);
         DeleteUser::setEventDispatcher(new Dispatcher);
 
         $std = new \stdClass();
@@ -93,9 +92,9 @@ class DeleteTest extends TestCase
         $user->exists = false;
         $result = $user->delete();
 
-        $model = DeleteUser::getDeletedModel();
+        //$model = DeleteUser::getDeletedModel();
 
-        $this->assertNull($model);
+        //$this->assertNull($model);
         $this->assertNull($result);
         $this->assertFalse($user->exists);
         $this->assertFalse($std->deleting);
@@ -107,7 +106,7 @@ class DeleteTest extends TestCase
     public function delete_on_deleting()
     {
         DeleteUser::setEventDispatcher(new Dispatcher);
-        DeleteUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'mocky',
         ]);
@@ -128,9 +127,9 @@ class DeleteTest extends TestCase
 
         $user = DeleteUser::first();
         $result = $user->delete();
-        $model = DeleteUser::getDeletedModel();
+        //$model = DeleteUser::getDeletedModel();
 
-        $this->assertNull($model);
+        //$this->assertNull($model);
         $this->assertFalse($result);
         $this->assertTrue($user->exists);
         $this->assertTrue($std->deleting);
@@ -144,7 +143,7 @@ class DeleteTest extends TestCase
     public function delete_events()
     {
         DeleteUser::setEventDispatcher(new Dispatcher);
-        DeleteUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'mocky',
         ]);
@@ -161,7 +160,7 @@ class DeleteTest extends TestCase
 
         $user = DeleteUser::find(1);
         $result = $user->delete();
-        $model = DeleteUser::getDeletedModel();
+        //$model = DeleteUser::getDeletedModel();
 
         //$this->assertSame($user, $model);
         $this->assertTrue($result);
@@ -177,11 +176,11 @@ class DeleteTest extends TestCase
     {
         DeleteUser::setEventDispatcher(new Dispatcher);
 
-        DeleteUser::addFakeRow(['id' => 1]);
+        FakeDB::addRow('users', ['id' => 1]);
         $user = DeleteUser::query()->find(1);
 
         $result = $user->forceDelete();
-        $deletedModel = DeleteUser::getDeletedModel();
+        //$deletedModel = DeleteUser::getDeletedModel();
 
         //$this->assertEquals(1, $deletedModel->id);
         $this->assertTrue($result);
@@ -194,14 +193,14 @@ class DeleteTest extends TestCase
     public function delete_or_fail()
     {
         DeleteUser::setEventDispatcher(new Dispatcher);
-        DeleteUser::addFakeRow(['id' => 1]);
+        FakeDB::addRow('users', ['id' => 1]);
         $user = DeleteUser::find(1);
 
         if (! method_exists($user, 'deleteOrFail')) {
             $this->markTestSkipped();
         }
         $result = $user->deleteOrFail();
-        $deletedModel = DeleteUser::getDeletedModel();
+        //$deletedModel = DeleteUser::getDeletedModel();
 
         //$this->assertEquals(1, $deletedModel->id);
         //$this->assertSame($deletedModel, $user);
@@ -217,10 +216,10 @@ class DeleteTest extends TestCase
         DeleteUser::setEventDispatcher(new Dispatcher);
 
         $count = DeleteUser::where('id', 1)->delete();
-        $model = DeleteUser::getDeletedModel();
+        //$model = DeleteUser::getDeletedModel();
 
         $this->assertEquals(0, $count);
-        $this->assertNull($model);
+        //$this->assertNull($model);
     }
 
     /**
@@ -229,14 +228,14 @@ class DeleteTest extends TestCase
     public function raw_delete2()
     {
         DeleteUser::setEventDispatcher(new Dispatcher);
-        DeleteUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'mocky',
         ]);
         $count = DeleteUser::where('id', 2)->delete();
-        $model = DeleteUser::getDeletedModel();
+        //$model = DeleteUser::getDeletedModel();
 
         $this->assertEquals(0, $count);
-        $this->assertNull($model);
+        //$this->assertNull($model);
     }
 }

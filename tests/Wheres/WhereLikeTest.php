@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class LikeUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class WhereLikeTest extends TestCase
@@ -29,9 +28,9 @@ class WhereLikeTest extends TestCase
      */
     public function whereLike()
     {
-        LikeUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
-        LikeUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        LikeUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $users = LikeUser::where('name', 'like', '%man 3')->get();
         $this->assertEquals('Iman 3', ($users[0])->name);

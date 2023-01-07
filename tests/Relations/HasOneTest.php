@@ -4,14 +4,13 @@ namespace Imanghafoori\EloquentMockery\Tests\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class HasOneUser extends Model
 {
     public $fillable = ['name'];
 
-    use MockableModel;
+    protected $table = 'users';
 
     public function comments()
     {
@@ -21,7 +20,7 @@ class HasOneUser extends Model
 
 class HasOneComment extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 
     public $fillable = ['comment'];
 
@@ -38,14 +37,14 @@ class HasOneTest extends TestCase
      */
     public function has_one()
     {
-        HasOneUser::addFakeRow(['id' => 1, 'name' => 'Iman 1']);
-        HasOneUser::addFakeRow(['id' => 2, 'name' => 'Iman 2']);
-        HasOneUser::addFakeRow(['id' => 3, 'name' => 'Iman 3']);
-        HasOneUser::addFakeRow(['id' => 4, 'name' => 'Iman 4']);
+FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1']);
+FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2']);
+FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3']);
+FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4']);
 
-        HasOneComment::addFakeRow(['id' => 1, 'user_id' => 1, 'comment' => 'sss']);
-        HasOneComment::addFakeRow(['id' => 2, 'user_id' => 1, 'comment' => 'aaa']);
-        HasOneComment::addFakeRow(['id' => 3, 'user_id' => 3, 'comment' => 'bbb']);
+FakeDB::addRow('users', ['id' => 1, 'user_id' => 1, 'comment' => 'sss']);
+FakeDB::addRow('users', ['id' => 2, 'user_id' => 1, 'comment' => 'aaa']);
+FakeDB::addRow('users', ['id' => 3, 'user_id' => 3, 'comment' => 'bbb']);
 
         $user = HasOneUser::with('comments')->where('id', 1)->first();
 

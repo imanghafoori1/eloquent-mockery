@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class KeyUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class WhereKeyTest extends TestCase
@@ -30,9 +29,9 @@ class WhereKeyTest extends TestCase
      */
     public function whereKey()
     {
-        KeyUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
-        KeyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        KeyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $users = KeyUser::query()->whereKey(1)->get();
         $this->assertEquals('Hello', ($users[0])->name);
@@ -51,9 +50,9 @@ class WhereKeyTest extends TestCase
      */
     public function whereKeyNot()
     {
-        KeyUser::addFakeRow(['id' => 1, 'name' => 'Hello', 'age' => 20,]);
-        KeyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        KeyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Hello', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $users = KeyUser::query()->whereKeyNot(1)->get();
         $this->assertEquals('Iman 2', ($users[0])->name);

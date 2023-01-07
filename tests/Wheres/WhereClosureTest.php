@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class UserClosure extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class WhereClosureTest extends TestCase
@@ -30,11 +29,11 @@ class WhereClosureTest extends TestCase
      */
     public function where_closure()
     {
-        UserClosure::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        UserClosure::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        UserClosure::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
-        UserClosure::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
-        UserClosure::addFakeRow(['id' => 5, 'name' => 'Iman 4', 'age' => 10,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
+        FakeDB::addRow('users', ['id' => 5, 'name' => 'Iman 4', 'age' => 10,]);
 
         $users = UserClosure::query()
             ->where('age', '<', 31)

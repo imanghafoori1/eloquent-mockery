@@ -5,14 +5,13 @@ namespace Imanghafoori\EloquentMockery\Tests\Relations;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class Mser extends Model
 {
     public $fillable = ['username'];
 
-    use MockableModel;
+    protected $table = 'users';
 
     public function city()
     {
@@ -22,7 +21,7 @@ class Mser extends Model
 
 class Mity extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 
     public $fillable = ['name'];
 
@@ -39,21 +38,21 @@ class ManyToManyTest extends TestCase
      */
     public function belongs_to_many()
     {
-        Mser::addFakeRow(['id' => 1, 'name' => 'Iman 1']);
-        Mser::addFakeRow(['id' => 2, 'name' => 'Iman 2']);
-        Mser::addFakeRow(['id' => 3, 'name' => 'Iman 3']);
-        Mser::addFakeRow(['id' => 4, 'name' => 'Iman 4']);
+FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1']);
+FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2']);
+FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3']);
+FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4']);
 
         FakeDB::table('pivot')->addRow(['mity_id' => 1, 'mser_id' => 1]);
         FakeDB::table('pivot')->addRow(['mity_id' => 1, 'mser_id' => 2]);
         FakeDB::table('pivot')->addRow(['mity_id' => 2, 'mser_id' => 2]);
         FakeDB::table('pivot')->addRow(['mity_id' => 2, 'mser_id' => 3]);
 
-        Mity::addFakeRow(['id' => 1, 'name' => 'sss']);
-        Mity::addFakeRow(['id' => 2, 'name' => 'aaa']);
-        Mity::addFakeRow(['id' => 3, 'name' => 'bbb']);
-        Mity::addFakeRow(['id' => 4, 'name' => 'ccc']);
-        Mity::addFakeRow(['id' => 5, 'name' => 'ddd']);
+FakeDB::addRow('users', ['id' => 1, 'name' => 'sss']);
+FakeDB::addRow('users', ['id' => 2, 'name' => 'aaa']);
+FakeDB::addRow('users', ['id' => 3, 'name' => 'bbb']);
+FakeDB::addRow('users', ['id' => 4, 'name' => 'ccc']);
+FakeDB::addRow('users', ['id' => 5, 'name' => 'ddd']);
 
         $user = Mser::where('id', 1)->first();
 

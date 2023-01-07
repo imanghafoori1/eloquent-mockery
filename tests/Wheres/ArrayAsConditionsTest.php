@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class WhereArrayUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class ArrayAsConditionsTest extends TestCase
@@ -29,21 +28,21 @@ class ArrayAsConditionsTest extends TestCase
      */
     public function whereArray()
     {
-        WhereArrayUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'test-name',
             'email' => 'test-email1',
             'address' => 'test-address0',
         ]);
 
-        WhereArrayUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 2,
             'name' => 'test-name1',
             'email' => 'test-email1',
             'address' => 'test-address1',
         ]);
 
-        WhereArrayUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 3,
             'name' => 'test-name1',
             'email' => 'test-email',

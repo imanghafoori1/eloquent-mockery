@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class WhereInUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class WhereInTest extends TestCase
@@ -30,9 +29,9 @@ class WhereInTest extends TestCase
      */
     public function where_in()
     {
-        WhereInUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        WhereInUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        WhereInUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         // ################ where In / first ################
         $user = WhereInUser::whereIn('id', [2])->first();
@@ -65,9 +64,9 @@ class WhereInTest extends TestCase
      */
     public function where_not_in()
     {
-        WhereInUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        WhereInUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        WhereInUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         // ################ where not In / first ################
         $user = WhereInUser::whereNotIn('id', [1, 3])->first();
@@ -100,9 +99,9 @@ class WhereInTest extends TestCase
      */
     public function where_in_can_accept_arrayable()
     {
-        WhereInUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        WhereInUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        WhereInUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         // ################ where In / first ################
         $count = WhereInUser::whereIn('id', collect([1, 2]))->count();

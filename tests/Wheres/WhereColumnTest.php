@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class WhereColumnUser extends Model
 {
-    //
+    protected $table = 'users';
 }
 
 class WhereColumnTest extends TestCase

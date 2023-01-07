@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class ExistsUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class ExistsTest extends TestCase
@@ -29,10 +28,10 @@ class ExistsTest extends TestCase
      */
     public function basic_exists()
     {
-        ExistsUser::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        ExistsUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        ExistsUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-        ExistsUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
+        FakeDB::addRow('users',['id' => 1, 'name' => null, 'age' => 20,]);
+        FakeDB::addRow('users',['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users',['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
+        FakeDB::addRow('users',['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
 
         $this->assertTrue(ExistsUser::query()->exists());
         $this->assertTrue(ExistsUser::query()->exists());

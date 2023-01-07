@@ -3,22 +3,24 @@
 namespace Imanghafoori\EloquentMockery\Tests\FakeDB;
 
 use Illuminate\Database\Eloquent\Model;
-use Imanghafoori\EloquentMockery\FakeConnection;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class FakeDbUser extends Model
 {
-    use MockableModel;
-
-    public $table = 'users';
+    protected $table = 'users';
 }
 
 class FakeDbTest extends TestCase
 {
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     public function tearDown(): void
     {
+        FakeDB::dontMockQueryBuilder();
         FakeDB::truncate();
     }
 

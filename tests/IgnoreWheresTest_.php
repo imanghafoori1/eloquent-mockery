@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class IgnoreWheresUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class IgnoreWheresTest_ extends TestCase
@@ -30,9 +29,9 @@ class IgnoreWheresTest_ extends TestCase
      */
     public function where__whereIn()
     {
-        IgnoreWheresUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        IgnoreWheresUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        IgnoreWheresUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         IgnoreWheresUser::ignoreWheres();
 
@@ -87,10 +86,10 @@ class IgnoreWheresTest_ extends TestCase
      */
     public function test_get()
     {
-        IgnoreWheresUser::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        IgnoreWheresUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        IgnoreWheresUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
-        IgnoreWheresUser::addFakeRow(['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
+FakeDB::addRow('users', ['id' => 1, 'name' => null, 'age' => 20,]);
+FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
+FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4', 'age' => 40,]);
 
         IgnoreWheresUser::ignoreWheres();
 

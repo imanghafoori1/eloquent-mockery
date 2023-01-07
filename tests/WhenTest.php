@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class WhenUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class WhenTest extends TestCase
@@ -29,9 +28,9 @@ class WhenTest extends TestCase
      */
     public function when_test()
     {
-        WhenUser::addFakeRow(['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
-        WhenUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        WhenUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1', 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => 34,]);
 
         $users = WhenUser::query()->when(true, function ($q) {
             $q->where('id', '<', 2);

@@ -5,12 +5,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class WhereNullUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class WhereNullTest extends TestCase
@@ -18,9 +17,9 @@ class WhereNullTest extends TestCase
     public function setUp(): void
     {
         FakeDB::mockQueryBuilder();
-        WhereNullUser::addFakeRow(['id' => 1, 'name' => null, 'age' => 20,]);
-        WhereNullUser::addFakeRow(['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
-        WhereNullUser::addFakeRow(['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
+        FakeDB::addRow('users', ['id' => 1, 'name' => null, 'age' => 20,]);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2', 'age' => 30,]);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3', 'age' => null,]);
     }
 
     public function tearDown(): void

@@ -4,14 +4,13 @@ namespace Imanghafoori\EloquentMockery\Tests\Relations;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class HasManyUser extends Model
 {
     public $fillable = ['name'];
 
-    use MockableModel;
+    protected $table = 'users';
 
     public function comments()
     {
@@ -21,7 +20,7 @@ class HasManyUser extends Model
 
 class HasManyComment extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 
     public $fillable = ['comment'];
 
@@ -38,16 +37,16 @@ class HasManyTest extends TestCase
      */
     public function has_many()
     {
-        HasManyUser::addFakeRow(['id' => 1, 'name' => 'Iman 1']);
-        HasManyUser::addFakeRow(['id' => 2, 'name' => 'Iman 2']);
-        HasManyUser::addFakeRow(['id' => 3, 'name' => 'Iman 3']);
-        HasManyUser::addFakeRow(['id' => 4, 'name' => 'Iman 4']);
+FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1']);
+FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2']);
+FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3']);
+FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4']);
 
-        HasManyComment::addFakeRow(['id' => 1, 'user_id' => 1, 'comment' => 'sss']);
-        HasManyComment::addFakeRow(['id' => 2, 'user_id' => 1, 'comment' => 'aaa']);
-        HasManyComment::addFakeRow(['id' => 3, 'user_id' => 2, 'comment' => 'bbb']);
-        HasManyComment::addFakeRow(['id' => 4, 'user_id' => 2, 'comment' => 'ccc']);
-        HasManyComment::addFakeRow(['id' => 5, 'user_id' => 3, 'comment' => 'ddd']);
+FakeDB::addRow('users', ['id' => 1, 'user_id' => 1, 'comment' => 'sss']);
+FakeDB::addRow('users', ['id' => 2, 'user_id' => 1, 'comment' => 'aaa']);
+FakeDB::addRow('users', ['id' => 3, 'user_id' => 2, 'comment' => 'bbb']);
+FakeDB::addRow('users', ['id' => 4, 'user_id' => 2, 'comment' => 'ccc']);
+FakeDB::addRow('users', ['id' => 5, 'user_id' => 3, 'comment' => 'ddd']);
 
         $user = HasManyUser::with('comments')->where('id', 1)->first();
 

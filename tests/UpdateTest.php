@@ -6,14 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Carbon;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class UpdateyModel extends Model
 {
     protected $fillable = ['name'];
 
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class UpdateTest extends TestCase
@@ -34,8 +33,8 @@ class UpdateTest extends TestCase
     public function calling_update_method_on_model_object()
     {
         UpdateyModel::setEventDispatcher(new Dispatcher());
-        UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         UpdateyModel::saved(function () {
             $_SERVER['saved'] = true;
@@ -59,14 +58,14 @@ class UpdateTest extends TestCase
         $this->assertTrue($_SERVER['updated']);
         $this->assertTrue($_SERVER['updating']);
 
-        $foo = UpdateyModel::getUpdatedModel();
+        //$foo = UpdateyModel::getUpdatedModel();
         //$this->assertEquals(1, $foo->id);
         //$this->assertEquals('hello', $foo->name);
 
         //$this->assertEquals($foo->updated_at->timestamp, $time);
         //$this->assertTrue($foo->exists);
 
-        $this->assertNull(UpdateyModel::getUpdatedModel(1));
+        //$this->assertNull(UpdateyModel::getUpdatedModel(1));
         //$this->assertSame(UpdateyModel::getUpdatedModel(), UpdateyModel::getSavedModel());
 
         unset($_SERVER['saved']);
@@ -81,8 +80,8 @@ class UpdateTest extends TestCase
     public function update_with_no_dispatcher()
     {
         UpdateyModel::unsetEventDispatcher();
-        UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         $_SERVER['saved'] = false;
         $_SERVER['updating'] = false;
@@ -111,7 +110,7 @@ class UpdateTest extends TestCase
         $this->assertFalse($_SERVER['updated']);
         $this->assertFalse($_SERVER['updating']);
 
-        $foo = UpdateyModel::getUpdatedModel(0);
+        //$foo = UpdateyModel::getUpdatedModel(0);
         //$this->assertEquals(1, $foo->id);
         //$this->assertEquals('hello', $foo->name);
 
@@ -132,8 +131,8 @@ class UpdateTest extends TestCase
     public function updating_event()
     {
         UpdateyModel::setEventDispatcher(new Dispatcher());
-        UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         UpdateyModel::updating(function () {
             return false;
@@ -158,8 +157,8 @@ class UpdateTest extends TestCase
     public function update_raw()
     {
         UpdateyModel::setEventDispatcher(new Dispatcher());
-        UpdateyModel::addFakeRow(['id' => 1, 'name' => 'hi 1']);
-        UpdateyModel::addFakeRow(['id' => 2, 'name' => 'hi 2']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'hi 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'hi 2']);
 
         $_SERVER['saved'] = false;
         $_SERVER['updating'] = false;
@@ -188,8 +187,8 @@ class UpdateTest extends TestCase
         $this->assertFalse($_SERVER['updated']);
         $this->assertFalse($_SERVER['updating']);
 
-        $foo = UpdateyModel::getUpdatedModel();
-        $this->assertNull($foo);
+        //$foo = UpdateyModel::getUpdatedModel();
+        //$this->assertNull($foo);
 
         // No event has been fired.
         unset($_SERVER['saved']);

@@ -4,12 +4,11 @@ namespace Imanghafoori\EloquentMockery\Tests\Wheres;
 
 use Illuminate\Database\Eloquent\Model;
 use Imanghafoori\EloquentMockery\FakeDB;
-use Imanghafoori\EloquentMockery\MockableModel;
 use PHPUnit\Framework\TestCase;
 
 class OrWhereUser extends Model
 {
-    use MockableModel;
+    protected $table = 'users';
 }
 
 class OrWhereTest extends TestCase
@@ -31,28 +30,28 @@ class OrWhereTest extends TestCase
     {
         FakeDB::mockQueryBuilder();
 
-        OrWhereUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 1,
             'name' => 'name0',
             'email' => 'email0',
             'address' => 'address-0',
         ]);
 
-        OrWhereUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 2,
             'name' => 'name1',
             'email' => 'email1',
             'address' => 'address-1',
         ]);
 
-        OrWhereUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 3,
             'name' => 'name2',
             'email' => 'email2',
             'address' => 'address-2',
         ]);
 
-        OrWhereUser::addFakeRow([
+        FakeDB::addRow('users', [
             'id' => 4,
             'name' => 'name4',
             'email' => 'email4',
