@@ -67,9 +67,7 @@ class FakeConnection extends Connection implements ConnectionInterface
         }
 
         if (in_array($type, ['update', 'delete'])) {
-            return $this->run($query['sql'], $bindings, function () use ($query) {
-                return FakeDb::exec($query);
-            });
+            return $this->select($queryObj, $bindings);
         }
 
         if (is_array($query) && isset($query['uniqueBy'])) {

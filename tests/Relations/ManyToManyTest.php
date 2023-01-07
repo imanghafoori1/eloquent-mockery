@@ -21,7 +21,7 @@ class Mser extends Model
 
 class Mity extends Model
 {
-    protected $table = 'users';
+    protected $table = 'mities';
 
     public $fillable = ['name'];
 
@@ -33,26 +33,36 @@ class Mity extends Model
 
 class ManyToManyTest extends TestCase
 {
+    public function tearDown(): void
+    {
+        FakeDB::dontMockQueryBuilder();
+    }
+
+    public function setUp(): void
+    {
+        FakeDB::mockQueryBuilder();
+    }
+
     /**
      * @test
      */
     public function belongs_to_many()
     {
-FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1']);
-FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2']);
-FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3']);
-FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4']);
+        FakeDB::addRow('users', ['id' => 1, 'name' => 'Iman 1']);
+        FakeDB::addRow('users', ['id' => 2, 'name' => 'Iman 2']);
+        FakeDB::addRow('users', ['id' => 3, 'name' => 'Iman 3']);
+        FakeDB::addRow('users', ['id' => 4, 'name' => 'Iman 4']);
 
         FakeDB::table('pivot')->addRow(['mity_id' => 1, 'mser_id' => 1]);
         FakeDB::table('pivot')->addRow(['mity_id' => 1, 'mser_id' => 2]);
         FakeDB::table('pivot')->addRow(['mity_id' => 2, 'mser_id' => 2]);
         FakeDB::table('pivot')->addRow(['mity_id' => 2, 'mser_id' => 3]);
 
-FakeDB::addRow('users', ['id' => 1, 'name' => 'sss']);
-FakeDB::addRow('users', ['id' => 2, 'name' => 'aaa']);
-FakeDB::addRow('users', ['id' => 3, 'name' => 'bbb']);
-FakeDB::addRow('users', ['id' => 4, 'name' => 'ccc']);
-FakeDB::addRow('users', ['id' => 5, 'name' => 'ddd']);
+        FakeDB::addRow('mities', ['id' => 1, 'name' => 'sss']);
+        FakeDB::addRow('mities', ['id' => 2, 'name' => 'aaa']);
+        FakeDB::addRow('mities', ['id' => 3, 'name' => 'bbb']);
+        FakeDB::addRow('mities', ['id' => 4, 'name' => 'ccc']);
+        FakeDB::addRow('mities', ['id' => 5, 'name' => 'ddd']);
 
         $user = Mser::where('id', 1)->first();
 
