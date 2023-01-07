@@ -50,33 +50,21 @@ public function test_basic()
 ```php
 public function test_basic()
 {
-    User::fake();
+    // ::Arrange::
+    FakeDB::mockEloquentBuilder();
 
+    // ::Act::
     // in your controller:
-    $user = User::create(['username' => 'iman', 'email' => 'iman@gmail.com']);   # <=== This does NOT connect to DB.
+    // $user = User::create(['username' => 'iman', 'email' => 'iman@gmail.com']);   # <=== This does NOT connect to DB.
+    $this->post('/create-url', ['some' => 'data' ])
 
-    // Assert:
-    $user = User::getCreatedModel();
-    $this->assert($user->id === 1);
-    $this->assert($user->username === 'iman');
-
-    User::stopFaking();
+    // ::Assert::
+    $user = User::first();
+    $this->assertEquals('iman', $user->username);
+    
+    FakeDB::dontMockEloquentBuilder();
 }
 ```
-You can access the changed model instances by accessing the static properties below:
-```php
-
-$model = User::getDeletedModel();
-
-$model = User::getSoftDeletedModel();
-
-$model = User::getCreatedModel();
-
-$model = User::getUpdatedModel();
-
-```
-The `User` can be any other model using the `Mockable` trait.
-
 
 - For more examples take a look at the `tests` directory.
 
