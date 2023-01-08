@@ -98,7 +98,7 @@ class FakeGrammar extends Grammar
 
             public function __toString()
             {
-                return $this->data['sql'];
+                return (string) $this->data['sql'];
             }
         };
     }
