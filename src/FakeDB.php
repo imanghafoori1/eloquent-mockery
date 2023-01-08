@@ -282,7 +282,9 @@ class FakeDB
                 if ($where['boolean'] === 'or') {
                     $basicOr[] = $where;
                     continue;
-                } elseif ($where['boolean'] === 'and' && $basicOr) {
+                }
+
+                if ($where['boolean'] === 'and' && $basicOr) {
                     $basicOr[] = $where;
                     $collection = self::applyBasicWheres($collection, $table, $basicOr);
                     $basicOr = [];
