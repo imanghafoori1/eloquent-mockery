@@ -66,7 +66,7 @@ public function test_basic()
 public function test_basic()
 {
     # ::Arrange::
-    FakeDB::mockEloquentBuilder();
+    FakeDB::mockQueryBuilder();
 
     # ::Act::
     // In your controller:
@@ -77,7 +77,7 @@ public function test_basic()
     $user = User::first();
     $this->assertEquals('iman', $user->username);
     
-    FakeDB::dontMockEloquentBuilder();
+    FakeDB::dontMockQueryBuilder();
 }
 ```
 
