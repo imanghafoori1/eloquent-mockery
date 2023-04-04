@@ -7,6 +7,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Query\Grammars\SQLiteGrammar;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -489,7 +490,7 @@ class FakeDB
     {
         foreach ($values as $_key => $_val) {
             if (is_object($_val) && get_class($_val) === Expression::class) {
-                $tokens = token_get_all('<?php '.$_val->getValue());
+                $tokens = token_get_all('<?php '.$_val->getValue(new FakeGrammar()));
                 array_shift($tokens);
                 foreach ($tokens as $i => $token) {
                     $type = $token[0];
