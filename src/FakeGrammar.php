@@ -85,6 +85,17 @@ class FakeGrammar extends Grammar
         ]);
     }
 
+    public function compileTruncate(Builder $query)
+    {
+        return
+            $this->stringy([
+                'type' => 'truncate',
+                'builder' => $query,
+                'sql' => parent::compileTruncate($query),
+            ])
+        ;
+    }
+
     private function stringy($query)
     {
         return new class ($query) {

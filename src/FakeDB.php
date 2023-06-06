@@ -65,18 +65,24 @@ class FakeDB
         FakeDB::$changedModels[get_class($model)][$action][] = $model;
     }
 
-    public static function truncate()
+    public static function truncate($query = null)
     {
-        self::$fakeRows = [];
-        self::$changedModels = [];
-        self::$tables = [];
-        self::$deletedRows = [];
+        if ($query) {
+            $table = $query['builder']->from;
+            unset(self::$tables[$table]);
+            unset(self::$fakeRows[$table]);
+        } else {
+            self::$fakeRows = [];
+            self::$changedModels = [];
+            self::$tables = [];
+            self::$deletedRows = [];
+        }
     }
 
     public static function mockQueryBuilder()
     {
-        Connection::resolverFor('arrayDB', function () {
-            return FakeConnection::resolve();
+        Connection::resolverFor('arrayDB', function ($connection, $db, $prefix, $config) {
+            return FakeConnection::resolve($connection, $db, $prefix, $config);
         });
 
         $resolver = new ConnectionResolver(['arrayDB' => FakeConnection::resolve()]);

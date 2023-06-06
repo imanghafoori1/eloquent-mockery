@@ -9,13 +9,11 @@ use Illuminate\Support\Arr;
 
 class FakeConnection extends Connection implements ConnectionInterface
 {
-    protected $pretending = true;
-
-    public static function resolve()
+    public static function resolve($connection = null, $db = '', $prefix = '', $config = ['name' => 'arrayDB'])
     {
         return new FakeConnection(function () {
             return new FakePDO;
-        });
+        }, $db, $prefix, $config);
     }
 
     public function transaction(Closure $callback, $attempts = 1)
@@ -43,6 +41,10 @@ class FakeConnection extends Connection implements ConnectionInterface
         }
 
         return $this->run($query['sql'], $bindings, function () use ($query) {
+            if ($this->pretending()) {
+                return true;
+            }
+
             return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
         });
     }
@@ -51,6 +53,10 @@ class FakeConnection extends Connection implements ConnectionInterface
     {
         $query = $query->data;
         return $this->run($query['sql'], $bindings, function () use ($query) {
+            if ($this->pretending()) {
+                return [];
+            }
+
             return FakeDb::exec($query);
         });
     }
@@ -66,7 +72,7 @@ class FakeConnection extends Connection implements ConnectionInterface
             return Arr::isAssoc($query['value']) ? 1 : count($query['value']);
         }
 
-        if (in_array($type, ['update', 'delete'])) {
+        if (in_array($type, ['update', 'delete', 'truncate'])) {
             return $this->select($queryObj, $bindings);
         }
 
