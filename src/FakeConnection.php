@@ -40,9 +40,11 @@ class FakeConnection extends Connection implements ConnectionInterface
             return parent::statement($query);
         }
 
-        return $this->run($query['sql'], $bindings, function () use ($query) {
+        $pretending = true;
+
+        return $this->run($query['sql'], $bindings, function () use ($query, $pretending) {
             if ($this->pretending()) {
-                return true;
+                return $pretending;
             }
 
             return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
@@ -52,13 +54,8 @@ class FakeConnection extends Connection implements ConnectionInterface
     public function select($query, $bindings = [], $useReadPdo = true)
     {
         $query = $query->data;
-        return $this->run($query['sql'], $bindings, function () use ($query) {
-            if ($this->pretending()) {
-                return [];
-            }
 
-            return FakeDb::exec($query);
-        });
+        return $this->runFake($query, $bindings, []);
     }
 
     public function affectingStatement($query, $bindings = [])
@@ -72,15 +69,19 @@ class FakeConnection extends Connection implements ConnectionInterface
             return Arr::isAssoc($query['value']) ? 1 : count($query['value']);
         }
 
-        if (in_array($type, ['update', 'delete', 'truncate'])) {
-            return $this->select($queryObj, $bindings);
+        if (in_array($type, ['update', 'delete', 'truncate', 'upsert'])) {
+            return $this->runFake($query, $bindings, 0);
         }
+    }
 
-        if (is_array($query) && isset($query['uniqueBy'])) {
-            $sql = $query['sql'];
-            $query = $query['builder'];
-            $values = $query['values'];
-            $uniqueBy = $query['uniqueBy'];
-        }
+    protected function runFake($sql, $bindings, $pretend)
+    {
+        return $this->run($sql['sql'], $bindings, function () use ($sql, $pretend) {
+            if ($this->pretending()) {
+                return $pretend;
+            }
+
+            return FakeDb::exec($sql);
+        });
     }
 }

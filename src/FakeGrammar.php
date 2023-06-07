@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar;
+use Illuminate\Database\Query\Grammars\MySqlGrammar;
 
 class FakeGrammar extends Grammar
 {
@@ -72,7 +73,7 @@ class FakeGrammar extends Grammar
             'builder' => $query,
             'values' => $values,
             'uniqueBy' => $uniqueBy,
-            'sql' => parent::compileUpsert($query, $values, $uniqueBy, $update)
+            'sql' => (new MySqlGrammar)->compileUpsert($query, $values, $uniqueBy, $update)
         ]);
     }
 

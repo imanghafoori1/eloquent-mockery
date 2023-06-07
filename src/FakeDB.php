@@ -7,7 +7,6 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Expression;
-use Illuminate\Database\Query\Grammars\SQLiteGrammar;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -525,6 +524,38 @@ class FakeDB
         return FakeDB::syncTable($collection, $builder->from);
     }
 
+    public static function upsert($query)
+    {
+        $values = $query['values'];
+        $uniqueBy = $query['uniqueBy'];
+        $query = $query['builder'];
+        $from = $query->from;
+
+        foreach ($values as $value) {
+            $shouldInsert = true;
+            $i = 0;
+            foreach (self::$fakeRows[$from] ?? [] as $i => $_row) {
+                $allMatch = true;
+                foreach ($uniqueBy as $uniqueCol) {
+                    if ($_row[$from][$uniqueCol] !== $value[$uniqueCol]) {
+                        $allMatch = false;
+                        break;
+                    }
+                }
+                if ($allMatch) {
+                    $shouldInsert = false;
+                    break;
+                }
+            }
+
+            if ($shouldInsert) {
+                self::addRow($from, $value);
+            } else {
+                self::$fakeRows[$from][$i][$from] = $value;
+            }
+        }
+    }
+
     public static function exec($query)
     {
         $type = $query['type'];
@@ -546,8 +577,8 @@ class FakeDB
         $builder = $query['builder'];
 
         if ($aggregate = $builder->aggregate) {
-            $function = $aggregate["function"];
-            $columns = $aggregate["columns"];
+            $function = $aggregate['function'];
+            $columns = $aggregate['columns'];
 
             return self::aggregate($columns, $builder, $function);
         }

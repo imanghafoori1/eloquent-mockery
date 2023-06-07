@@ -13,7 +13,9 @@ class FakeQueryBuilder extends Builder
 
     public function truncate()
     {
-        $this->applyBeforeQueryCallbacks();
+        if (method_exists($this, 'applyBeforeQueryCallbacks')) {
+            $this->applyBeforeQueryCallbacks();
+        }
 
         $this->connection->affectingStatement($this->grammar->compileTruncate($this));
     }
