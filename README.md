@@ -15,7 +15,7 @@ Mock your eloquent queries without the repository pattern.
 ## Installation
 You can **install** the package via composer:
 ```bash
-composer require imanghafoori/eloquent-mockery --dev
+composer require imanghafoori/eloquent-mockery --dev dev-main
 ```
 
 ## Usage:
