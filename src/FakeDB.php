@@ -442,12 +442,20 @@ class FakeDB
     {
         $orderBy = $query->orders;
         $selects = $query->columns;
+        $groups = $query->groups;
         $offset = $query->offset;
         $limit = $query->limit;
         $from = $query->from;
         $joins = $query->joins ?? [];
         $base = FakeDB::$fakeRows[$from] ?? [];
         $collection = FakeDB::performJoins($base, $joins);
+
+        if ($groups) {
+            foreach ($groups as &$group) {
+                $group = $from.'.'.$group;
+            }
+            $collection = $collection->groupBy($groups);
+        }
 
         foreach ($orderBy ?: [] as $i => $_order) {
             if (isset($_order['column'])) {
