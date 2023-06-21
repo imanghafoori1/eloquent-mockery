@@ -571,6 +571,13 @@ class FakeDB
         return self::$type($query);
     }
 
+    public static function tableExists($query)
+    {
+        $table = $query['bindings'][0];
+
+        return isset(self::$tables[$table]) ? [] : [1];
+    }
+
     public static function exists($query)
     {
         $builder = $query['builder'];

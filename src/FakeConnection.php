@@ -5,15 +5,21 @@ namespace Imanghafoori\EloquentMockery;
 use Closure;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Schema\Builder as SchemaBuilder;
+use Illuminate\Database\Schema\Grammars\MySqlGrammar as SchemaGrammar;
 use Illuminate\Support\Arr;
 
 class FakeConnection extends Connection implements ConnectionInterface
 {
     public static function resolve($connection = null, $db = '', $prefix = '', $config = ['name' => 'arrayDB'])
     {
-        return new FakeConnection(function () {
+        $fakeConnection = new FakeConnection(function () {
             return new FakePDO;
         }, $db, $prefix, $config);
+
+        $fakeConnection->setQueryGrammar(new FakeGrammar);
+        
+        return $fakeConnection;
     }
 
     public function transaction(Closure $callback, $attempts = 1)
@@ -53,9 +59,12 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function select($query, $bindings = [], $useReadPdo = true)
     {
-        $query = $query->data;
+        return $this->runFake($query->data, $bindings, []);
+    }
 
-        return $this->runFake($query, $bindings, []);
+    public function cursor($query, $bindings = [], $useReadPdo = true)
+    {
+        return $this->runFake($query->data, $bindings, []);
     }
 
     public function affectingStatement($query, $bindings = [])
@@ -74,14 +83,28 @@ class FakeConnection extends Connection implements ConnectionInterface
         }
     }
 
-    protected function runFake($sql, $bindings, $pretend)
+    protected function runFake($data, $bindings, $pretend)
     {
-        return $this->run($sql['sql'], $bindings, function () use ($sql, $pretend) {
+        return $this->run($data['sql'], $bindings, function () use ($data, $pretend, $bindings) {
             if ($this->pretending()) {
                 return $pretend;
             }
 
-            return FakeDb::exec($sql);
+            $data['bindings'] = $bindings;
+
+            return FakeDb::exec($data);
         });
+    }
+
+    /**
+     * Get the default schema grammar instance.
+     *
+     * @return \Illuminate\Database\Schema\Grammars\Grammar
+     */
+    protected function getDefaultSchemaGrammar()
+    {
+        $grammar = new FakeSchemaGrammar();
+
+        return $this->withTablePrefix($grammar);
     }
 }
