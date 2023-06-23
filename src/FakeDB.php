@@ -37,6 +37,14 @@ class FakeDB
         return $row;
     }
 
+    public static function createTable($blueprint, $fluent, $connection)
+    {
+        /**
+         * @var $blueprint \Illuminate\Database\Schema\Blueprint
+         */
+        $columns = $blueprint->getColumns();
+    }
+
     public static function table($table)
     {
         return new class ($table){

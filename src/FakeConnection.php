@@ -41,7 +41,12 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function statement($query, $bindings = [])
     {
-        $query = $query->data;
+        if (is_object($query)) {
+            $query = $query->data;
+        } else {
+            
+        }
+
         if (is_string($query)) {
             return parent::statement($query);
         }
@@ -53,7 +58,12 @@ class FakeConnection extends Connection implements ConnectionInterface
                 return $pretending;
             }
 
-            return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
+            if ($query['type'] === 'createTable') {
+                [$blueprint, $fluent, $connection] = $query['args'];
+                FakeDB::createTable($blueprint, $fluent, $connection);
+            } else {
+                return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
+            }
         });
     }
 
