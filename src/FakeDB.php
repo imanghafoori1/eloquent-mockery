@@ -17,6 +17,8 @@ class FakeDB
 
     public static $fakeRows = [];
 
+    public static $schema = [];
+
     public static $changedModels = [];
 
     public static $tables = [];
@@ -37,12 +39,25 @@ class FakeDB
         return $row;
     }
 
-    public static function createTable($blueprint, $fluent, $connection)
+    public static function createTable($args)
     {
         /**
          * @var $blueprint \Illuminate\Database\Schema\Blueprint
          */
-        $columns = $blueprint->getColumns();
+        [$blueprint, $fluent, $connection] = $args;
+        $table = $blueprint->getTable();
+        self::$schema[$table]['columns'] = $columns = $blueprint->getColumns();
+
+        foreach ($columns as $column) {
+            /**
+             * @var $column \Illuminate\Database\Schema\ColumnDefinition
+             */
+            $column = $column->getAttributes();
+            if ($column['autoIncrement'] ?? null) {
+                self::$schema[$table]['primaryKey'] = $column['name'];
+                break;
+            }
+        }
     }
 
     public static function table($table)
@@ -579,11 +594,61 @@ class FakeDB
         return self::$type($query);
     }
 
+    public static function columnListing($query)
+    {
+        $dbName = $query['bindings'][0];
+        $table = $query['bindings'][1];
+
+        $cols = [];
+        foreach (self::$schema[$table]['columns'] as $column) {
+            /**
+             * @var \Illuminate\Database\Schema\ColumnDefinition $column
+             */
+            $cols[] = $column->getAttributes()['name'];
+        }
+
+        return $cols;
+    }
+
+    public static function dropColumns($table, $cols)
+    {
+        foreach (self::$schema[$table]['columns'] as $i => $column) {
+            /**
+             * @var \Illuminate\Database\Schema\ColumnDefinition $column
+             */
+            if (in_array($column->getAttributes()['name'], $cols)) {
+                unset(self::$schema[$table]['columns'][$i]);
+            }
+        }
+    }
+
     public static function tableExists($query)
     {
-        $table = $query['bindings'][0];
+        $dbName = $query['bindings'][0];
+        $table = $query['bindings'][1];
 
-        return isset(self::$tables[$table]) ? [] : [1];
+        return isset(self::$schema[$table]) ? [1] : [];
+    }
+
+    public static function getAllTables()
+    {
+        return array_keys(self::$schema);
+    }
+
+    public static function dropTable($table)
+    {
+        unset(self::$schema[$table]);
+    }
+
+    public static function renameTable($from, $to)
+    {
+        self::$schema[$to] = self::$schema[$from];
+        unset(self::$schema[$from]);
+    }
+
+    public static function dropAllTables()
+    {
+        self::$schema = [];
     }
 
     public static function exists($query)

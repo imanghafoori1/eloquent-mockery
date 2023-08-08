@@ -5,8 +5,6 @@ namespace Imanghafoori\EloquentMockery;
 use Closure;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
-use Illuminate\Database\Schema\Builder as SchemaBuilder;
-use Illuminate\Database\Schema\Grammars\MySqlGrammar as SchemaGrammar;
 use Illuminate\Support\Arr;
 
 class FakeConnection extends Connection implements ConnectionInterface
@@ -25,6 +23,16 @@ class FakeConnection extends Connection implements ConnectionInterface
     public function transaction(Closure $callback, $attempts = 1)
     {
         return $callback();
+    }
+
+    public function getSchemaBuilder()
+    {
+        return new FakeSchemaBuilder($this);
+    }
+
+    public function getSchemaGrammar()
+    {
+        return $this->getDefaultSchemaGrammar();
     }
 
     public function query()
@@ -46,6 +54,14 @@ class FakeConnection extends Connection implements ConnectionInterface
         } else {
             
         }
+        if (FakeSchemaGrammar::$query && is_string($query)) {
+            $payload = array_shift(FakeSchemaGrammar::$query);
+            $query = [
+                'sql' => $query,
+                'args' => $payload['args'] ?? null,
+                'type' => $payload['type'],
+            ];
+        }
 
         if (is_string($query)) {
             return parent::statement($query);
@@ -59,8 +75,37 @@ class FakeConnection extends Connection implements ConnectionInterface
             }
 
             if ($query['type'] === 'createTable') {
-                [$blueprint, $fluent, $connection] = $query['args'];
-                FakeDB::createTable($blueprint, $fluent, $connection);
+                FakeDB::createTable($query['args']);
+            } elseif ($query['type'] === 'index') {
+            } elseif ($query['type'] === 'primary') {
+            } elseif ($query['type'] === 'autoIncrementStartValue') {
+            } elseif ($query['type'] === 'change') {
+            } elseif ($query['type'] === 'enableForeignKeyConstraints') {
+            } elseif ($query['type'] === 'disableForeignKeyConstraints') {
+            } elseif ($query['type'] === 'dropColumn') {
+                [$blueprint, $fluent] = $query['args'];
+                foreach ($blueprint->getCommands() as $fluentCommand) {
+                    $cols = $fluentCommand->getAttributes()['columns'];
+                    FakeDB::dropColumns($blueprint->getTable(), $cols);
+                }
+            } elseif ($query['type'] === 'drop') {
+                [$blueprint, $fluent] = $query['args'];
+                FakeDB::dropTable($blueprint->getTable());
+            } elseif ($query['type'] === 'dropAllTables') {
+                FakeDB::dropAllTables();
+            } elseif ($query['type'] === 'dropIfExists') {
+                [$blueprint, $fluent] = $query['args'];
+                FakeDB::dropTable($blueprint->getTable());
+            } elseif ($query['type'] === 'rename') {
+                [$blueprint, $fluent] = $query['args'];
+
+                /**
+                 * @var $blueprint \Illuminate\Database\Schema\Blueprint
+                 */
+                $from = $blueprint->getTable();
+                $to = $blueprint->getCommands()[0]->getAttributes()['to'];
+
+                FakeDB::renameTable($from, $to);
             } else {
                 return (bool) FakeDB::insertGetId($query['value'], $query['builder']->from);
             }
