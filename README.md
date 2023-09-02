@@ -47,14 +47,14 @@ public function test_basic()
 {
     config()->set('database.default', 'my_test_connection');
 
-    // ::Arrange:: (Setup Sample Data)
+    # ::Arrange:: (Setup Sample Data)
     FakeDB::addRow('users', ['id' => 1, 'username' => 'faky', 'password' => '...']);
     FakeDB::addRow('users', ['id' => 1, 'username' => 'maky', 'password' => '...']);
 
-    // ::Act:: (This query resides in your controller)
+    # ::Act:: (This query resides in your controller)
     $user = User::where('username', 'faky')->first();   # <=== This does NOT connect to a real DB.
 
-    // ::Assert::
+    # ::Assert::
     $this->assert($user->id === 1);
     $this->assert($user->username === 'faky');
 }
@@ -65,18 +65,17 @@ public function test_basic()
 ```php
 public function test_basic()
 {
-    # ::Arrange::
+    # In setUp:
     FakeDB::mockEloquentBuilder();
 
     # ::Act::
-    // In your controller:
-    // $user = User::create(['username' => 'iman', 'email' => 'iman@gmail.com']);   # <=== This does NOT connect to DB.
     $this->post('/create-url', ['some' => 'data' ])
 
-    // ::Assert::
+    # ::Assert::
     $user = User::first();
     $this->assertEquals('iman', $user->username);
-    
+
+    # In tearDown
     FakeDB::dontMockEloquentBuilder();
 }
 ```
