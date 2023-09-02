@@ -36,7 +36,7 @@ class FakeDB
         foreach (FakeDB::$fakeRows[$table] ?? [] as $row) {
         }
 
-        return $row;
+        return $row[$table] ?? [];
     }
 
     public static function createTable($args)

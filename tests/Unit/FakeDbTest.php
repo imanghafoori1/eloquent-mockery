@@ -14,24 +14,24 @@ class FakeDbTest extends TestCase
     {
         // In this case, the users row does not change
         // but the comment key renames from "common" to "cc"
-        $table = "users";
+        $table = 'users';
         $aliases = [
-            "common" => "users.common",
-            "cc" => "comments.common",
+            'common' => 'users.common',
+            'cc' => 'comments.common',
         ];
 
         $userRow = [
-            "id" => 3,
-            "common" => "someValue",
+            'id' => 3,
+            'common' => 'someValue',
         ];
         $item = [
-            "users" => $userRow,
-            "comments" => ["common" => "aValue"],
+            'users' => $userRow,
+            'comments' => ['common' => 'aValue'],
         ];
 
         $resultingItem = [
-            "users" => $userRow,
-            "comments" => ["cc" => "aValue"],
+            'users' => $userRow,
+            'comments' => ['cc' => 'aValue'],
         ];
 
         $this->assertEquals($resultingItem, FakeDb::aliasColumns($aliases, $item, $table));
@@ -86,11 +86,11 @@ class FakeDbTest extends TestCase
 
         // Assert
         $this->assertEquals([
-            '::table1::' => ['id' => 1],
+            'id' => 1,
         ], $result1);
 
         $this->assertEquals([
-            '::table2::' => ['id' => 5],
+            'id' => 5,
         ], $result2);
 
         $this->assertEquals([], $result3);

@@ -18,7 +18,7 @@ class FakeEloquentBuilder extends Builder
         try {
             return $count = parent::delete();
         } finally {
-            if (is_int($count) && $count > 0) {
+            if (isset($count) && is_int($count) && $count > 0) {
                 FakeDB::setChangedModel('deleted', $this->model);
             }
         }

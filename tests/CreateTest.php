@@ -4,6 +4,7 @@ namespace Imanghafoori\EloquentMockery\Tests;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Carbon;
 use Imanghafoori\EloquentMockery\FakeDB;
 use PHPUnit\Framework\TestCase;
 
@@ -31,6 +32,7 @@ class CreateTest extends TestCase
      */
     public function create()
     {
+        Carbon::setTestNow(Carbon::create(2020));
         CreatyModel::reguard();
         CreatyModel::setEventDispatcher(new Dispatcher());
         FakeDB::addRow('users', ['id' => 1]);
@@ -54,29 +56,23 @@ class CreateTest extends TestCase
             'family' => 'gha',
         ]);
 
-        //$foo = CreatyModel::getCreatedModel();
-        //$this->assertSame($foo, $bar);
         $this->assertTrue($_SERVER['saved']);
         $this->assertTrue($_SERVER['saving']);
         $this->assertTrue($_SERVER['created']);
         $this->assertTrue($_SERVER['creating']);
 
-        //$this->assertEquals(3, $foo->id);
-        //$this->assertEquals('hello', $foo->name);
-        //$this->assertNull($foo->family);
-        //$this->assertNotNull($foo->created_at);
-        //$this->assertNotNull($foo->updated_at);
-        //$this->assertTrue($foo->exists);
-        //$this->assertTrue($foo->wasRecentlyCreated);
-
-        //$this->assertSame(CreatyModel::getSavedModel(), CreatyModel::getCreatedModel());
-        //$this->assertNull(CreatyModel::getCreatedModel(1));
-        //$this->assertNull(CreatyModel::getSavedModel(1));
         $model = CreatyModel::query()->find(3);
         $this->assertEquals('hello', $model->name);
         $this->assertEquals(3, $model->id);
         $this->assertNotNull($model->created_at);
         $this->assertNotNull($model->updated_at);
+
+        $this->assertEquals([
+            'name' => 'hello',
+            'updated_at' => '2020-01-01 00:00:00',
+            'created_at' => '2020-01-01 00:00:00',
+            'id' => 3,
+        ], FakeDB::getLatestRow('users'));
 
         unset($_SERVER['saved']);
         unset($_SERVER['saving']);
