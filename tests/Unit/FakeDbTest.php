@@ -114,27 +114,6 @@ class FakeDbTest extends TestCase
     /**
      * @test
      */
-    public function fakeDbGetChangedModel()
-    {
-        // Arrange
-        FakeDB::$changedModels = [
-            '::model::' => [
-                'create' => [
-                    '::test',
-                ],
-            ],
-        ];
-
-        // Act
-        $result = FakeDB::getChangedModel('create', 0, '::model::');
-
-        // Assert
-        $this->assertEquals('::test', $result);
-    }
-
-    /**
-     * @test
-     */
     public function fakeDbTruncate()
     {
         // Arrange

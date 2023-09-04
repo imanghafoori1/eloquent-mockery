@@ -5,6 +5,7 @@ namespace Imanghafoori\EloquentMockery;
 use Closure;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Schema\MySqlBuilder;
 use Illuminate\Support\Arr;
 
 class FakeConnection extends Connection implements ConnectionInterface
@@ -27,7 +28,7 @@ class FakeConnection extends Connection implements ConnectionInterface
 
     public function getSchemaBuilder()
     {
-        return new FakeSchemaBuilder($this);
+        return new MySqlBuilder($this);
     }
 
     public function getSchemaGrammar()

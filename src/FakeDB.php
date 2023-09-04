@@ -62,7 +62,7 @@ class FakeDB
 
     public static function table($table)
     {
-        return new class ($table){
+        return new class ($table) {
             private $table;
 
             public function __construct($table)
@@ -74,17 +74,22 @@ class FakeDB
             {
                 FakeDB::addRow($this->table, $row);
             }
+
+            public function allRows()
+            {
+                $rows = [];
+                foreach((FakeDB::$fakeRows[$this->table] ?? []) as $i => $row) {
+                    $rows[$i] = $row[$this->table];
+                }
+
+                return $rows;
+            }
+
+            public function count()
+            {
+                return count(FakeDB::$fakeRows[$this->table] ?? []);
+            }
         };
-    }
-
-    public static function getChangedModel(string $action, $index, $model)
-    {
-        return FakeDB::$changedModels[$model][$action][$index] ?? null;
-    }
-
-    public static function setChangedModel(string $action, $model)
-    {
-        FakeDB::$changedModels[get_class($model)][$action][] = $model;
     }
 
     public static function truncate($query = null)
