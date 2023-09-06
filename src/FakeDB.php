@@ -325,6 +325,10 @@ class FakeDB
                 }
                 $collection = self::applyBasicWhere($where, $table, $query, $collection);
             } elseif ($type === 'Column' && $where['boolean'] === 'and') {
+                if (strpos($where['first'], '.') && strpos($where['second'], '.')) {
+                    return self::applyWhereColumns($where);
+                }
+
                 $collection = $collection->filter(function ($row) use ($where, $table) {
                     return self::whereColumn($where, $row[$table]);
                 });
@@ -340,6 +344,8 @@ class FakeDB
                     $method = $where['not'] ? 'whereNotBetween' : 'whereBetween';
                 }
                 $collection = $collection->$method($column, $value);
+            } elseif ($type === 'Exists') {
+                $collection = self::applyWheres($where['query'], $collection);
             }
         }
 
@@ -733,5 +739,27 @@ class FakeDB
         $result = ['aggregate' => self::filter($builder, ['*'])->$function($columns)];
 
         return [0 => $result];
+    }
+
+    private static function applyWhereColumns($where): Collection
+    {
+        [$table1, $column1] = explode('.', $where['first']);
+        [$table2, $column2] = explode('.', $where['second']);
+        $op = $where['operator'];
+        if ($op === '=' || $op === '==') {
+            $op = '===';
+        }
+
+        $result = array_filter(self::$fakeRows[$table1], function ($row) use ($table1, $table2, $column1, $column2, $op) {
+            foreach (self::$fakeRows[$table2] as $row2) {
+                if (eval('return $row[$table1][$column1] '.$op.' $row2[$table2][$column2];')) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        return new Collection($result);
     }
 }
