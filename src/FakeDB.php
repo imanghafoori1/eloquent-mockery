@@ -55,8 +55,9 @@ class FakeDB
             $column = $column->getAttributes();
             if ($column['autoIncrement'] ?? null) {
                 self::$schema[$table]['primaryKey'] = $column['name'];
-                break;
             }
+
+            self::$schema[$table]['columnsNames'][] = $column;
         }
     }
 
@@ -122,6 +123,11 @@ class FakeDB
     {
         self::truncate();
         self::$originalConnection && Model::setConnectionResolver(self::$originalConnection);
+    }
+
+    public static function columns($data)
+    {
+        return self::$schema[$data['args']['table']]['columnsNames'];
     }
 
     public static function addRow(string $table, array $row)
@@ -629,6 +635,7 @@ class FakeDB
              */
             if (in_array($column->getAttributes()['name'], $cols)) {
                 unset(self::$schema[$table]['columns'][$i]);
+                unset(self::$schema[$table]['columnsNames'][$i]);
             }
         }
     }

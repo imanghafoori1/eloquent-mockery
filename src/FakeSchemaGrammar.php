@@ -105,6 +105,15 @@ class FakeSchemaGrammar extends SchemaGrammar
         ]);
     }
 
+    public function compileColumns($database, $table)
+    {
+        return $this->stringy([
+            'type' => 'columns',
+            'args' => ['database' => $database, 'table' => $table],
+            'sql' => parent::compileColumns($database, $table),
+        ]);
+    }
+
     public function compileDropColumn(Blueprint $blueprint, Fluent $command)
     {
         self::keepData('dropColumn', [$blueprint, $command]);
