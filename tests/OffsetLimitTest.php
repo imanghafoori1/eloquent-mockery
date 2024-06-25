@@ -9,11 +9,6 @@ use PHPUnit\Framework\TestCase;
 class OffsetUser extends Model
 {
     protected $table = 'users';
-
-    public function comments()
-    {
-        return $this->hasMany(HasManyComment::class, 'user_id');
-    }
 }
 
 class OffsetLimitTest extends TestCase

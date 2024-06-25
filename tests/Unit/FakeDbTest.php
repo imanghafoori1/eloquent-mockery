@@ -34,7 +34,7 @@ class FakeDbTest extends TestCase
             'comments' => ['cc' => 'aValue'],
         ];
 
-        $this->assertEquals($resultingItem, FakeDb::aliasColumns($aliases, $item, $table));
+        $this->assertEquals($resultingItem, FakeDB::aliasColumns($aliases, $item, $table));
     }
 
     /**
@@ -66,7 +66,7 @@ class FakeDbTest extends TestCase
             "comments" => ["cc" => "aValue"],
         ];
 
-        $this->assertEquals($resultingItem, FakeDb::aliasColumns($aliases, $item, $table));
+        $this->assertEquals($resultingItem, FakeDB::aliasColumns($aliases, $item, $table));
     }
 
     /**
