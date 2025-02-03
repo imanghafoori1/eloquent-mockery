@@ -149,11 +149,12 @@ class FakeSchemaGrammar extends SchemaGrammar
         return parent::compileDropAllTables($tables);
     }
 
-    public function compileTableExists()
+    public function compileTableExists($database, $table)
     {
         return $this->stringy([
             'type' => 'tableExists',
-            'sql' => parent::compileTableExists(),
+            'args' => ['database' => $database, 'table' => $table],
+            'sql' => parent::compileTableExists($database, $table),
         ]);
     }
 
