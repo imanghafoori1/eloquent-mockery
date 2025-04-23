@@ -13,11 +13,11 @@ class FakeConnection extends Connection implements ConnectionInterface
     public static function resolve($connection = null, $db = '', $prefix = '', $config = ['name' => 'arrayDB'])
     {
         $fakeConnection = new FakeConnection(function () {
-            return new FakePDO;
+            return new FakePDO();
         }, $db, $prefix, $config);
 
-        $fakeConnection->setQueryGrammar(new FakeGrammar);
-        
+        $fakeConnection->setQueryGrammar(new FakeGrammar($fakeConnection));
+
         return $fakeConnection;
     }
 
@@ -39,13 +39,15 @@ class FakeConnection extends Connection implements ConnectionInterface
     public function query()
     {
         return new FakeQueryBuilder(
-            $this, $this->getQueryGrammar(), $this->getPostProcessor()
+            $this,
+            $this->getQueryGrammar(),
+            $this->getPostProcessor()
         );
     }
 
     protected function getDefaultQueryGrammar()
     {
-        return new FakeGrammar;
+        return new FakeGrammar($this);
     }
 
     public function statement($query, $bindings = [])
@@ -53,12 +55,11 @@ class FakeConnection extends Connection implements ConnectionInterface
         if (is_object($query)) {
             $query = $query->data;
         } else {
-            
         }
         if (FakeSchemaGrammar::$query && is_string($query)) {
             $payload = array_shift(FakeSchemaGrammar::$query);
             $query = [
-                'sql' => $query,
+                'sql'  => $query,
                 'args' => $payload['args'] ?? null,
                 'type' => $payload['type'],
             ];

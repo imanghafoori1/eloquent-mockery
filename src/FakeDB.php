@@ -63,7 +63,7 @@ class FakeDB
 
     public static function table($table)
     {
-        return new class ($table) {
+        return new class($table) {
             private $table;
 
             public function __construct($table)
@@ -79,7 +79,7 @@ class FakeDB
             public function allRows()
             {
                 $rows = [];
-                foreach((FakeDB::$fakeRows[$this->table] ?? []) as $i => $row) {
+                foreach ((FakeDB::$fakeRows[$this->table] ?? []) as $i => $row) {
                     $rows[$i] = $row[$this->table];
                 }
 
@@ -189,12 +189,12 @@ class FakeDB
 
                 $result = 0;
 
-                if (! is_string($prop) && is_callable($prop)) {
+                if (!is_string($prop) && is_callable($prop)) {
                     $result = $prop($a, $b);
                 } else {
                     $values = [data_get($a, $prop), data_get($b, $prop)];
 
-                    if (! $ascending) {
+                    if (!$ascending) {
                         $values = array_reverse($values);
                     }
 
@@ -241,7 +241,7 @@ class FakeDB
         return $collection->map(function ($item) use ($columns, $aliases, $_table) {
             if ($columns !== ['*']) {
                 foreach ($columns as $i => $col) {
-                    ! Str::contains($col, '.') && $columns[$i] = $_table.'.'.$col;
+                    !Str::contains($col, '.') && $columns[$i] = $_table.'.'.$col;
                 }
                 $newItem = [];
                 foreach ($columns as $col) {
@@ -362,7 +362,7 @@ class FakeDB
     {
         $pattern = str_replace('%', '.*', preg_quote($pattern, '/'));
 
-        return (bool) (preg_match("/^{$pattern}$/i", data_get($item, $value) ?? ''));
+        return (bool) preg_match("/^{$pattern}$/i", data_get($item, $value) ?? '');
     }
 
     public static function whereColumn($where, $row)
@@ -436,7 +436,7 @@ class FakeDB
 
     public static function prefixColumn($column, $mainTable, $joins)
     {
-        if (! Str::contains($column, '.') && ! isset(FakeDB::$fakeRows[$mainTable][0][$mainTable][$column]) && $joins) {
+        if (!Str::contains($column, '.') && !isset(FakeDB::$fakeRows[$mainTable][0][$mainTable][$column]) && $joins) {
             foreach ($joins as $joined) {
                 $table = $joined->table;
                 if (isset(FakeDB::$fakeRows[$table][0][$table][$column])) {
@@ -445,7 +445,7 @@ class FakeDB
             }
         }
 
-        if (! Str::contains($column, '.')) {
+        if (!Str::contains($column, '.')) {
             $column = $mainTable.'.'.$column;
         }
 
@@ -505,7 +505,7 @@ class FakeDB
 
         $orderBy && ($collection = self::sortRows($collection, $orderBy));
 
-        if (! FakeDB::$ignoreWheres) {
+        if (!FakeDB::$ignoreWheres) {
             $collection = FakeDB::applyWheres($query, $collection);
         }
 
@@ -520,11 +520,11 @@ class FakeDB
 
     public static function sortRows(Collection $collection, $orderBy)
     {
-        if (! $orderBy) {
+        if (!$orderBy) {
             return $collection;
         }
         if (count($orderBy) === 1 && is_object($orderBy[0]['sql'] ?? '')) {
-            $data = ($orderBy[0]['sql'])->data;
+            $data = $orderBy[0]['sql']->data;
             if ($data['type'] === 'random') {
                 return $collection->shuffle((int) $data['seed']);
             }
@@ -718,7 +718,7 @@ class FakeDB
 
     public static function insertGetId(array $values, $table)
     {
-        if (! Arr::isAssoc($values)) {
+        if (!Arr::isAssoc($values)) {
             foreach ($values as $value) {
                 self::insertGetId($value, $table);
             }
@@ -726,7 +726,7 @@ class FakeDB
             return true;
         }
 
-        if (! isset($values['id'])) {
+        if (!isset($values['id'])) {
             $values['id'] = (FakeDB::$tables[$table]['latestRowId'] ?? 0) + 1;
         }
 

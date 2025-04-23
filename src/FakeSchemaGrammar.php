@@ -28,7 +28,7 @@ class FakeSchemaGrammar extends SchemaGrammar
     public function compileChange(Blueprint $blueprint, Fluent $command, Connection $connection)
     {
         self::keepData('change', [$blueprint, $command, $connection]);
-        
+
         return parent::compileChange($blueprint, $command, $connection);
     }
 
@@ -41,17 +41,14 @@ class FakeSchemaGrammar extends SchemaGrammar
 
     public function compileKey(Blueprint $blueprint, Fluent $command, $type)
     {
-        
     }
 
     public function compileRenameIndex(Blueprint $blueprint, Fluent $command)
     {
-        
     }
 
     public function compileForeign(Blueprint $blueprint, Fluent $command)
     {
-        
     }
 
     public function compileRenameColumn(Blueprint $blueprint, Fluent $command, Connection $connection)
@@ -63,7 +60,6 @@ class FakeSchemaGrammar extends SchemaGrammar
 
     public function compileUnique(Blueprint $blueprint, Fluent $command)
     {
-        
     }
 
     public function compileRename(Blueprint $blueprint, Fluent $command)
@@ -91,17 +87,25 @@ class FakeSchemaGrammar extends SchemaGrammar
     {
         return $this->stringy([
             'type' => 'columnListing',
-            'sql' => parent::compileColumnListing(),
+            'sql'  => parent::compileColumnListing(),
         ]);
 
         return parent::compileColumnListing();
+    }
+
+    public function compileTableListing($schema = null, $schemaQualified = true)
+    {
+        return $this->stringy([
+            'type' => 'getAllTables',
+            'sql'  => parent::compileTableListing($schema, $schemaQualified),
+        ]);
     }
 
     public function compileGetAllTables()
     {
         return $this->stringy([
             'type' => 'getAllTables',
-            'sql' => parent::compileGetAllTables(),
+            'sql'  => parent::compileGetAllTables(),
         ]);
     }
 
@@ -110,7 +114,7 @@ class FakeSchemaGrammar extends SchemaGrammar
         return $this->stringy([
             'type' => 'columns',
             'args' => ['database' => $database, 'table' => $table],
-            'sql' => parent::compileColumns($database, $table),
+            'sql'  => parent::compileColumns($database, $table),
         ]);
     }
 
@@ -153,14 +157,13 @@ class FakeSchemaGrammar extends SchemaGrammar
     {
         return $this->stringy([
             'type' => 'tableExists',
-            'sql' => parent::compileTableExists(),
+            'sql'  => parent::compileTableExists(),
         ]);
     }
 
     private function stringy(array $data)
     {
-        return new class ($data){
-
+        return new class($data) {
             public $data;
 
             public function __construct($data)
