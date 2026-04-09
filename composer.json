@@ -15,14 +15,14 @@
         }
     ],
     "require": {
-        "php" : "^7.2|^8.0",
-        "illuminate/database": "11.*|12.*",
-        "illuminate/events": "11.*|12.*"
+        "php" : "^7.2 || >=8.2",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/events": "^11.0|^12.0|^13.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^7.5.20|^8.5.28|^9.5",
-        "imanghafoori/php-imports-analyzer": "^1.0.2",
-        "symfony/var-dumper" : "3.*|4.*|5.*"
+        "phpunit/phpunit": "^10.0|^11.0",
+        "robiningelbrecht/phpunit-coverage-tools": "^1.10"
+        "symfony/var-dumper" : "@stable"
     },
     "autoload": {
         "psr-4": {
